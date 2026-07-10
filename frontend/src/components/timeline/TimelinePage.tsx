@@ -4,6 +4,7 @@ import { AppShell } from "@/components/layout/AppShell";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { MobileNavigation } from "@/components/layout/MobileNavigation";
 import { ActiveFilterChips } from "@/components/timeline/ActiveFilterChips";
+import { AgencyFilterBar } from "@/components/timeline/AgencyFilterBar";
 import { EventIntensityPanel } from "@/components/timeline/EventIntensityPanel";
 import { EventDetailPanel } from "@/components/timeline/EventDetailPanel";
 import { TimelineDaySection } from "@/components/timeline/TimelineDay";
@@ -24,6 +25,7 @@ import {
   computeSummary,
   findEventById,
 } from "@/data/timeline.mock";
+import { listAgencies } from "@/lib/agency-store";
 import { getDashboardSettings } from "@/lib/admin-store";
 import { loadTimelineDays } from "@/lib/timeline-store";
 import { buildFilterChips, filterTimelineDays } from "@/lib/timeline";
@@ -91,6 +93,7 @@ export function TimelinePage({
     severity:
       (searchParams.get("severity") as TimelineFiltersState["severity"]) || "all",
     province: searchParams.get("province") || "all",
+    agencyId: searchParams.get("agency") || "all",
     dateFrom: searchParams.get("from") ?? "",
     dateTo: searchParams.get("to") ?? "",
   }));
@@ -163,6 +166,13 @@ export function TimelinePage({
     const date = searchParams.get("date");
     if (date) setSelectedDay(date);
 
+    const agency = searchParams.get("agency");
+    setFilters((prev) => {
+      const nextAgency = agency || "all";
+      if (prev.agencyId === nextAgency) return prev;
+      return { ...prev, agencyId: nextAgency };
+    });
+
     const eventId = searchParams.get("event");
     if (eventId) {
       const found = findEventById(eventId, days);
@@ -219,6 +229,8 @@ export function TimelinePage({
       else params.delete("severity");
       if (f.province !== "all") params.set("province", f.province);
       else params.delete("province");
+      if (f.agencyId !== "all") params.set("agency", f.agencyId);
+      else params.delete("agency");
       if (f.dateFrom) params.set("from", f.dateFrom);
       else params.delete("from");
       if (f.dateTo) params.set("to", f.dateTo);
@@ -257,13 +269,24 @@ export function TimelinePage({
     });
   }, [days, dashboardSettings.rangeStart, dashboardSettings.rangeEnd]);
 
+  const agencyLabelById = useMemo(() => {
+    const map: Record<string, string> = {};
+    for (const agency of listAgencies({ activeOnly: false })) {
+      map[agency.id] = agency.shortName;
+    }
+    return map;
+  }, []);
+
   const filteredDays = useMemo(
     () => filterTimelineDays(rangedDays, filters, searchQuery),
     [rangedDays, filters, searchQuery],
   );
 
   const summary = useMemo(() => computeSummary(rangedDays), [rangedDays]);
-  const chips = useMemo(() => buildFilterChips(filters), [filters]);
+  const chips = useMemo(
+    () => buildFilterChips(filters, agencyLabelById),
+    [filters, agencyLabelById],
+  );
   const activeFilterCount = chips.length;
 
   useEffect(() => {
@@ -292,18 +315,51 @@ export function TimelinePage({
       if (switchToTimeline) setSelectedView("timeline");
       setSelectedDay(date);
       setCollapsedDays((prev) => ({ ...prev, [date]: false }));
+
+      const day =
+        rangedDays.find((d) => d.date === date) ??
+        days.find((d) => d.date === date) ??
+        null;
+      const top = day?.events[0] ?? null;
+      if (top) setSelectedEvent(top);
+
+      const dayVisible = filterTimelineDays(
+        rangedDays.length ? rangedDays : days,
+        filters,
+        searchQuery,
+      ).some((d) => d.date === date);
+
+      const nextFilters = dayVisible
+        ? filters
+        : { ...filters, agencyId: "all" as const };
+      if (!dayVisible) setFilters(nextFilters);
+
       syncUrl({
         date,
         view: switchToTimeline ? "timeline" : selectedView,
+        event: top?.id ?? null,
+        filters: nextFilters,
       });
-      requestAnimationFrame(() => {
-        document.getElementById(`day-${date}`)?.scrollIntoView({
-          behavior: "smooth",
-          block: "start",
-        });
-      });
+
+      const tryScroll = (attempt = 0) => {
+        const el = document.getElementById(`day-${date}`);
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth", block: "start" });
+          // Second pass after sticky header settles
+          window.setTimeout(() => {
+            el.scrollIntoView({ behavior: "smooth", block: "start" });
+          }, 120);
+          return;
+        }
+        if (attempt < 20) {
+          window.setTimeout(() => tryScroll(attempt + 1), 40);
+        }
+      };
+
+      // Wait for React to paint the day section (and filter reset if needed)
+      window.setTimeout(() => tryScroll(), 80);
     },
-    [selectedView, syncUrl],
+    [days, filters, rangedDays, searchQuery, selectedView, syncUrl],
   );
 
   const relatedLookup = useCallback(
@@ -346,6 +402,7 @@ export function TimelinePage({
     if (key === "province") next.province = "all";
     if (key === "city") next.city = "all";
     if (key === "organization") next.organization = "all";
+    if (key === "agencyId") next.agencyId = "all";
     if (key === "verificationStatus") next.verificationStatus = "all";
     if (key === "hasResponse") next.hasResponse = "all";
     if (key === "hasImage") next.hasImage = false;
@@ -415,6 +472,15 @@ export function TimelinePage({
         onViewChange={changeView}
       />
 
+      <AgencyFilterBar
+        value={filters.agencyId}
+        onChange={(agencyId) => {
+          const next = { ...filters, agencyId };
+          setFilters(next);
+          syncUrl({ filters: next });
+        }}
+      />
+
       {selectedView === "timeline" ? (
         <ActiveFilterChips
           chips={chips}
@@ -454,7 +520,7 @@ export function TimelinePage({
             <EventIntensityPanel
               days={rangedDays}
               activeDate={selectedDay}
-              onSelectDay={(date) => scrollToDay(date, false)}
+              onSelectDay={(date) => scrollToDay(date, true)}
             />
             <div className="space-y-4">
               {filteredDays.map((day) => (

@@ -9,6 +9,7 @@ import {
   Plus,
   Settings,
   Shield,
+  Building2,
   Users,
 } from "lucide-react";
 import Link from "next/link";
@@ -20,6 +21,7 @@ import { CreateEventForm } from "@/components/forms/CreateEventForm";
 
 const NAV = [
   { href: "/admin", label: "داشبورد ادمین", icon: LayoutDashboard, exact: true },
+  { href: "/admin/agencies", label: "وزارتخانه‌ها", icon: Building2, exact: false },
   { href: "/admin/users", label: "کاربران و دسترسی‌ها", icon: Users, exact: false },
   { href: "/admin/settings", label: "تنظیمات داشبورد", icon: Settings, exact: false },
   { href: "/timeline", label: "بازگشت به تقویم", icon: Shield, exact: false },
@@ -29,10 +31,12 @@ export function RequireAuth({
   children,
   requireManageUsers,
   requireManageSettings,
+  requireManageAgencies,
 }: {
   children: ReactNode;
   requireManageUsers?: boolean;
   requireManageSettings?: boolean;
+  requireManageAgencies?: boolean;
 }) {
   const router = useRouter();
   const [user, setUser] = useState<AdminUser | null>(null);
@@ -54,10 +58,19 @@ export function RequireAuth({
       router.replace("/admin");
       return;
     }
+    if (requireManageAgencies && !perms.manageAgencies) {
+      router.replace("/admin");
+      return;
+    }
 
     setUser(current);
     setReady(true);
-  }, [router, requireManageUsers, requireManageSettings]);
+  }, [
+    router,
+    requireManageUsers,
+    requireManageSettings,
+    requireManageAgencies,
+  ]);
 
   if (!ready || !user) {
     return (
@@ -107,6 +120,9 @@ function AdminShell({
           <nav className="flex-1 space-y-1 p-2">
             {NAV.map((item) => {
               if (item.href === "/admin/users" && !perms.manageUsers) return null;
+              if (item.href === "/admin/agencies" && !perms.manageAgencies) {
+                return null;
+              }
               if (item.href === "/admin/settings" && !perms.manageSettings) {
                 return null;
               }
@@ -194,6 +210,9 @@ function AdminShell({
           <div className="flex flex-wrap gap-2 lg:hidden">
             {NAV.map((item) => {
               if (item.href === "/admin/users" && !perms.manageUsers) return null;
+              if (item.href === "/admin/agencies" && !perms.manageAgencies) {
+                return null;
+              }
               if (item.href === "/admin/settings" && !perms.manageSettings) {
                 return null;
               }

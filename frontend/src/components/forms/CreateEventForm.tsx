@@ -1,13 +1,19 @@
 "use client";
 
 import { PersianDatePicker } from "@/components/shared/PersianDatePicker";
-import type { EventType, Severity } from "@/types/timeline";
+import { getAgencyById, listAgencies } from "@/lib/agency-store";
+import { getCurrentUser } from "@/lib/auth";
+import { upsertTimelineEvent } from "@/lib/timeline-store";
+import type { GovernmentAgency } from "@/types/agency";
+import { ROLE_PERMISSIONS } from "@/types/auth";
+import type { EventType, Severity, TimelineEvent } from "@/types/timeline";
 import { X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 type CreateEventFormProps = {
   open: boolean;
   onClose: () => void;
+  onCreated?: (event: TimelineEvent) => void;
 };
 
 const STEPS = [
@@ -18,8 +24,16 @@ const STEPS = [
   "مرور و انتشار",
 ] as const;
 
-export function CreateEventForm({ open, onClose }: CreateEventFormProps) {
+export function CreateEventForm({
+  open,
+  onClose,
+  onCreated,
+}: CreateEventFormProps) {
   const [step, setStep] = useState(0);
+  const [error, setError] = useState<string | null>(null);
+  const [allowedAgencies, setAllowedAgencies] = useState<GovernmentAgency[]>(
+    [],
+  );
   const [draft, setDraft] = useState({
     eventType: "enemy" as EventType,
     title: "",
@@ -31,10 +45,30 @@ export function CreateEventForm({ open, onClose }: CreateEventFormProps) {
     city: "",
     category: "",
     severity: "medium" as Severity,
+    agencyId: "",
     organization: "",
     source: "",
     tags: "",
   });
+
+  const agencyOptions = useMemo(() => allowedAgencies, [allowedAgencies]);
+
+  useEffect(() => {
+    if (!open) return;
+    const user = getCurrentUser();
+    const all = listAgencies({ activeOnly: true });
+    const scoped =
+      !user ||
+      user.role === "super_admin" ||
+      !user.agencyIds?.length
+        ? all
+        : all.filter((a) => user.agencyIds.includes(a.id));
+    setAllowedAgencies(scoped);
+    setDraft((d) => ({
+      ...d,
+      agencyId: d.agencyId || scoped[0]?.id || "",
+    }));
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
@@ -62,6 +96,72 @@ export function CreateEventForm({ open, onClose }: CreateEventFormProps) {
     return () => document.removeEventListener("keydown", onKey);
   }, [open, onClose]);
 
+  function publish() {
+    setError(null);
+    const user = getCurrentUser();
+    if (!user || !ROLE_PERMISSIONS[user.role].manageContent) {
+      setError("اجازه ثبت محتوا ندارید.");
+      return;
+    }
+    if (!draft.title.trim() || !draft.date || !draft.time) {
+      setError("عنوان، تاریخ و ساعت الزامی است.");
+      return;
+    }
+    if (!draft.agencyId) {
+      setError("وزارتخانه / بخش دولت را انتخاب کنید.");
+      return;
+    }
+    if (
+      user.role !== "super_admin" &&
+      user.agencyIds?.length &&
+      !user.agencyIds.includes(draft.agencyId)
+    ) {
+      setError("به این وزارتخانه دسترسی ندارید.");
+      return;
+    }
+
+    const agency = getAgencyById(draft.agencyId);
+    const now = new Date().toISOString();
+    const event: TimelineEvent = {
+      id: `evt-${Date.now()}`,
+      eventType: draft.eventType,
+      title: draft.title.trim(),
+      summary: draft.summary.trim() || draft.title.trim(),
+      description: draft.description.trim() || undefined,
+      date: draft.date,
+      time: draft.time,
+      severity: draft.severity,
+      verificationStatus: "published",
+      actionStatus:
+        draft.eventType === "government" ? "in_progress" : undefined,
+      category: draft.category.trim() || agency?.shortName || "عمومی",
+      location: {
+        province: draft.province.trim() || undefined,
+        city: draft.city.trim() || undefined,
+      },
+      organization:
+        draft.organization.trim() || agency?.shortName || undefined,
+      agencyId: draft.agencyId,
+      agencyName: agency?.name,
+      source: draft.source.trim() || undefined,
+      tags: draft.tags
+        .split(/[,،]/)
+        .map((t) => t.trim())
+        .filter(Boolean),
+      relatedEventIds: [],
+      relatedResponseIds: [],
+      commentsCount: 0,
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    upsertTimelineEvent(event);
+    localStorage.removeItem("taghvim_event_draft");
+    onCreated?.(event);
+    onClose();
+    setStep(0);
+  }
+
   if (!open) return null;
 
   return (
@@ -79,7 +179,9 @@ export function CreateEventForm({ open, onClose }: CreateEventFormProps) {
       >
         <div className="mb-4 flex items-center justify-between">
           <div>
-            <h3 className="text-lg font-bold text-[var(--text-primary)]">ثبت رویداد جدید</h3>
+            <h3 className="text-lg font-bold text-[var(--text-primary)]">
+              ثبت رویداد جدید
+            </h3>
             <p className="text-xs text-[var(--text-secondary)]">
               مرحله {(step + 1).toLocaleString("fa-IR")} از{" "}
               {STEPS.length.toLocaleString("fa-IR")}: {STEPS[step]}
@@ -110,14 +212,23 @@ export function CreateEventForm({ open, onClose }: CreateEventFormProps) {
           {step === 0 ? (
             <>
               <Select
+                label="وزارتخانه / بخش دولت"
+                value={draft.agencyId}
+                onChange={(v) => setDraft((d) => ({ ...d, agencyId: v }))}
+                options={agencyOptions.map((a) => ({
+                  value: a.id,
+                  label: a.shortName,
+                }))}
+              />
+              <Select
                 label="نوع رویداد"
                 value={draft.eventType}
                 onChange={(v) =>
                   setDraft((d) => ({ ...d, eventType: v as EventType }))
                 }
                 options={[
-                  { value: "enemy", label: "اقدام دشمن" },
-                  { value: "government", label: "اقدام دولت" },
+                  { value: "enemy", label: "اقدام دشمن (مرتبط با این بخش)" },
+                  { value: "government", label: "اقدام دولت / این وزارتخانه" },
                 ]}
               />
               <Field
@@ -195,7 +306,7 @@ export function CreateEventForm({ open, onClose }: CreateEventFormProps) {
                 onChange={(v) => setDraft((d) => ({ ...d, source: v }))}
               />
               <Field
-                label="نهاد مرتبط"
+                label="نهاد اجرایی (اختیاری)"
                 value={draft.organization}
                 onChange={(v) => setDraft((d) => ({ ...d, organization: v }))}
               />
@@ -220,20 +331,32 @@ export function CreateEventForm({ open, onClose }: CreateEventFormProps) {
           {step === 4 ? (
             <div className="space-y-2 rounded-xl border border-[var(--border)] bg-[var(--surface-3)] p-4 text-sm text-[var(--text-secondary)]">
               <p>
-                <strong className="text-[var(--text-primary)]">عنوان:</strong> {draft.title || "—"}
+                <strong className="text-[var(--text-primary)]">عنوان:</strong>{" "}
+                {draft.title || "—"}
+              </p>
+              <p>
+                <strong className="text-[var(--text-primary)]">وزارتخانه:</strong>{" "}
+                {getAgencyById(draft.agencyId)?.shortName || "—"}
               </p>
               <p>
                 <strong className="text-[var(--text-primary)]">نوع:</strong>{" "}
                 {draft.eventType === "enemy" ? "دشمن" : "دولت"}
               </p>
               <p>
-                <strong className="text-[var(--text-primary)]">زمان:</strong> {draft.date} {draft.time}
+                <strong className="text-[var(--text-primary)]">زمان:</strong>{" "}
+                {draft.date} {draft.time}
               </p>
               <p>
-                <strong className="text-[var(--text-primary)]">مکان:</strong> {draft.city} {draft.province}
+                <strong className="text-[var(--text-primary)]">مکان:</strong>{" "}
+                {draft.city} {draft.province}
               </p>
-              <p className="text-xs text-emerald-300">پیش‌نویس به‌صورت خودکار ذخیره شد.</p>
             </div>
+          ) : null}
+
+          {error ? (
+            <p className="rounded-xl bg-red-500/15 px-3 py-2 text-sm text-red-200">
+              {error}
+            </p>
           ) : null}
         </div>
 
@@ -258,10 +381,7 @@ export function CreateEventForm({ open, onClose }: CreateEventFormProps) {
           ) : (
             <button
               type="button"
-              onClick={() => {
-                localStorage.removeItem("taghvim_event_draft");
-                onClose();
-              }}
+              onClick={publish}
               className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white"
             >
               انتشار / ثبت
@@ -338,6 +458,9 @@ function Select({
         onChange={(e) => onChange(e.target.value)}
         className="w-full rounded-xl border border-[var(--border)] bg-[var(--surface-3)] px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
       >
+        {options.length === 0 ? (
+          <option value="">وزارتخانه‌ای تعریف نشده</option>
+        ) : null}
         {options.map((opt) => (
           <option key={opt.value} value={opt.value}>
             {opt.label}

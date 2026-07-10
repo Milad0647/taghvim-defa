@@ -1,5 +1,6 @@
 "use client";
 
+import { listAgencies } from "@/lib/agency-store";
 import type { TimelineFiltersState, TimelineDay } from "@/types/timeline";
 import { defaultFilters } from "@/types/timeline";
 import { X } from "lucide-react";
@@ -34,6 +35,8 @@ export function TimelineFilters({
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
   }, [open, onClose]);
+
+  const agencies = useMemo(() => listAgencies({ activeOnly: true }), []);
 
   const options = useMemo(() => {
     const events = days.flatMap((d) => d.events);
@@ -83,6 +86,18 @@ export function TimelineFilters({
         </div>
 
         <div className="space-y-3 text-sm">
+          <Select
+            label="وزارتخانه / بخش دولت"
+            value={draft.agencyId}
+            onChange={(v) => setDraft((d) => ({ ...d, agencyId: v }))}
+            options={[
+              { value: "all", label: "همه" },
+              ...agencies.map((a) => ({
+                value: a.id,
+                label: a.shortName,
+              })),
+            ]}
+          />
           <Select
             label="نوع محتوا"
             value={draft.eventType}

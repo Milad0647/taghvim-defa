@@ -21,9 +21,11 @@ const LEGEND_COLORS = [
   "#D93445",
 ] as const;
 
-const MIN_BAR_WIDTH = 10;
+const MIN_BAR_WIDTH = 8;
 const BAR_GAP = 2;
 const MONTH_GAP = 14;
+/** Approximate number of days visible in the viewport before panning */
+const VISIBLE_DAYS = 60;
 
 function pickColor(normalized: number): string {
   if (normalized < 0.18) return "#193D78";
@@ -42,6 +44,12 @@ function shortPersianLabel(day: Pick<TimelineDay, "persianDate">): string {
   const parts = day.persianDate.split(" ");
   if (parts.length >= 2) return `${parts[0]} ${parts[1]}`;
   return day.persianDate;
+}
+
+function persianDayNumber(dateStr: string): string {
+  return new Intl.DateTimeFormat("fa-IR", { day: "numeric" }).format(
+    new Date(`${dateStr}T12:00:00`),
+  );
 }
 
 function persianMonthKey(dateStr: string): string {
@@ -131,6 +139,9 @@ export function EventIntensityPanel({
   }>({ active: false, startX: 0, startScroll: 0, moved: false });
 
   const [hoveredDate, setHoveredDate] = useState<string | null>(null);
+  const [hoverPoint, setHoverPoint] = useState<{ x: number; y: number } | null>(
+    null,
+  );
   const [isPanning, setIsPanning] = useState(false);
   const [containerWidth, setContainerWidth] = useState(0);
   const [canPan, setCanPan] = useState(false);
@@ -161,6 +172,7 @@ export function EventIntensityPanel({
           height,
           color: day.totalEvents === 0 ? "rgba(148,163,184,0.22)" : pickColor(score),
           shortLabel: shortPersianLabel(day),
+          dayNumber: persianDayNumber(day.date),
           isEmpty: day.totalEvents === 0,
           monthKey,
           monthLabel: persianMonthShort(day.date),
@@ -170,18 +182,12 @@ export function EventIntensityPanel({
     [chronological, maxEvents],
   );
 
-  const monthGapCount = useMemo(
-    () => bars.filter((b, i) => i > 0 && b.isMonthStart).length,
-    [bars],
-  );
-
   const barSlotWidth = useMemo(() => {
-    if (bars.length === 0 || containerWidth <= 0) return MIN_BAR_WIDTH;
-    const gaps =
-      Math.max(0, bars.length - 1) * BAR_GAP + monthGapCount * MONTH_GAP;
-    const available = containerWidth - gaps;
-    return Math.max(MIN_BAR_WIDTH, available / bars.length);
-  }, [bars.length, containerWidth, monthGapCount]);
+    if (containerWidth <= 0) return MIN_BAR_WIDTH;
+    // Size bars so ~60 days fit in the viewport; remaining days require pan.
+    const gaps = Math.max(0, VISIBLE_DAYS - 1) * BAR_GAP;
+    return Math.max(MIN_BAR_WIDTH, (containerWidth - gaps) / VISIBLE_DAYS);
+  }, [containerWidth]);
 
   const barOffsets = useMemo(() => {
     const offsets: number[] = [];
@@ -209,21 +215,6 @@ export function EventIntensityPanel({
         .filter(({ bar }) => bar.isMonthStart),
     [bars],
   );
-
-  const axisLabels = useMemo(() => {
-    if (bars.length === 0) return [];
-    if (bars.length <= 8) {
-      return bars.map((b, index) => ({ ...b, index }));
-    }
-    const indexes = new Set<number>();
-    const steps = Math.min(7, bars.length - 1);
-    for (let i = 0; i <= steps; i++) {
-      indexes.add(Math.round((i / steps) * (bars.length - 1)));
-    }
-    return [...indexes]
-      .sort((a, b) => a - b)
-      .map((index) => ({ ...bars[index]!, index }));
-  }, [bars]);
 
   useEffect(() => {
     const el = scrollRef.current;
@@ -273,35 +264,46 @@ export function EventIntensityPanel({
     scrollRef.current.setPointerCapture(e.pointerId);
   }, []);
 
-  const onPointerMove = useCallback((e: ReactPointerEvent<HTMLDivElement>) => {
-    const drag = dragRef.current;
-    if (!drag.active || !scrollRef.current) return;
-    const dx = e.clientX - drag.startX;
-    if (Math.abs(dx) > 4) {
-      if (!drag.moved) {
-        drag.moved = true;
-        setIsPanning(true);
-        setHoveredDate(null);
-      }
-      scrollRef.current.scrollLeft = drag.startScroll - dx;
-    }
+  const clearHover = useCallback(() => {
+    setHoveredDate(null);
+    setHoverPoint(null);
   }, []);
 
-  const endDrag = useCallback((e: ReactPointerEvent<HTMLDivElement>) => {
-    const drag = dragRef.current;
-    const wasPanning = drag.moved;
-    drag.active = false;
-    if (scrollRef.current?.hasPointerCapture(e.pointerId)) {
-      scrollRef.current.releasePointerCapture(e.pointerId);
-    }
-    if (wasPanning) {
-      setHoveredDate(null);
-      // Keep hover suppressed briefly so mouseenter after drag doesn't flash tooltip
-      window.setTimeout(() => setIsPanning(false), 120);
-    } else {
-      setIsPanning(false);
-    }
-  }, []);
+  const onPointerMove = useCallback(
+    (e: ReactPointerEvent<HTMLDivElement>) => {
+      const drag = dragRef.current;
+      if (!drag.active || !scrollRef.current) return;
+      const dx = e.clientX - drag.startX;
+      if (Math.abs(dx) > 4) {
+        if (!drag.moved) {
+          drag.moved = true;
+          setIsPanning(true);
+          clearHover();
+        }
+        scrollRef.current.scrollLeft = drag.startScroll - dx;
+      }
+    },
+    [clearHover],
+  );
+
+  const endDrag = useCallback(
+    (e: ReactPointerEvent<HTMLDivElement>) => {
+      const drag = dragRef.current;
+      const wasPanning = drag.moved;
+      drag.active = false;
+      if (scrollRef.current?.hasPointerCapture(e.pointerId)) {
+        scrollRef.current.releasePointerCapture(e.pointerId);
+      }
+      if (wasPanning) {
+        clearHover();
+        // Keep hover suppressed briefly so mouseenter after drag doesn't flash tooltip
+        window.setTimeout(() => setIsPanning(false), 120);
+      } else {
+        setIsPanning(false);
+      }
+    },
+    [clearHover],
+  );
 
   const handleBarClick = useCallback(
     (date: string) => {
@@ -312,14 +314,15 @@ export function EventIntensityPanel({
   );
 
   const handleBarHover = useCallback(
-    (date: string | null) => {
+    (date: string | null, point?: { x: number; y: number } | null) => {
       if (dragRef.current.active || dragRef.current.moved || isPanning) {
-        setHoveredDate(null);
+        clearHover();
         return;
       }
       setHoveredDate(date);
+      setHoverPoint(date && point ? point : null);
     },
-    [isPanning],
+    [clearHover, isPanning],
   );
 
   if (bars.length === 0) {
@@ -345,7 +348,7 @@ export function EventIntensityPanel({
   return (
     <div
       className={clsx(
-        "event-intensity-panel grid h-[124px] grid-cols-[118px_1fr] items-stretch gap-3 overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--panel)] px-4",
+        "event-intensity-panel grid h-[148px] grid-cols-[118px_1fr] items-stretch gap-3 overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--panel)] px-4",
         className,
       )}
       style={{ direction: "rtl" }}
@@ -373,7 +376,8 @@ export function EventIntensityPanel({
         <p className="m-0 text-[9px] leading-snug text-[var(--text-muted)]">
           {rangeLabel}
           <br />
-          {bars.length.toLocaleString("fa-IR")} روز · برای جابه‌جایی بکشید
+          {Math.min(VISIBLE_DAYS, bars.length).toLocaleString("fa-IR")} روز
+          نمایان · بقیه را بکشید
         </p>
       </div>
 
@@ -390,47 +394,15 @@ export function EventIntensityPanel({
         onPointerCancel={endDrag}
         onPointerLeave={(e) => {
           if (dragRef.current.active) endDrag(e);
+          clearHover();
         }}
+        onMouseLeave={clearHover}
       >
         <div
           ref={trackRef}
-          className="relative flex h-full flex-col justify-end pb-5"
+          className="relative flex h-full flex-col justify-end pb-8"
           style={{ width: Math.max(trackWidth, containerWidth || trackWidth) }}
         >
-          {hovered ? (
-            <div
-              role="tooltip"
-              className="pointer-events-none absolute top-0 z-20 w-[180px] rounded-[10px] border border-[var(--border)] bg-[var(--panel-2)] px-2.5 py-2 shadow-xl"
-              style={{
-                right:
-                  barOffsets[
-                    bars.findIndex((b) => b.day.date === hovered.day.date)
-                  ] ?? 0,
-                transform: "translateX(30%)",
-              }}
-            >
-              <p className="m-0 text-[11px] font-semibold text-[var(--text-primary)]">
-                {hovered.day.weekday} {hovered.day.persianDate}
-              </p>
-              <p className="mt-1.5 mb-0 text-[10px] text-[var(--text-secondary)]">
-                {hovered.day.totalEvents.toLocaleString("fa-IR")} رویداد
-              </p>
-              <p className="mt-0.5 mb-0 text-[10px] text-[var(--enemy)]">
-                {hovered.day.enemyActionsCount.toLocaleString("fa-IR")} اقدام دشمن
-              </p>
-              <p className="mt-0.5 mb-0 text-[10px] text-[var(--government)]">
-                {hovered.day.governmentActionsCount.toLocaleString("fa-IR")} اقدام
-                دولت
-              </p>
-              <p className="mt-1 mb-0 text-[10px] text-[var(--text-secondary)]">
-                شدت:{" "}
-                {hovered.isEmpty
-                  ? "بدون فعالیت"
-                  : intensityLabel(hovered.day.intensity)}
-              </p>
-            </div>
-          ) : null}
-
           <div
             className="relative z-[1] flex h-[36px] items-end"
             style={{ gap: BAR_GAP }}
@@ -445,7 +417,18 @@ export function EventIntensityPanel({
                   type="button"
                   data-day={bar.day.date}
                   aria-label={`${bar.day.persianDate}، ${bar.day.totalEvents} رویداد`}
-                  onMouseEnter={() => handleBarHover(bar.day.date)}
+                  onMouseEnter={(e) =>
+                    handleBarHover(bar.day.date, {
+                      x: e.clientX,
+                      y: e.clientY,
+                    })
+                  }
+                  onMouseMove={(e) =>
+                    handleBarHover(bar.day.date, {
+                      x: e.clientX,
+                      y: e.clientY,
+                    })
+                  }
                   onMouseLeave={() => handleBarHover(null)}
                   onFocus={() => handleBarHover(bar.day.date)}
                   onBlur={() => handleBarHover(null)}
@@ -478,12 +461,13 @@ export function EventIntensityPanel({
           </div>
 
           <div className="relative mt-0 h-px w-full bg-[var(--border)]">
-            {axisLabels.map((item) => (
+            {bars.map((bar, index) => (
               <span
-                key={`tick-${item.day.date}`}
-                className="absolute top-0 h-[5px] w-px bg-[var(--border)]"
+                key={`tick-${bar.day.date}`}
+                className="absolute top-0 h-[4px] w-px bg-[var(--border)]"
                 style={{
-                  right: (barOffsets[item.index] ?? 0) + barSlotWidth / 2,
+                  right: (barOffsets[index] ?? 0) + barSlotWidth / 2,
+                  opacity: bar.isMonthStart || index % 5 === 0 ? 1 : 0.35,
                 }}
               />
             ))}
@@ -493,7 +477,8 @@ export function EventIntensityPanel({
                   key={`month-sep-${bar.day.date}`}
                   className="absolute top-[-34px] h-[34px] w-px"
                   style={{
-                    right: (barOffsets[index] ?? 0) - MONTH_GAP / 2 - BAR_GAP / 2,
+                    right:
+                      (barOffsets[index] ?? 0) - MONTH_GAP / 2 - BAR_GAP / 2,
                     background:
                       "linear-gradient(to top, var(--border), transparent)",
                   }}
@@ -502,11 +487,53 @@ export function EventIntensityPanel({
             )}
           </div>
 
-          <div className="relative mt-0.5 h-[22px]">
+          {/* Day numbers directly under bars */}
+          <div className="relative mt-1 h-[14px]">
+            {bars.map((bar, index) => {
+              const isSelected = selected === bar.day.date;
+              return (
+                <button
+                  key={`daynum-${bar.day.date}`}
+                  type="button"
+                  onClick={() => handleBarClick(bar.day.date)}
+                  title={bar.day.persianDate}
+                  className="absolute z-[2] cursor-pointer whitespace-nowrap leading-none tabular-nums"
+                  style={{
+                    top: isSelected ? -1 : 0,
+                    right: (barOffsets[index] ?? 0) + barSlotWidth / 2,
+                    transform: "translateX(50%)",
+                    border: isSelected
+                      ? "1px solid var(--primary)"
+                      : "none",
+                    background: isSelected
+                      ? "linear-gradient(180deg, #3478ed 0%, #1957c8 100%)"
+                      : "transparent",
+                    color: isSelected
+                      ? "#ffffff"
+                      : bar.isMonthStart
+                        ? "var(--text-secondary)"
+                        : "var(--text-muted)",
+                    borderRadius: isSelected ? 5 : 0,
+                    padding: isSelected ? "1px 5px" : 0,
+                    fontSize: isSelected ? 10 : 8,
+                    fontWeight: isSelected || bar.isMonthStart ? 600 : 400,
+                    boxShadow: isSelected
+                      ? "0 0 10px rgba(39, 112, 255, 0.32)"
+                      : "none",
+                  }}
+                >
+                  {isSelected ? bar.shortLabel : bar.dayNumber}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Month names below day numbers */}
+          <div className="relative mt-0.5 h-[12px]">
             {monthMarkers.map(({ bar, index }) => (
               <span
                 key={`month-${bar.day.date}`}
-                className="pointer-events-none absolute top-0 text-[9px] font-medium text-[var(--text-muted)]"
+                className="pointer-events-none absolute top-0 text-[8px] font-medium text-[var(--text-muted)]"
                 style={{
                   right: (barOffsets[index] ?? 0) + barSlotWidth / 2,
                   transform: "translateX(50%)",
@@ -515,40 +542,41 @@ export function EventIntensityPanel({
                 {bar.monthLabel}
               </span>
             ))}
-            {axisLabels.map((item) => {
-              const isSelected = selected === item.day.date;
-              return (
-                <button
-                  key={`label-${item.day.date}`}
-                  type="button"
-                  onClick={() => handleBarClick(item.day.date)}
-                  className="absolute cursor-pointer whitespace-nowrap text-[10px] leading-none"
-                  style={{
-                    top: isSelected ? -2 : 12,
-                    right: (barOffsets[item.index] ?? 0) + barSlotWidth / 2,
-                    transform: "translateX(50%)",
-                    border: isSelected
-                      ? "1px solid var(--primary)"
-                      : "none",
-                    background: isSelected
-                      ? "linear-gradient(180deg, #3478ed 0%, #1957c8 100%)"
-                      : "transparent",
-                    color: isSelected ? "#ffffff" : "var(--text-muted)",
-                    borderRadius: isSelected ? 7 : 0,
-                    padding: isSelected ? "4px 10px" : 0,
-                    boxShadow: isSelected
-                      ? "0 0 12px rgba(39, 112, 255, 0.32)"
-                      : "none",
-                    zIndex: isSelected ? 2 : 1,
-                  }}
-                >
-                  {isSelected ? item.shortLabel : null}
-                </button>
-              );
-            })}
           </div>
         </div>
       </div>
+
+      {hovered && hoverPoint ? (
+        <div
+          role="tooltip"
+          className="pointer-events-none fixed z-[80] w-[190px] rounded-[10px] border border-[var(--border)] bg-[var(--panel-2)] px-2.5 py-2 shadow-xl"
+          style={{
+            left: hoverPoint.x,
+            top: hoverPoint.y - 12,
+            transform: "translate(-50%, -100%)",
+          }}
+        >
+          <p className="m-0 text-[11px] font-semibold text-[var(--text-primary)]">
+            {hovered.day.weekday} {hovered.day.persianDate}
+          </p>
+          <p className="mt-1.5 mb-0 text-[10px] text-[var(--text-secondary)]">
+            {hovered.day.totalEvents.toLocaleString("fa-IR")} رویداد
+          </p>
+          <p className="mt-0.5 mb-0 text-[10px] text-[var(--enemy)]">
+            {hovered.day.enemyActionsCount.toLocaleString("fa-IR")} اقدام دشمن
+          </p>
+          <p className="mt-0.5 mb-0 text-[10px] text-[var(--government)]">
+            {hovered.day.governmentActionsCount.toLocaleString("fa-IR")} اقدام
+            دولت
+          </p>
+          <p className="mt-1 mb-0 text-[10px] text-[var(--text-secondary)]">
+            شدت:{" "}
+            {hovered.isEmpty
+              ? "بدون فعالیت"
+              : intensityLabel(hovered.day.intensity)}
+          </p>
+        </div>
+      ) : null}
     </div>
   );
 }

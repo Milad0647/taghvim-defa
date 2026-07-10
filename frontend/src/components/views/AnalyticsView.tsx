@@ -145,32 +145,34 @@ export function AnalyticsView({ days }: AnalyticsViewProps) {
         </Panel>
       </div>
 
-      <div className="grid gap-4 xl:grid-cols-[1.2fr_1fr]">
-        <Panel title="شدت روزانه" subtitle="روند شدت رویدادها">
-          <AreaTrendChart
-            height={180}
-            labels={model.trend.map((p) => p.shortLabel)}
-            series={[
-              {
-                id: "intensity",
-                label: "شدت",
-                color: "var(--warning)",
-                values: model.trend.map((p) => p.intensity),
-              },
-            ]}
-          />
-        </Panel>
+      <Panel
+        title="شدت روزانه"
+        subtitle="روند شدت رویدادها در کل بازه — نمای تمام‌عرض"
+      >
+        <AreaTrendChart
+          height={320}
+          labels={model.trend.map((p) => p.shortLabel)}
+          series={[
+            {
+              id: "intensity",
+              label: "شدت",
+              color: "var(--warning)",
+              values: model.trend.map((p) => p.intensity),
+            },
+          ]}
+        />
+      </Panel>
 
-        <Panel title="میله‌های روزانه" subtitle="انباشته دشمن / دولت">
-          <StackedDailyBars
-            points={model.trend.map((p) => ({
-              label: p.shortLabel,
-              enemy: p.enemy,
-              government: p.government,
-            }))}
-          />
-        </Panel>
-      </div>
+      <Panel title="میله‌های روزانه" subtitle="انباشته دشمن / دولت در هر روز">
+        <StackedDailyBars
+          height={220}
+          points={model.trend.map((p) => ({
+            label: p.shortLabel,
+            enemy: p.enemy,
+            government: p.government,
+          }))}
+        />
+      </Panel>
 
       <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-4">
         <Panel title="سطح شدت" subtitle="توزیع severity">

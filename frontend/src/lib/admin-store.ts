@@ -16,6 +16,7 @@ const SEED_USERS: AdminUser[] = [
     role: "super_admin",
     is_active: true,
     created_at: new Date().toISOString(),
+    agencyIds: [],
     password: "password",
   },
   {
@@ -25,6 +26,17 @@ const SEED_USERS: AdminUser[] = [
     role: "editor",
     is_active: true,
     created_at: new Date().toISOString(),
+    agencyIds: ["agency-defense", "agency-mfa"],
+    password: "password",
+  },
+  {
+    id: "u-health",
+    name: "کارشناس بهداشت",
+    email: "health@taghvim.local",
+    role: "editor",
+    is_active: true,
+    created_at: new Date().toISOString(),
+    agencyIds: ["agency-health"],
     password: "password",
   },
   {
@@ -34,9 +46,20 @@ const SEED_USERS: AdminUser[] = [
     role: "viewer",
     is_active: true,
     created_at: new Date().toISOString(),
+    agencyIds: [],
     password: "password",
   },
 ];
+
+const USERS_VERSION_KEY = "taghvim_admin_users_version";
+const USERS_SEED_VERSION = "users-agencies-v1";
+
+function normalizeUser(user: AdminUser): AdminUser {
+  return {
+    ...user,
+    agencyIds: Array.isArray(user.agencyIds) ? user.agencyIds : [],
+  };
+}
 
 function canUseStorage() {
   return typeof window !== "undefined";
@@ -59,10 +82,20 @@ function writeJson(key: string, value: unknown) {
 }
 
 export function ensureSeedUsers(): AdminUser[] {
+  if (!canUseStorage()) return SEED_USERS.map(normalizeUser);
+
+  const version = localStorage.getItem(USERS_VERSION_KEY);
   const existing = readJson<AdminUser[] | null>(USERS_KEY, null);
-  if (existing && existing.length > 0) return existing;
-  writeJson(USERS_KEY, SEED_USERS);
-  return SEED_USERS;
+
+  if (version !== USERS_SEED_VERSION || !existing?.length) {
+    writeJson(USERS_KEY, SEED_USERS);
+    localStorage.setItem(USERS_VERSION_KEY, USERS_SEED_VERSION);
+    return SEED_USERS.map(normalizeUser);
+  }
+
+  const normalized = existing.map(normalizeUser);
+  writeJson(USERS_KEY, normalized);
+  return normalized;
 }
 
 export function listUsers(): AdminUser[] {
@@ -79,6 +112,7 @@ export function createUser(input: {
   role: AdminUser["role"];
   password: string;
   is_active?: boolean;
+  agencyIds?: string[];
 }): AdminUser {
   const users = ensureSeedUsers();
   if (users.some((u) => u.email.toLowerCase() === input.email.toLowerCase())) {
@@ -92,6 +126,7 @@ export function createUser(input: {
     role: input.role,
     is_active: input.is_active ?? true,
     created_at: new Date().toISOString(),
+    agencyIds: input.agencyIds ?? [],
     password: input.password,
   };
 
@@ -102,7 +137,9 @@ export function createUser(input: {
 
 export function updateUser(
   id: string,
-  patch: Partial<Pick<AdminUser, "name" | "email" | "role" | "is_active">> & {
+  patch: Partial<
+    Pick<AdminUser, "name" | "email" | "role" | "is_active" | "agencyIds">
+  > & {
     password?: string;
   },
 ): AdminUser {
@@ -119,7 +156,7 @@ export function updateUser(
     throw new Error("این ایمیل قبلاً ثبت شده است.");
   }
 
-  const next = { ...users[index]!, ...patch };
+  const next = normalizeUser({ ...users[index]!, ...patch });
   users[index] = next;
   writeJson(USERS_KEY, users);
   const { password: _p, ...safe } = next;

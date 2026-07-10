@@ -144,6 +144,12 @@ function matchesEvent(
   ) {
     return false;
   }
+  if (filters.agencyId !== "all") {
+    const matchesAgency =
+      event.agencyId === filters.agencyId ||
+      event.organization === filters.agencyId;
+    if (!matchesAgency) return false;
+  }
   if (
     filters.verificationStatus !== "all" &&
     event.verificationStatus !== filters.verificationStatus
@@ -177,6 +183,7 @@ function matchesEvent(
     event.summary,
     event.description,
     event.organization,
+    event.agencyName,
     event.source,
     event.category,
     event.location?.city,
@@ -192,6 +199,7 @@ function matchesEvent(
 
 export function buildFilterChips(
   filters: TimelineFiltersState,
+  agencyLabelById?: Record<string, string>,
 ): ActiveFilterChip[] {
   const chips: ActiveFilterChip[] = [];
 
@@ -219,6 +227,12 @@ export function buildFilterChips(
   }
   if (filters.organization !== "all") {
     chips.push({ key: "organization", label: filters.organization });
+  }
+  if (filters.agencyId !== "all") {
+    chips.push({
+      key: "agencyId",
+      label: `وزارتخانه: ${agencyLabelById?.[filters.agencyId] ?? filters.agencyId}`,
+    });
   }
   if (filters.verificationStatus !== "all") {
     chips.push({

@@ -41,19 +41,24 @@ export function TimelineDaySection({
     <section
       id={`day-${day.date}`}
       className={clsx(
-        "scroll-mt-36 rounded-2xl border bg-[var(--panel)] transition",
+        "rounded-2xl border bg-[var(--panel)] transition",
         isActive ? "border-[var(--primary)]/40" : "border-[var(--border)]",
         day.isCritical && "ring-1 ring-red-500/20",
       )}
+      style={{
+        scrollMarginTop:
+          "calc(var(--timeline-sticky-top, 4rem) + 0.75rem)",
+      }}
     >
       <button
         type="button"
         onClick={() => onToggle(day.date)}
-        className="sticky top-[148px] z-20 flex h-[38px] w-full items-center justify-between gap-3 rounded-t-2xl border-b border-[var(--border)] bg-[var(--panel)]/95 px-3 text-right backdrop-blur"
+        className="sticky z-20 flex h-[42px] w-full items-center justify-between gap-3 border-b border-[var(--border)] bg-[var(--panel)] px-3 text-right shadow-[0_8px_16px_-12px_rgba(0,0,0,0.45)]"
+        style={{ top: "var(--timeline-sticky-top, 4rem)" }}
         aria-expanded={!collapsed}
       >
-        <div className="flex flex-wrap items-center gap-2">
-          <h3 className="text-[18px] font-bold leading-[1.6] text-[var(--text-primary)]">
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
+          <h3 className="m-0 truncate text-[16px] font-bold leading-[1.4] text-[var(--text-primary)] sm:text-[18px]">
             {day.weekday}، {day.persianDate}
           </h3>
           <span className="rounded-[10px] border border-[var(--border)] bg-[var(--panel-2)] px-2.5 py-1 text-[11px] text-[var(--text-secondary)]">

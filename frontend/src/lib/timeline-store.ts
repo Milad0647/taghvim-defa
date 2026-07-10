@@ -1,4 +1,6 @@
+import type { TimelineDay, TimelineEvent } from "@/types/timeline";
 import {
+  buildDaysFromEvents,
   SEED_RANGE_END,
   SEED_RANGE_START,
   TIMELINE_SEED_VERSION,
@@ -8,7 +10,6 @@ import {
   defaultDashboardSettings,
   type DashboardSettings,
 } from "@/types/settings";
-import type { TimelineDay } from "@/types/timeline";
 
 const TIMELINE_KEY = "taghvim_timeline_days";
 const TIMELINE_CLEARED_KEY = "taghvim_timeline_cleared";
@@ -94,6 +95,18 @@ export function saveTimelineDays(days: TimelineDay[]) {
   if (canUseStorage() && days.length > 0) {
     localStorage.removeItem(TIMELINE_CLEARED_KEY);
   }
+}
+
+/** Insert or replace a single event and rebuild day aggregates. */
+export function upsertTimelineEvent(event: TimelineEvent): TimelineDay[] {
+  const days = loadTimelineDays();
+  const allEvents = days
+    .flatMap((d) => d.events)
+    .filter((e) => e.id !== event.id);
+  allEvents.push(event);
+  const next = buildDaysFromEvents(allEvents);
+  saveTimelineDays(next);
+  return next;
 }
 
 export function restoreConflictDemoData(): TimelineDay[] {

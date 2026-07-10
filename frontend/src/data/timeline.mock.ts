@@ -50,9 +50,30 @@ const IMG = {
 /** Inclusive seed window: 9 Esfand 1404 → today */
 export const SEED_RANGE_START = "2026-02-28";
 export const SEED_RANGE_END = "2026-07-10";
-export const TIMELINE_SEED_VERSION = "conflict-2026-esfand9-v1";
+export const TIMELINE_SEED_VERSION = "conflict-2026-agencies-v3";
 
-export const conflictSeedEvents: TimelineEvent[] = [
+const VIDEO = {
+  clipA:
+    "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+  clipB:
+    "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4",
+  clipC:
+    "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4",
+} as const;
+
+const VIDEO_CLIPS = [VIDEO.clipA, VIDEO.clipB, VIDEO.clipC] as const;
+const IMG_POOL = [
+  IMG.strike,
+  IMG.missile,
+  IMG.radar,
+  IMG.diplomacy,
+  IMG.base,
+  IMG.city,
+  IMG.sea,
+] as const;
+
+/** Landmark / reported milestones — kept verbatim, then densified per day */
+const landmarkConflictEvents: TimelineEvent[] = [
   eventBase({
     id: "e-20260228-opening-strike",
     eventType: "enemy",
@@ -634,6 +655,368 @@ export const conflictSeedEvents: TimelineEvent[] = [
     commentsCount: 2,
   }),
 ];
+
+const LOCATIONS = [
+  { province: "تهران", city: "تهران" },
+  { province: "اصفهان", city: "اصفهان" },
+  { province: "کرمانشاه", city: "قصرشیرین" },
+  { province: "ایلام", city: "مهران" },
+  { province: "بوشهر", city: "بوشهر" },
+  { province: "هرمزگان", city: "بندرعباس" },
+  { province: "خوزستان", city: "اهواز" },
+  { province: "آذربایجان غربی", city: "ارومیه" },
+  { province: "فارس", city: "شیراز" },
+  { province: "یزد", city: "یزد" },
+] as const;
+
+const ENEMY_TEMPLATES = [
+  {
+    title: "حمله پهپادی به تأسیسات پدافندی",
+    summary: "پهپادهای دشمن به نقاط پدافندی و راداری حمله کردند؛ خسارت محدود گزارش شد.",
+    category: "حمله پهپادی",
+    severity: "high" as const,
+    tags: ["پهپاد", "پدافند"],
+  },
+  {
+    title: "موج حملات سایبری به زیرساخت ارتباطی",
+    summary: "مراکز داده و شبکه‌های ارتباطی هدف نفوذ سایبری قرار گرفتند.",
+    category: "حملات سایبری",
+    severity: "medium" as const,
+    tags: ["سایبری", "زیرساخت"],
+  },
+  {
+    title: "حمله هوایی به پایگاه نظامی",
+    summary: "جنگنده‌ها و مهمات هدایت‌شونده پایگاه‌های نظامی را هدف گرفتند.",
+    category: "حمله هوایی",
+    severity: "critical" as const,
+    tags: ["هوایی", "پایگاه"],
+  },
+  {
+    title: "اقدام اطلاعاتی و خرابکاری میدانی",
+    summary: "عوامل دشمن در عملیات اطلاعاتی و خرابکاری محدود شناسایی شدند.",
+    category: "عملیات اطلاعاتی",
+    severity: "medium" as const,
+    tags: ["اطلاعاتی", "امنیت"],
+  },
+  {
+    title: "فشار تحریمی و تهدید انرژی",
+    summary: "تهدید جدید علیه صادرات انرژی و کشتیرانی اعلام شد.",
+    category: "تحریم و فشار",
+    severity: "low" as const,
+    tags: ["تحریم", "انرژی"],
+  },
+  {
+    title: "شلیک موشک به مناطق مرزی",
+    summary: "موشک‌های کوتاه‌برد به نقاط مرزی شلیک شد؛ پدافند بخشی را رهگیری کرد.",
+    category: "حمله موشکی",
+    severity: "high" as const,
+    tags: ["موشک", "مرز"],
+  },
+  {
+    title: "حمله به شناور و مسیر دریایی",
+    summary: "تنش دریایی در مسیرهای نزدیک هرمز و بنادر جنوبی گزارش شد.",
+    category: "عملیات دریایی دشمن",
+    severity: "high" as const,
+    tags: ["دریایی", "هرمز"],
+  },
+] as const;
+
+const GOV_TEMPLATES = [
+  {
+    title: "رهگیری و انهدام اهداف متخاصم توسط پدافند",
+    summary: "سامانه‌های پدافندی اهداف متخاصم را رهگیری و بخشی را منهدم کردند.",
+    category: "پدافند هوایی",
+    organization: "نیروی پدافند هوایی",
+    severity: "high" as const,
+    tags: ["پدافند", "رهگیری"],
+  },
+  {
+    title: "پاسخ موشکی و پهپادی محدود",
+    summary: "نیروهای مسلح با موج محدود موشک و پهپاد به تجاوز پاسخ دادند.",
+    category: "پاسخ موشکی",
+    organization: "نیروی هوافضای سپاه",
+    severity: "high" as const,
+    tags: ["پاسخ", "موشک"],
+  },
+  {
+    title: "تقویت امنیت سایبری و بازیابی سرویس‌ها",
+    summary: "مراکز سایبری نفوذ را مهار و سرویس‌های حیاتی را بازیابی کردند.",
+    category: "امنیت سایبری",
+    organization: "پلیس فتا / مراکز سایبری",
+    severity: "medium" as const,
+    tags: ["سایبری", "بازیابی"],
+  },
+  {
+    title: "بیانیه دیپلماتیک و رایزنی منطقه‌ای",
+    summary: "وزارت امور خارجه تجاوز را محکوم و رایزنی با شرکای منطقه‌ای را آغاز کرد.",
+    category: "دیپلماسی",
+    organization: "وزارت امور خارجه",
+    severity: "low" as const,
+    tags: ["دیپلماسی", "محکومیت"],
+  },
+  {
+    title: "آماده‌باش میدانی و استقرار یگان‌ها",
+    summary: "یگان‌های عملیاتی در مناطق حساس مستقر و آماده‌باش را تمدید کردند.",
+    category: "امنیت ملی",
+    organization: "ستاد کل نیروهای مسلح",
+    severity: "medium" as const,
+    tags: ["آماده‌باش", "استقرار"],
+  },
+  {
+    title: "رصد دریایی و اسکورت مسیرهای مصوب",
+    summary: "نیروی دریایی رصد تنگه و اسکورت مسیرهای مصوب کشتیرانی را ادامه داد.",
+    category: "عملیات دریایی",
+    organization: "نیروی دریایی",
+    severity: "medium" as const,
+    tags: ["دریایی", "اسکورت"],
+  },
+  {
+    title: "حمایت امدادی و اطلاع‌رسانی عمومی",
+    summary: "ستادهای امدادی به مناطق آسیب‌دیده اعزام و اطلاع‌رسانی عمومی انجام شد.",
+    category: "حمایت مردمی",
+    organization: "هلال احمر / ستاد بحران",
+    severity: "low" as const,
+    tags: ["امداد", "مردم"],
+  },
+] as const;
+
+const DAY_TIMES = ["06:20", "09:45", "13:10", "17:30", "21:15"] as const;
+const SOURCES = [
+  "رصد خبری دفاعی",
+  "AP / رصد میدانی",
+  "خبرگزاری داخلی",
+  "سخنگوی نیروهای مسلح",
+  "جمع‌بندی اتاق خبر",
+] as const;
+
+/** Keep IDs aligned with `agency-store` seed */
+const AGENCY_CATALOG = [
+  { id: "agency-health", name: "وزارت بهداشت، درمان و آموزش پزشکی", shortName: "بهداشت و درمان" },
+  { id: "agency-defense", name: "ستاد کل نیروهای مسلح / وزارت دفاع", shortName: "دفاع و نیروهای مسلح" },
+  { id: "agency-mfa", name: "وزارت امور خارجه", shortName: "امور خارجه" },
+  { id: "agency-oil", name: "وزارت نفت", shortName: "نفت و انرژی" },
+  { id: "agency-ict", name: "وزارت ارتباطات و فناوری اطلاعات", shortName: "ارتباطات و فناوری" },
+  { id: "agency-interior", name: "وزارت کشور", shortName: "کشور" },
+  { id: "agency-intel", name: "وزارت اطلاعات", shortName: "اطلاعات" },
+  { id: "agency-roads", name: "وزارت راه و شهرسازی", shortName: "راه و شهرسازی" },
+] as const;
+
+function resolveAgencyFromText(...parts: Array<string | undefined>) {
+  const hay = parts.filter(Boolean).join(" ").toLowerCase();
+  if (/بهداشت|درمان|امداد|هلال|بیمار/.test(hay)) return AGENCY_CATALOG[0];
+  if (/سایبر|ارتباط|فناوری|فتا|داده/.test(hay)) return AGENCY_CATALOG[4];
+  if (/نفت|انرژی|خارک|تحریم/.test(hay)) return AGENCY_CATALOG[3];
+  if (/دیپلماس|امور خارجه|مذاکره|آتش‌بس|توافق/.test(hay)) return AGENCY_CATALOG[2];
+  if (/اطلاعاتی|خرابکار/.test(hay)) return AGENCY_CATALOG[6];
+  if (/کشور|استان|بحران|مردم/.test(hay)) return AGENCY_CATALOG[5];
+  if (/بندر|راه|حمل|کشتیرانی|هرمز/.test(hay)) return AGENCY_CATALOG[7];
+  return AGENCY_CATALOG[1];
+}
+
+function withAgencyFields(
+  event: TimelineEvent,
+  agency = resolveAgencyFromText(
+    event.category,
+    event.organization,
+    event.title,
+    ...(event.tags ?? []),
+  ),
+): TimelineEvent {
+  return {
+    ...event,
+    agencyId: event.agencyId ?? agency.id,
+    agencyName: event.agencyName ?? agency.name,
+    organization: event.organization ?? agency.shortName,
+  };
+}
+
+function toLocalDateString(date: Date): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+function eachDateInclusive(start: string, end: string): string[] {
+  const out: string[] = [];
+  const cursor = new Date(`${start}T12:00:00`);
+  const last = new Date(`${end}T12:00:00`);
+  while (cursor <= last) {
+    out.push(toLocalDateString(cursor));
+    cursor.setDate(cursor.getDate() + 1);
+  }
+  return out;
+}
+
+function pick<T>(items: readonly T[], seed: number): T {
+  return items[((seed % items.length) + items.length) % items.length]!;
+}
+
+function buildMediaBundle(
+  id: string,
+  seed: number,
+  withVideo: boolean,
+): NonNullable<TimelineEvent["media"]> {
+  const imgA = pick(IMG_POOL, seed);
+  const imgB = pick(IMG_POOL, seed + 3);
+  const media: NonNullable<TimelineEvent["media"]> = [
+    {
+      id: `${id}-img1`,
+      type: "image",
+      url: imgA,
+      thumbnailUrl: imgA,
+      title: "تصویر میدانی",
+    },
+    {
+      id: `${id}-img2`,
+      type: "image",
+      url: imgB,
+      thumbnailUrl: imgB,
+      title: "تصویر تکمیلی",
+    },
+  ];
+
+  if (withVideo) {
+    const clip = pick(VIDEO_CLIPS, seed);
+    media.push({
+      id: `${id}-vid`,
+      type: "video",
+      url: clip,
+      thumbnailUrl: pick(IMG_POOL, seed + 5),
+      title: "فیلم گزارش میدانی",
+    });
+  }
+
+  return media;
+}
+
+function makeDailyEvent(
+  date: string,
+  dayIndex: number,
+  slot: number,
+  preferEnemy: boolean,
+): TimelineEvent {
+  const seed = dayIndex * 17 + slot * 9;
+  const isEnemy = preferEnemy ? slot % 2 === 0 : slot % 2 === 1;
+  const location = pick(LOCATIONS, seed);
+  const time = DAY_TIMES[Math.min(slot, DAY_TIMES.length - 1)]!;
+  const id = `${isEnemy ? "e" : "g"}-gen-${date.replaceAll("-", "")}-${slot + 1}`;
+
+  if (isEnemy) {
+    const tpl = pick(ENEMY_TEMPLATES, seed);
+    const media = buildMediaBundle(id, seed, slot === 1 || slot === 3);
+    const agency = resolveAgencyFromText(tpl.category, tpl.title, ...tpl.tags);
+    return withAgencyFields(
+      eventBase({
+        id,
+        eventType: "enemy",
+        title: tpl.title,
+        summary: tpl.summary,
+        description: `${tpl.summary} گزارش اتاق خبر برای ${date}.`,
+        impact: "افزایش تنش عملیاتی و نیاز به پاسخ پدافندی.",
+        date,
+        time,
+        severity: tpl.severity,
+        verificationStatus: "verified",
+        category: tpl.category,
+        location: { ...location },
+        source: pick(SOURCES, seed + 1),
+        imageUrl: media[0]!.url,
+        media,
+        tags: [...tpl.tags],
+        relatedEventIds: [],
+        relatedResponseIds: [],
+        commentsCount: 2 + (seed % 12),
+      }),
+      agency,
+    );
+  }
+
+  const tpl = pick(GOV_TEMPLATES, seed);
+  const media = buildMediaBundle(id, seed, slot === 2 || slot === 4);
+  const agency = resolveAgencyFromText(
+    tpl.category,
+    tpl.organization,
+    tpl.title,
+    ...tpl.tags,
+  );
+  return withAgencyFields(
+    eventBase({
+      id,
+      eventType: "government",
+      title: tpl.title,
+      summary: tpl.summary,
+      description: `${tpl.summary} اقدام ثبت‌شده در ${date}.`,
+      impact: "حفظ آماده‌باش و کاهش آسیب به زیرساخت حیاتی.",
+      date,
+      time,
+      severity: tpl.severity,
+      verificationStatus: "published",
+      actionStatus: slot % 3 === 0 ? "completed" : "in_progress",
+      category: tpl.category,
+      location: { ...location },
+      organization: tpl.organization,
+      source: pick(SOURCES, seed + 2),
+      imageUrl: media[0]!.url,
+      media,
+      tags: [...tpl.tags],
+      relatedEventIds: [],
+      relatedResponseIds: [],
+      responseTimeMinutes: 20 + (seed % 180),
+      commentsCount: 1 + (seed % 8),
+    }),
+    agency,
+  );
+}
+
+/** Ensure every day in the seed window has 4–5 news actions with media. */
+function densifyConflictEvents(
+  landmarks: TimelineEvent[],
+): TimelineEvent[] {
+  const byDate = new Map<string, TimelineEvent[]>();
+
+  for (const event of landmarks) {
+    const list = byDate.get(event.date) ?? [];
+    let enriched = withAgencyFields(event);
+    if (!enriched.imageUrl || !enriched.media?.length) {
+      const media = buildMediaBundle(
+        enriched.id,
+        enriched.date.length + list.length,
+        true,
+      );
+      enriched = {
+        ...enriched,
+        imageUrl: enriched.imageUrl ?? media[0]!.url,
+        media: enriched.media?.length ? enriched.media : media,
+      };
+    }
+    list.push(enriched);
+    byDate.set(event.date, list);
+  }
+
+  const dates = eachDateInclusive(SEED_RANGE_START, SEED_RANGE_END);
+  dates.forEach((date, dayIndex) => {
+    const existing = byDate.get(date) ?? [];
+    const target = 4 + (dayIndex % 2); // 4 or 5
+    let slot = 0;
+    while (existing.length < target) {
+      existing.push(makeDailyEvent(date, dayIndex, slot, dayIndex % 3 !== 0));
+      slot += 1;
+    }
+    byDate.set(date, existing);
+  });
+
+  return [...byDate.values()]
+    .flat()
+    .sort((a, b) =>
+      a.date === b.date
+        ? b.time.localeCompare(a.time)
+        : b.date.localeCompare(a.date),
+    );
+}
+
+export const conflictSeedEvents: TimelineEvent[] =
+  densifyConflictEvents(landmarkConflictEvents);
 
 export function buildDaysFromEvents(events: TimelineEvent[]): TimelineDay[] {
   const byDate = new Map<string, TimelineEvent[]>();

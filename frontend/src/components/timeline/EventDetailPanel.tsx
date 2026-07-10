@@ -23,7 +23,10 @@ export function EventDetailPanel({
   onOpenRelated,
 }: EventDetailPanelProps) {
   const panelRef = useRef<HTMLDivElement>(null);
-  const [lightbox, setLightbox] = useState<string | null>(null);
+  const [lightbox, setLightbox] = useState<{
+    url: string;
+    type: "image" | "video";
+  } | null>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -147,6 +150,10 @@ export function EventDetailPanel({
               }
             />
             <Meta label="نهاد" value={event.organization || "—"} />
+            <Meta
+              label="وزارتخانه"
+              value={event.agencyName || event.organization || "—"}
+            />
           </div>
 
           <section>
@@ -165,29 +172,58 @@ export function EventDetailPanel({
           {media.length > 0 ? (
             <section>
               <h4 className="mb-2 text-[13px] font-bold text-[var(--text-primary)]">
-                تصاویر و مدارک
+                تصاویر، فیلم و مدارک
               </h4>
               <div className="grid grid-cols-3 gap-2">
-                {media.slice(0, 3).map((item, idx) => (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={() => setLightbox(item.url)}
-                    className="relative overflow-hidden rounded-lg border border-[var(--border)]"
-                  >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={item.url}
-                      alt=""
-                      className="h-20 w-full object-cover"
-                    />
-                    {idx === 2 && media.length > 3 ? (
-                      <span className="absolute inset-0 flex items-center justify-center bg-black/55 text-sm font-bold text-white">
-                        +{(media.length - 3).toLocaleString("fa-IR")}
-                      </span>
-                    ) : null}
-                  </button>
-                ))}
+                {media.slice(0, 3).map((item, idx) => {
+                  const isVideo = item.type === "video";
+                  const thumb =
+                    item.thumbnailUrl ||
+                    (isVideo ? undefined : item.url) ||
+                    event.imageUrl ||
+                    "";
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() =>
+                        setLightbox({
+                          url: item.url,
+                          type: isVideo ? "video" : "image",
+                        })
+                      }
+                      className="relative overflow-hidden rounded-lg border border-[var(--border)]"
+                    >
+                      {isVideo ? (
+                        <video
+                          src={item.url}
+                          poster={thumb || undefined}
+                          muted
+                          playsInline
+                          preload="metadata"
+                          className="h-20 w-full object-cover"
+                        />
+                      ) : (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={thumb || item.url}
+                          alt=""
+                          className="h-20 w-full object-cover"
+                        />
+                      )}
+                      {isVideo ? (
+                        <span className="absolute inset-0 flex items-center justify-center bg-black/35 text-[10px] font-bold text-white">
+                          فیلم
+                        </span>
+                      ) : null}
+                      {idx === 2 && media.length > 3 ? (
+                        <span className="absolute inset-0 flex items-center justify-center bg-black/55 text-sm font-bold text-white">
+                          +{(media.length - 3).toLocaleString("fa-IR")}
+                        </span>
+                      ) : null}
+                    </button>
+                  );
+                })}
               </div>
             </section>
           ) : null}
@@ -279,15 +315,24 @@ export function EventDetailPanel({
           <button
             type="button"
             className="absolute inset-0"
-            aria-label="بستن تصویر"
+            aria-label="بستن رسانه"
             onClick={() => setLightbox(null)}
           />
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={lightbox}
-            alt=""
-            className="relative z-[71] max-h-[85vh] max-w-[90vw] rounded-xl object-contain"
-          />
+          {lightbox.type === "video" ? (
+            <video
+              src={lightbox.url}
+              controls
+              autoPlay
+              className="relative z-[71] max-h-[85vh] max-w-[90vw] rounded-xl bg-black"
+            />
+          ) : (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={lightbox.url}
+              alt=""
+              className="relative z-[71] max-h-[85vh] max-w-[90vw] rounded-xl object-contain"
+            />
+          )}
         </div>
       ) : null}
     </>

@@ -7,6 +7,9 @@ import { ViewSwitcher } from "@/components/timeline/ViewSwitcher";
 import type { TimelineViewMode } from "@/types/timeline";
 import { Bell, Filter, Search, UserRound } from "lucide-react";
 import Link from "next/link";
+import { useEffect, useRef, useState } from "react";
+import { getCurrentUser } from "@/lib/auth";
+import { ROLE_LABELS, type AdminUser } from "@/types/auth";
 
 type TimelineHeaderProps = {
   showViewSwitcher?: boolean;
@@ -40,9 +43,41 @@ export function TimelineHeader({
   showDateFilters = false,
 }: TimelineHeaderProps) {
   const showExtras = showViewSwitcher || showDateFilters;
+  const headerRef = useRef<HTMLElement>(null);
+  const [user, setUser] = useState<AdminUser | null>(null);
+
+  useEffect(() => {
+    setUser(getCurrentUser());
+  }, []);
+
+  useEffect(() => {
+    const el = headerRef.current;
+    if (!el) return;
+
+    const publishHeight = () => {
+      const height = Math.ceil(el.getBoundingClientRect().height);
+      document.documentElement.style.setProperty(
+        "--timeline-sticky-top",
+        `${height}px`,
+      );
+    };
+
+    publishHeight();
+    const observer = new ResizeObserver(publishHeight);
+    observer.observe(el);
+    window.addEventListener("resize", publishHeight);
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", publishHeight);
+    };
+  }, [showExtras]);
 
   return (
-    <header className="sticky top-0 z-30 space-y-2 bg-[var(--background)]/95 pb-1 backdrop-blur-md">
+    <header
+      ref={headerRef}
+      className="sticky top-0 z-30 space-y-2 bg-[var(--background)] pb-2"
+    >
       <div className="flex items-center gap-2 sm:gap-3">
         <MobileMenuButton onClick={onOpenMobileMenu} />
 
@@ -84,16 +119,25 @@ export function TimelineHeader({
           </span>
         </button>
 
-        <div className="hidden shrink-0 items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--panel)] px-2.5 py-1.5 md:flex">
+        <Link
+          href={user ? "/admin" : "/admin/login"}
+          className="inline-flex shrink-0 items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--panel)] px-2.5 py-1.5 transition hover:bg-[var(--hover)]"
+          aria-label={user ? "رفتن به داشبورد" : "ورود به داشبورد"}
+          title={user ? "داشبورد" : "ورود"}
+        >
           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 text-xs font-bold text-white">
-            ع
+            {user?.name?.trim().charAt(0) || "ک"}
           </div>
-          <div className="hidden text-xs lg:block">
-            <p className="font-semibold text-[var(--text-primary)]">علی رضایی</p>
-            <p className="text-[var(--text-secondary)]">مدیر</p>
+          <div className="hidden text-xs sm:block">
+            <p className="font-semibold text-[var(--text-primary)]">
+              {user?.name ?? "ورود"}
+            </p>
+            <p className="text-[var(--text-secondary)]">
+              {user ? ROLE_LABELS[user.role] : "داشبورد"}
+            </p>
           </div>
-          <UserRound className="hidden h-3.5 w-3.5 text-[var(--text-muted)] xl:block" />
-        </div>
+          <UserRound className="hidden h-3.5 w-3.5 text-[var(--text-muted)] lg:block" />
+        </Link>
       </div>
 
       {showExtras ? (

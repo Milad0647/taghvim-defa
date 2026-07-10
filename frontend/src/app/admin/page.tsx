@@ -102,7 +102,19 @@ function AdminHomeContent() {
           >
             <h3 className="font-semibold text-[var(--text-primary)]">کاربران و دسترسی‌ها</h3>
             <p className="mt-2 text-sm text-[var(--text-secondary)]">
-              ساخت کاربر جدید، تغییر نقش، فعال/غیرفعال کردن حساب
+              ساخت کاربر جدید، تخصیص وزارتخانه، تغییر نقش
+            </p>
+          </Link>
+        ) : null}
+
+        {canUsers ? (
+          <Link
+            href="/admin/agencies"
+            className="rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-5 transition hover:border-blue-500/30"
+          >
+            <h3 className="font-semibold text-[var(--text-primary)]">وزارتخانه‌ها</h3>
+            <p className="mt-2 text-sm text-[var(--text-secondary)]">
+              تعریف بخش‌های دولت مثل بهداشت، دفاع، امور خارجه برای ثبت داده جداگانه
             </p>
           </Link>
         ) : null}

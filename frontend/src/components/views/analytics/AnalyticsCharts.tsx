@@ -112,10 +112,11 @@ export function AreaTrendChart({
         ))}
       </div>
 
-      <div className="relative w-full overflow-hidden">
+      <div className="relative w-full overflow-hidden rounded-xl bg-[var(--panel-2)]/35 p-2 sm:p-3">
         <svg
           viewBox={`0 0 ${w} ${h}`}
           className="h-auto w-full"
+          style={{ minHeight: Math.max(200, Math.round(height * 0.9)) }}
           role="img"
           aria-label="نمودار روند"
           onMouseLeave={() => setHover(null)}
@@ -340,9 +341,13 @@ type StackedDailyBarsProps = {
     enemy: number;
     government: number;
   }[];
+  height?: number;
 };
 
-export function StackedDailyBars({ points }: StackedDailyBarsProps) {
+export function StackedDailyBars({
+  points,
+  height = 176,
+}: StackedDailyBarsProps) {
   const max = Math.max(
     1,
     ...points.map((p) => p.enemy + p.government),
@@ -360,7 +365,10 @@ export function StackedDailyBars({ points }: StackedDailyBarsProps) {
           دولت
         </span>
       </div>
-      <div className="flex h-44 items-end gap-1 overflow-x-auto pb-1">
+      <div
+        className="flex items-end gap-1 overflow-x-auto pb-1"
+        style={{ height }}
+      >
         {points.map((p) => {
           const total = p.enemy + p.government;
           const h = Math.max(6, (total / max) * 100);

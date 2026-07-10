@@ -31,6 +31,11 @@ export async function loginRequest(
         role: rawUser.role,
         is_active: rawUser.is_active ?? true,
         created_at: rawUser.created_at ?? new Date().toISOString(),
+        agencyIds: Array.isArray(rawUser.agencyIds)
+          ? rawUser.agencyIds.map(String)
+          : Array.isArray(rawUser.agency_ids)
+            ? rawUser.agency_ids.map(String)
+            : [],
       };
       setSession(payload.token, user);
       return { token: payload.token, user };

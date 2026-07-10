@@ -52,6 +52,9 @@ export type TimelineEvent = {
     city?: string;
   };
   organization?: string;
+  /** Owning / responsible government agency (ministry) */
+  agencyId?: string;
+  agencyName?: string;
   source?: string;
   imageUrl?: string;
   media?: TimelineMedia[];
@@ -84,6 +87,8 @@ export type TimelineFiltersState = {
   province: string | "all";
   city: string | "all";
   organization: string | "all";
+  /** Filter by government agency / ministry across the whole site */
+  agencyId: string | "all";
   verificationStatus: VerificationStatus | "all";
   hasResponse: "all" | "yes" | "no";
   hasImage: boolean;
@@ -105,6 +110,7 @@ export const defaultFilters: TimelineFiltersState = {
   province: "all",
   city: "all",
   organization: "all",
+  agencyId: "all",
   verificationStatus: "all",
   hasResponse: "all",
   hasImage: false,

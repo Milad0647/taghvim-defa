@@ -7,6 +7,8 @@ export type AdminUser = {
   role: UserRole;
   is_active: boolean;
   created_at: string;
+  /** Assigned government agencies/ministries this user can fill data for */
+  agencyIds: string[];
   /** Only used when creating/updating locally; never returned from API */
   password?: string;
 };
@@ -28,6 +30,7 @@ export const ROLE_PERMISSIONS: Record<
   {
     manageUsers: boolean;
     manageSettings: boolean;
+    manageAgencies: boolean;
     manageContent: boolean;
     publish: boolean;
     viewDashboard: boolean;
@@ -36,6 +39,7 @@ export const ROLE_PERMISSIONS: Record<
   super_admin: {
     manageUsers: true,
     manageSettings: true,
+    manageAgencies: true,
     manageContent: true,
     publish: true,
     viewDashboard: true,
@@ -43,6 +47,7 @@ export const ROLE_PERMISSIONS: Record<
   editor: {
     manageUsers: false,
     manageSettings: false,
+    manageAgencies: false,
     manageContent: true,
     publish: true,
     viewDashboard: true,
@@ -50,6 +55,7 @@ export const ROLE_PERMISSIONS: Record<
   reviewer: {
     manageUsers: false,
     manageSettings: false,
+    manageAgencies: false,
     manageContent: false,
     publish: false,
     viewDashboard: true,
@@ -57,6 +63,7 @@ export const ROLE_PERMISSIONS: Record<
   viewer: {
     manageUsers: false,
     manageSettings: false,
+    manageAgencies: false,
     manageContent: false,
     publish: false,
     viewDashboard: true,

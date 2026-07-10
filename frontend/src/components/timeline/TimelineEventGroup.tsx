@@ -52,7 +52,7 @@ export function TimelineEventGroup({
         >
           {title}
         </h4>
-        <span className="rounded-md bg-white/5 px-1.5 py-0.5 text-[11px] text-slate-400">
+        <span className="rounded-md bg-[var(--hover)] px-1.5 py-0.5 text-[11px] text-[var(--text-secondary)]">
           {events.length.toLocaleString("fa-IR")}
         </span>
       </div>
@@ -88,7 +88,7 @@ export function TimelineEventGroup({
         })}
         {events.length === 0 ? (
           <p
-            className="text-xs text-slate-500"
+            className="text-xs text-[var(--text-muted)]"
             style={{ paddingRight: railPad }}
           >
             موردی در این بخش نیست.

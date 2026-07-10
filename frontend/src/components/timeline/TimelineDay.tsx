@@ -80,7 +80,7 @@ export function TimelineDaySection({
         </div>
         <ChevronDown
           className={clsx(
-            "h-5 w-5 shrink-0 text-slate-400 transition",
+            "h-5 w-5 shrink-0 text-[var(--text-secondary)] transition",
             !collapsed && "rotate-180",
           )}
         />

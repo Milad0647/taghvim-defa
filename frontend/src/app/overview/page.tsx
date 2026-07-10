@@ -33,14 +33,14 @@ function OverviewContent() {
       <main className="mx-auto w-full max-w-6xl flex-1 space-y-5">
         <div className="flex items-center justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold text-white">نمای کلی</h1>
-            <p className="mt-1 text-sm text-slate-400">
+            <h1 className="text-2xl font-bold text-[var(--text-primary)]">نمای کلی</h1>
+            <p className="mt-1 text-sm text-[var(--text-secondary)]">
               خلاصه وضعیت رخدادها در یک نگاه
             </p>
           </div>
           <Link
             href="/timeline"
-            className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white"
+            className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-[var(--text-primary)]"
           >
             رفتن به خط زمانی
           </Link>
@@ -69,7 +69,7 @@ function OverviewContent() {
 
 export default function OverviewPage() {
   return (
-    <Suspense fallback={<div className="p-6 text-slate-300">در حال بارگذاری...</div>}>
+    <Suspense fallback={<div className="p-6 text-[var(--text-secondary)]">در حال بارگذاری...</div>}>
       <OverviewContent />
     </Suspense>
   );

@@ -54,7 +54,7 @@ export function AnalyticsView({ days }: AnalyticsViewProps) {
       </div>
 
       <section className="rounded-[16px] border border-[var(--border)] bg-[var(--surface-2)] p-4">
-        <h3 className="mb-3 text-sm font-semibold text-white">روند روزانه</h3>
+        <h3 className="mb-3 text-sm font-semibold text-[var(--text-primary)]">روند روزانه</h3>
         <div className="flex h-40 items-end gap-1 overflow-x-auto">
           {[...days].reverse().map((day) => (
             <div key={day.date} className="flex min-w-[10px] flex-1 flex-col items-center">
@@ -84,7 +84,7 @@ function Stat({ title, value }: { title: string; value: string }) {
   return (
     <div className="rounded-[16px] border border-[var(--border)] bg-[var(--surface-2)] p-4">
       <p className="text-xs text-[var(--text-secondary)]">{title}</p>
-      <p className="mt-2 text-2xl font-bold text-white">{value}</p>
+      <p className="mt-2 text-2xl font-bold text-[var(--text-primary)]">{value}</p>
     </div>
   );
 }
@@ -92,12 +92,12 @@ function Stat({ title, value }: { title: string; value: string }) {
 function Rank({ title, rows }: { title: string; rows: [string, number][] }) {
   return (
     <div className="rounded-[16px] border border-[var(--border)] bg-[var(--surface-2)] p-4">
-      <h4 className="mb-3 text-sm font-semibold text-white">{title}</h4>
+      <h4 className="mb-3 text-sm font-semibold text-[var(--text-primary)]">{title}</h4>
       <div className="space-y-2">
         {rows.map(([name, count]) => (
           <div key={name} className="flex items-center justify-between text-sm">
-            <span className="text-slate-300">{name}</span>
-            <span className="text-slate-400">{count.toLocaleString("fa-IR")}</span>
+            <span className="text-[var(--text-secondary)]">{name}</span>
+            <span className="text-[var(--text-secondary)]">{count.toLocaleString("fa-IR")}</span>
           </div>
         ))}
       </div>

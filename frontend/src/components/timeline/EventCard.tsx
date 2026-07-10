@@ -71,29 +71,27 @@ export function EventCard({
       style={{
         direction: "ltr",
         background: isEnemy
-          ? "linear-gradient(90deg, rgba(46, 16, 27, 0.92) 0%, rgba(37, 15, 28, 0.92) 55%, rgba(28, 17, 29, 0.92) 100%)"
-          : "linear-gradient(90deg, rgba(13, 36, 67, 0.95) 0%, rgba(12, 31, 58, 0.95) 55%, rgba(10, 25, 47, 0.95) 100%)",
+          ? "var(--event-enemy-bg)"
+          : "var(--event-gov-bg)",
         border: selected
           ? isEnemy
-            ? "1px solid rgba(255, 90, 98, 0.85)"
-            : "1px solid rgba(85, 161, 255, 0.85)"
+            ? "1px solid var(--enemy-border)"
+            : "1px solid var(--government-border)"
           : isEnemy
-            ? "1px solid rgba(210, 48, 59, 0.58)"
-            : "1px solid rgba(46, 116, 210, 0.62)",
+            ? "1px solid var(--enemy-border)"
+            : "1px solid var(--government-border)",
         boxShadow: selected
           ? isEnemy
-            ? "0 0 18px rgba(239, 68, 68, 0.22), inset 0 0 24px rgba(185, 28, 47, 0.05)"
+            ? "0 0 18px rgba(239, 68, 68, 0.22)"
             : "0 0 18px rgba(59, 130, 246, 0.22)"
-          : isEnemy
-            ? "inset 0 0 24px rgba(185, 28, 47, 0.05)"
-            : "none",
+          : "none",
       }}
     >
       <div
         className="grid h-full items-stretch gap-2.5"
         style={{ gridTemplateColumns: "190px minmax(0, 1fr)" }}
       >
-        <div className="relative h-[96px] w-[190px] shrink-0 self-center overflow-hidden rounded-[9px] bg-[#0D1A30]">
+        <div className="relative h-[96px] w-[190px] shrink-0 self-center overflow-hidden rounded-[9px] bg-[var(--panel-2)]">
           {event.imageUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -103,7 +101,7 @@ export function EventCard({
               className="h-full w-full object-cover"
             />
           ) : (
-            <div className="flex h-full items-center justify-center text-slate-600">
+            <div className="flex h-full items-center justify-center text-[var(--text-muted)]">
               <FileImage className="h-5 w-5" />
             </div>
           )}
@@ -124,8 +122,8 @@ export function EventCard({
             className="pointer-events-none absolute inset-0 rounded-[9px]"
             style={{
               border: isEnemy
-                ? "1px solid rgba(239, 68, 68, 0.58)"
-                : "1px solid rgba(59, 130, 246, 0.45)",
+                ? "1px solid var(--enemy-border)"
+                : "1px solid var(--government-border)",
             }}
           />
         </div>
@@ -136,22 +134,20 @@ export function EventCard({
         >
           <div className="mb-[7px] flex items-start justify-between gap-2">
             <h3
-              className="min-w-0 flex-1 text-[15px] font-bold leading-snug"
-              style={{ color: "#F5F2F4" }}
+              className="min-w-0 flex-1 text-[15px] font-bold leading-snug text-[var(--event-card-title)]"
               dangerouslySetInnerHTML={{
                 __html: highlightText(event.title, searchQuery),
               }}
             />
             <span
               className="shrink-0 pt-0.5 text-[12px] tabular-nums"
-              style={{ color: isEnemy ? "#FF6166" : "#55A1FF" }}
+              style={{ color: isEnemy ? "var(--enemy)" : "var(--government)" }}
             >
               {event.time}
             </span>
           </div>
           <p
-            className="line-clamp-2 text-[11px] leading-[1.85]"
-            style={{ color: "#BEB4BA" }}
+            className="line-clamp-2 text-[11px] leading-[1.85] text-[var(--event-card-body)]"
             dangerouslySetInnerHTML={{
               __html: highlightText(event.summary, searchQuery),
             }}
@@ -165,9 +161,9 @@ export function EventCard({
                   style={{
                     background: "transparent",
                     border: isEnemy
-                      ? "1px solid rgba(229, 53, 65, 0.55)"
-                      : "1px solid rgba(47, 124, 228, 0.65)",
-                    color: isEnemy ? "#FF5961" : "#55A1FF",
+                      ? "1px solid var(--enemy-border)"
+                      : "1px solid var(--government-border)",
+                    color: isEnemy ? "var(--enemy)" : "var(--government)",
                   }}
                 >
                   {tag}

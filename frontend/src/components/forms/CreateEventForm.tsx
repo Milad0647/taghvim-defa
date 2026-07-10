@@ -78,7 +78,7 @@ export function CreateEventForm({ open, onClose }: CreateEventFormProps) {
       >
         <div className="mb-4 flex items-center justify-between">
           <div>
-            <h3 className="text-lg font-bold text-white">ثبت رویداد جدید</h3>
+            <h3 className="text-lg font-bold text-[var(--text-primary)]">ثبت رویداد جدید</h3>
             <p className="text-xs text-[var(--text-secondary)]">
               مرحله {(step + 1).toLocaleString("fa-IR")} از{" "}
               {STEPS.length.toLocaleString("fa-IR")}: {STEPS[step]}
@@ -87,7 +87,7 @@ export function CreateEventForm({ open, onClose }: CreateEventFormProps) {
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg p-2 hover:bg-white/5"
+            className="rounded-lg p-2 hover:bg-[var(--hover)]"
             aria-label="بستن"
           >
             <X className="h-4 w-4" />
@@ -199,33 +199,33 @@ export function CreateEventForm({ open, onClose }: CreateEventFormProps) {
                 value={draft.tags}
                 onChange={(v) => setDraft((d) => ({ ...d, tags: v }))}
               />
-              <p className="rounded-xl border border-dashed border-[var(--border)] p-4 text-xs text-slate-400">
+              <p className="rounded-xl border border-dashed border-[var(--border)] p-4 text-xs text-[var(--text-secondary)]">
                 آپلود تصویر / ویدئو / سند در اتصال به API فعال می‌شود.
               </p>
             </>
           ) : null}
 
           {step === 3 ? (
-            <p className="rounded-xl border border-[var(--border)] bg-[var(--surface-3)] p-4 text-sm text-slate-300">
+            <p className="rounded-xl border border-[var(--border)] bg-[var(--surface-3)] p-4 text-sm text-[var(--text-secondary)]">
               می‌توانید پس از ثبت، رخداد را به پاسخ‌های مرتبط یا رخدادهای دیگر
               متصل کنید.
             </p>
           ) : null}
 
           {step === 4 ? (
-            <div className="space-y-2 rounded-xl border border-[var(--border)] bg-[var(--surface-3)] p-4 text-sm text-slate-300">
+            <div className="space-y-2 rounded-xl border border-[var(--border)] bg-[var(--surface-3)] p-4 text-sm text-[var(--text-secondary)]">
               <p>
-                <strong className="text-white">عنوان:</strong> {draft.title || "—"}
+                <strong className="text-[var(--text-primary)]">عنوان:</strong> {draft.title || "—"}
               </p>
               <p>
-                <strong className="text-white">نوع:</strong>{" "}
+                <strong className="text-[var(--text-primary)]">نوع:</strong>{" "}
                 {draft.eventType === "enemy" ? "دشمن" : "دولت"}
               </p>
               <p>
-                <strong className="text-white">زمان:</strong> {draft.date} {draft.time}
+                <strong className="text-[var(--text-primary)]">زمان:</strong> {draft.date} {draft.time}
               </p>
               <p>
-                <strong className="text-white">مکان:</strong> {draft.city} {draft.province}
+                <strong className="text-[var(--text-primary)]">مکان:</strong> {draft.city} {draft.province}
               </p>
               <p className="text-xs text-emerald-300">پیش‌نویس به‌صورت خودکار ذخیره شد.</p>
             </div>
@@ -246,7 +246,7 @@ export function CreateEventForm({ open, onClose }: CreateEventFormProps) {
             <button
               type="button"
               onClick={() => setStep((s) => s + 1)}
-              className="rounded-xl bg-[var(--purple)] px-4 py-2 text-sm font-semibold text-white"
+              className="rounded-xl bg-[var(--purple)] px-4 py-2 text-sm font-semibold text-[var(--text-primary)]"
             >
               بعدی
             </button>
@@ -257,7 +257,7 @@ export function CreateEventForm({ open, onClose }: CreateEventFormProps) {
                 localStorage.removeItem("taghvim_event_draft");
                 onClose();
               }}
-              className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white"
+              className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-[var(--text-primary)]"
             >
               انتشار / ثبت
             </button>
@@ -281,7 +281,7 @@ function Field({
 }) {
   return (
     <label className="block space-y-1.5">
-      <span className="text-xs text-slate-400">{label}</span>
+      <span className="text-xs text-[var(--text-secondary)]">{label}</span>
       <input
         type={type}
         value={value}
@@ -303,7 +303,7 @@ function TextArea({
 }) {
   return (
     <label className="block space-y-1.5">
-      <span className="text-xs text-slate-400">{label}</span>
+      <span className="text-xs text-[var(--text-secondary)]">{label}</span>
       <textarea
         value={value}
         onChange={(e) => onChange(e.target.value)}
@@ -327,7 +327,7 @@ function Select({
 }) {
   return (
     <label className="block space-y-1.5">
-      <span className="text-xs text-slate-400">{label}</span>
+      <span className="text-xs text-[var(--text-secondary)]">{label}</span>
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}

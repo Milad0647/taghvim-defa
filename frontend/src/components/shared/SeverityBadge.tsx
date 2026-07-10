@@ -36,7 +36,7 @@ export function StatusBadge({
   };
 
   return (
-    <span className="rounded-md bg-white/5 px-2 py-0.5 text-[10px] text-slate-300">
+    <span className="rounded-md bg-[var(--hover)] px-2 py-0.5 text-[10px] text-[var(--text-secondary)]">
       {map[status] || verificationLabel(status as VerificationStatus)}
     </span>
   );

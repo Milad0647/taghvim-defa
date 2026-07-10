@@ -25,10 +25,10 @@ export function ActivityHistogram({
   const visible = days.slice(0, 18);
 
   return (
-    <section className="rounded-2xl border border-[var(--border)] bg-[#0A1428] p-4">
+    <section className="rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-4">
       <div className="mb-3 flex items-center justify-between gap-3">
-        <h3 className="text-sm font-semibold text-white">شدت رویدادها</h3>
-        <div className="flex items-center gap-3 text-[10px] text-slate-400">
+        <h3 className="text-sm font-semibold text-[var(--text-primary)]">شدت رویدادها</h3>
+        <div className="flex items-center gap-3 text-[10px] text-[var(--text-secondary)]">
           <span className="inline-flex items-center gap-1">
             <i className="h-2 w-2 rounded-sm bg-blue-500" /> کم
           </span>
@@ -76,18 +76,18 @@ export function ActivityHistogram({
                   aria-label={`روز ${day.persianDate}`}
                 >
                   {(isHovered || isActive) && (
-                    <div className="absolute bottom-[calc(100%+10px)] z-10 w-40 rounded-xl border border-[var(--border)] bg-[#07101F] p-2 text-right text-[11px] shadow-xl">
-                      <p className="font-semibold text-white">{day.persianDate}</p>
-                      <p className="mt-1 text-slate-300">
+                    <div className="absolute bottom-[calc(100%+10px)] z-10 w-40 rounded-xl border border-[var(--border)] bg-[var(--surface-1)] p-2 text-right text-[11px] shadow-xl">
+                      <p className="font-semibold text-[var(--text-primary)]">{day.persianDate}</p>
+                      <p className="mt-1 text-[var(--text-secondary)]">
                         {day.totalEvents.toLocaleString("fa-IR")} رویداد
                       </p>
-                      <p className="text-red-300">
+                      <p className="text-[var(--enemy)]">
                         {day.enemyActionsCount.toLocaleString("fa-IR")} اقدام دشمن
                       </p>
-                      <p className="text-blue-300">
+                      <p className="text-[var(--government)]">
                         {day.governmentActionsCount.toLocaleString("fa-IR")} اقدام دولت
                       </p>
-                      <p className="text-slate-400">
+                      <p className="text-[var(--text-muted)]">
                         شدت: {intensityLabel(day.intensity)}
                       </p>
                     </div>
@@ -110,7 +110,7 @@ export function ActivityHistogram({
                       "mt-2 max-w-[52px] truncate rounded-full px-1.5 py-0.5 text-[9px]",
                       isActive
                         ? "bg-blue-600 text-white"
-                        : "text-slate-500",
+                        : "text-[var(--text-muted)]",
                     )}
                   >
                     {shortDate}

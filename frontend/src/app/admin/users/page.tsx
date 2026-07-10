@@ -38,8 +38,8 @@ function UsersManager() {
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="text-xl font-bold text-white">کاربران و دسترسی‌ها</h2>
-          <p className="mt-1 text-sm text-slate-400">
+          <h2 className="text-xl font-bold text-[var(--text-primary)]">کاربران و دسترسی‌ها</h2>
+          <p className="mt-1 text-sm text-[var(--text-secondary)]">
             نقش هر کاربر سطح دسترسی او را مشخص می‌کند.
           </p>
         </div>
@@ -49,16 +49,16 @@ function UsersManager() {
             setCreating(true);
             setEditing(null);
           }}
-          className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500"
+          className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-[var(--text-primary)] hover:bg-blue-500"
         >
           <UserPlus className="h-4 w-4" />
           کاربر جدید
         </button>
       </div>
 
-      <div className="overflow-x-auto rounded-2xl border border-[var(--border)] bg-[#0A1428]">
+      <div className="overflow-x-auto rounded-2xl border border-[var(--border)] bg-[var(--panel)]">
         <table className="min-w-full text-sm">
-          <thead className="border-b border-[var(--border)] text-slate-400">
+          <thead className="border-b border-[var(--border)] text-[var(--text-secondary)]">
             <tr>
               <th className="px-4 py-3 text-right font-medium">نام</th>
               <th className="px-4 py-3 text-right font-medium">ایمیل</th>
@@ -73,8 +73,8 @@ function UsersManager() {
               const perms = ROLE_PERMISSIONS[user.role];
               return (
                 <tr key={user.id} className="border-b border-[var(--border)]">
-                  <td className="px-4 py-3 text-white">{user.name}</td>
-                  <td className="px-4 py-3 text-slate-300">{user.email}</td>
+                  <td className="px-4 py-3 text-[var(--text-primary)]">{user.name}</td>
+                  <td className="px-4 py-3 text-[var(--text-secondary)]">{user.email}</td>
                   <td className="px-4 py-3 text-blue-300">
                     {ROLE_LABELS[user.role]}
                   </td>
@@ -83,13 +83,13 @@ function UsersManager() {
                       className={
                         user.is_active
                           ? "rounded-md bg-emerald-500/15 px-2 py-0.5 text-xs text-emerald-300"
-                          : "rounded-md bg-slate-500/20 px-2 py-0.5 text-xs text-slate-400"
+                          : "rounded-md bg-slate-500/20 px-2 py-0.5 text-xs text-[var(--text-secondary)]"
                       }
                     >
                       {user.is_active ? "فعال" : "غیرفعال"}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-[11px] text-slate-400">
+                  <td className="px-4 py-3 text-[11px] text-[var(--text-secondary)]">
                     {[
                       perms.manageUsers ? "کاربران" : null,
                       perms.manageSettings ? "تنظیمات" : null,
@@ -107,7 +107,7 @@ function UsersManager() {
                           setEditing(user);
                           setCreating(false);
                         }}
-                        className="rounded-lg border border-[var(--border)] p-2 text-slate-300 hover:bg-white/5"
+                        className="rounded-lg border border-[var(--border)] p-2 text-[var(--text-secondary)] hover:bg-[var(--hover)]"
                         aria-label="ویرایش"
                       >
                         <Pencil className="h-3.5 w-3.5" />
@@ -215,8 +215,8 @@ function UserFormModal({
         aria-label="بستن"
         onClick={onClose}
       />
-      <div className="absolute inset-x-4 top-1/2 mx-auto max-w-lg -translate-y-1/2 rounded-2xl border border-[var(--border)] bg-[#0A1428] p-5">
-        <h3 className="mb-4 text-lg font-bold text-white">{title}</h3>
+      <div className="absolute inset-x-4 top-1/2 mx-auto max-w-lg -translate-y-1/2 rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-5">
+        <h3 className="mb-4 text-lg font-bold text-[var(--text-primary)]">{title}</h3>
         <form onSubmit={onSubmit} className="space-y-3 text-sm">
           <Field label="نام" value={name} onChange={setName} required />
           <Field
@@ -227,11 +227,11 @@ function UserFormModal({
             required
           />
           <label className="block space-y-1.5">
-            <span className="text-slate-400">نقش / دسترسی</span>
+            <span className="text-[var(--text-secondary)]">نقش / دسترسی</span>
             <select
               value={role}
               onChange={(e) => setRole(e.target.value as UserRole)}
-              className="w-full rounded-xl border border-[var(--border)] bg-[#0D1A30] px-3 py-2"
+              className="w-full rounded-xl border border-[var(--border)] bg-[var(--panel-2)] px-3 py-2"
             >
               {ROLES.map((r) => (
                 <option key={r} value={r}>
@@ -247,7 +247,7 @@ function UserFormModal({
             type="password"
             required={!initial}
           />
-          <label className="flex items-center gap-2 text-slate-300">
+          <label className="flex items-center gap-2 text-[var(--text-secondary)]">
             <input
               type="checkbox"
               checked={isActive}
@@ -258,7 +258,7 @@ function UserFormModal({
           <div className="flex gap-2 pt-2">
             <button
               type="submit"
-              className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 font-semibold text-white"
+              className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 font-semibold text-[var(--text-primary)]"
             >
               <Plus className="h-4 w-4" />
               ذخیره
@@ -292,13 +292,13 @@ function Field({
 }) {
   return (
     <label className="block space-y-1.5">
-      <span className="text-slate-400">{label}</span>
+      <span className="text-[var(--text-secondary)]">{label}</span>
       <input
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         required={required}
-        className="w-full rounded-xl border border-[var(--border)] bg-[#0D1A30] px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+        className="w-full rounded-xl border border-[var(--border)] bg-[var(--panel-2)] px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
       />
     </label>
   );
@@ -316,11 +316,11 @@ function PermissionsGuide() {
   );
 
   return (
-    <section className="rounded-2xl border border-[var(--border)] bg-[#0A1428] p-4">
-      <h3 className="mb-3 text-sm font-semibold text-white">راهنمای نقش‌ها</h3>
+    <section className="rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-4">
+      <h3 className="mb-3 text-sm font-semibold text-[var(--text-primary)]">راهنمای نقش‌ها</h3>
       <div className="overflow-x-auto">
-        <table className="min-w-full text-xs text-slate-300">
-          <thead className="text-slate-500">
+        <table className="min-w-full text-xs text-[var(--text-secondary)]">
+          <thead className="text-[var(--text-muted)]">
             <tr>
               <th className="px-2 py-2 text-right">نقش</th>
               <th className="px-2 py-2 text-right">کاربران</th>

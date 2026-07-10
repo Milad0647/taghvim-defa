@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { Vazirmatn } from "next/font/google";
+import { ThemeProvider } from "@/components/theme/ThemeProvider";
+import { THEME_STORAGE_KEY } from "@/lib/theme";
 import "./globals.css";
 
 const vazir = Vazirmatn({
@@ -14,14 +16,39 @@ export const metadata: Metadata = {
     "داشبورد RTL گزارش زنده اقدامات دشمن و پاسخ‌های دولت",
 };
 
+const themeBootScript = `
+(function(){
+  try {
+    var key = ${JSON.stringify(THEME_STORAGE_KEY)};
+    var stored = localStorage.getItem(key);
+    var theme = stored === "light" || stored === "dark" ? stored : "dark";
+    document.documentElement.setAttribute("data-theme", theme);
+    document.documentElement.style.colorScheme = theme;
+  } catch (e) {
+    document.documentElement.setAttribute("data-theme", "dark");
+  }
+})();
+`;
+
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="fa" dir="rtl" className={`${vazir.variable} h-full antialiased`}>
-      <body className="min-h-full font-sans text-slate-100">{children}</body>
+    <html
+      lang="fa"
+      dir="rtl"
+      data-theme="dark"
+      className={`${vazir.variable} h-full antialiased`}
+      suppressHydrationWarning
+    >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeBootScript }} />
+      </head>
+      <body className="min-h-full bg-[var(--background)] font-sans text-[var(--text-primary)]">
+        <ThemeProvider>{children}</ThemeProvider>
+      </body>
     </html>
   );
 }

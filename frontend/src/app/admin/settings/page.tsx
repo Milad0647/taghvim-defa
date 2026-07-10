@@ -33,30 +33,30 @@ function SettingsForm() {
   return (
     <div className="space-y-4">
       <div>
-        <h2 className="text-xl font-bold text-white">تنظیمات داشبورد</h2>
-        <p className="mt-1 text-sm text-slate-400">
+        <h2 className="text-xl font-bold text-[var(--text-primary)]">تنظیمات داشبورد</h2>
+        <p className="mt-1 text-sm text-[var(--text-secondary)]">
           بازه روزها برای نمودار شدت و Timeline از اینجا تنظیم می‌شود.
         </p>
       </div>
 
       <form
         onSubmit={onSubmit}
-        className="space-y-4 rounded-2xl border border-[var(--border)] bg-[#0A1428] p-5"
+        className="space-y-4 rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-5"
       >
         <div className="grid gap-4 sm:grid-cols-2">
           <label className="block space-y-1.5 text-sm">
-            <span className="text-slate-400">عنوان سامانه</span>
+            <span className="text-[var(--text-secondary)]">عنوان سامانه</span>
             <input
               value={settings.siteTitle}
               onChange={(e) =>
                 setSettings((s) => ({ ...s, siteTitle: e.target.value }))
               }
-              className="w-full rounded-xl border border-[var(--border)] bg-[#0D1A30] px-3 py-2.5 outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full rounded-xl border border-[var(--border)] bg-[var(--panel-2)] px-3 py-2.5 outline-none focus:ring-2 focus:ring-blue-500"
             />
           </label>
 
           <label className="block space-y-1.5 text-sm">
-            <span className="text-slate-400">نمای پیش‌فرض</span>
+            <span className="text-[var(--text-secondary)]">نمای پیش‌فرض</span>
             <select
               value={settings.defaultView}
               onChange={(e) =>
@@ -65,7 +65,7 @@ function SettingsForm() {
                   defaultView: e.target.value as DashboardSettings["defaultView"],
                 }))
               }
-              className="w-full rounded-xl border border-[var(--border)] bg-[#0D1A30] px-3 py-2.5 outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full rounded-xl border border-[var(--border)] bg-[var(--panel-2)] px-3 py-2.5 outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="timeline">خط زمانی</option>
               <option value="week">هفتگی</option>
@@ -74,42 +74,42 @@ function SettingsForm() {
           </label>
 
           <label className="block space-y-1.5 text-sm">
-            <span className="text-slate-400">روز اول بازه</span>
+            <span className="text-[var(--text-secondary)]">روز اول بازه</span>
             <input
               type="date"
               value={settings.rangeStart}
               onChange={(e) =>
                 setSettings((s) => ({ ...s, rangeStart: e.target.value }))
               }
-              className="w-full rounded-xl border border-[var(--border)] bg-[#0D1A30] px-3 py-2.5 outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full rounded-xl border border-[var(--border)] bg-[var(--panel-2)] px-3 py-2.5 outline-none focus:ring-2 focus:ring-blue-500"
             />
           </label>
 
           <label className="block space-y-1.5 text-sm">
-            <span className="text-slate-400">روز آخر بازه</span>
+            <span className="text-[var(--text-secondary)]">روز آخر بازه</span>
             <input
               type="date"
               value={settings.rangeEnd}
               onChange={(e) =>
                 setSettings((s) => ({ ...s, rangeEnd: e.target.value }))
               }
-              className="w-full rounded-xl border border-[var(--border)] bg-[#0D1A30] px-3 py-2.5 outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full rounded-xl border border-[var(--border)] bg-[var(--panel-2)] px-3 py-2.5 outline-none focus:ring-2 focus:ring-blue-500"
             />
           </label>
 
           <label className="block space-y-1.5 text-sm sm:col-span-2">
-            <span className="text-slate-400">منطقه زمانی</span>
+            <span className="text-[var(--text-secondary)]">منطقه زمانی</span>
             <input
               value={settings.timezoneLabel}
               onChange={(e) =>
                 setSettings((s) => ({ ...s, timezoneLabel: e.target.value }))
               }
-              className="w-full rounded-xl border border-[var(--border)] bg-[#0D1A30] px-3 py-2.5 outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full rounded-xl border border-[var(--border)] bg-[var(--panel-2)] px-3 py-2.5 outline-none focus:ring-2 focus:ring-blue-500"
             />
           </label>
         </div>
 
-        <div className="flex flex-wrap gap-4 text-sm text-slate-300">
+        <div className="flex flex-wrap gap-4 text-sm text-[var(--text-secondary)]">
           <label className="flex items-center gap-2">
             <input
               type="checkbox"
@@ -156,7 +156,7 @@ function SettingsForm() {
         <div className="flex items-center gap-3">
           <button
             type="submit"
-            className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-500"
+            className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-[var(--text-primary)] hover:bg-blue-500"
           >
             <Save className="h-4 w-4" />
             ذخیره تنظیمات

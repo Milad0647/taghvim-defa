@@ -24,7 +24,7 @@ export function WeeklyView({ days, onSelectDay }: WeeklyViewProps) {
             className="rounded-[16px] border border-[var(--border)] bg-[var(--surface-2)] p-3 text-right transition hover:border-[var(--purple)]/40"
           >
             <p className="text-xs text-[var(--text-secondary)]">{day.weekday}</p>
-            <p className="mt-1 text-sm font-semibold text-white">{day.persianDate}</p>
+            <p className="mt-1 text-sm font-semibold text-[var(--text-primary)]">{day.persianDate}</p>
             <div className="mt-3 h-16 overflow-hidden rounded-lg bg-[var(--surface-3)]">
               <div
                 className="mx-auto w-6 rounded-t-md"
@@ -35,7 +35,7 @@ export function WeeklyView({ days, onSelectDay }: WeeklyViewProps) {
                 }}
               />
             </div>
-            <div className="mt-3 space-y-1 text-[11px] text-slate-400">
+            <div className="mt-3 space-y-1 text-[11px] text-[var(--text-secondary)]">
               <p className="text-red-300">
                 دشمن: {day.enemyActionsCount.toLocaleString("fa-IR")}
               </p>
@@ -45,7 +45,7 @@ export function WeeklyView({ days, onSelectDay }: WeeklyViewProps) {
               <p>شدت: {intensityLabel(day.intensity)}</p>
             </div>
             {day.events[0] ? (
-              <p className="mt-2 line-clamp-2 text-[11px] text-slate-300">
+              <p className="mt-2 line-clamp-2 text-[11px] text-[var(--text-secondary)]">
                 {day.events[0].title}
               </p>
             ) : null}

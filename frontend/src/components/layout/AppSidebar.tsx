@@ -23,6 +23,7 @@ import {
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
+import { ThemeToggle } from "@/components/theme/ThemeToggle";
 
 const MENU = [
   { href: "/overview", label: "نمای کلی", icon: LayoutDashboard, match: "overview" },
@@ -70,7 +71,7 @@ export function AppSidebar({
   const content = (
     <div
       className={clsx(
-        "flex h-[calc(100vh-1.5rem)] flex-col overflow-hidden rounded-2xl border border-[var(--border)] bg-[#0A1428]",
+        "flex h-[calc(100vh-1.5rem)] flex-col overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--panel)]",
         collapsed ? "w-[72px]" : "w-[240px]",
       )}
     >
@@ -79,21 +80,21 @@ export function AppSidebar({
           <div>
             <div className="mb-0.5 flex items-center gap-2">
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-500/15">
-                <Shield className="h-4 w-4 text-blue-400" />
+                <Shield className="h-4 w-4 text-[var(--primary)]" />
               </div>
               <div>
-                <p className="text-sm font-bold text-white">گزارش زنده</p>
-                <p className="text-[10px] text-slate-400">رویدادها و اقدامات</p>
+                <p className="text-sm font-bold text-[var(--text-primary)]">گزارش زنده</p>
+                <p className="text-[10px] text-[var(--text-secondary)]">رویدادها و اقدامات</p>
               </div>
             </div>
           </div>
         ) : (
-          <Shield className="mx-auto h-5 w-5 text-blue-400" />
+          <Shield className="mx-auto h-5 w-5 text-[var(--primary)]" />
         )}
         <button
           type="button"
           onClick={onToggleCollapse}
-          className="hidden rounded-lg p-1.5 text-slate-400 hover:bg-white/5 lg:inline-flex"
+          className="hidden rounded-lg p-1.5 text-[var(--text-secondary)] hover:bg-[var(--hover)] lg:inline-flex"
           aria-label={collapsed ? "باز کردن منو" : "جمع کردن منو"}
         >
           {collapsed ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
@@ -101,7 +102,7 @@ export function AppSidebar({
         <button
           type="button"
           onClick={onCloseMobile}
-          className="inline-flex rounded-lg p-1.5 text-slate-400 hover:bg-white/5 lg:hidden"
+          className="inline-flex rounded-lg p-1.5 text-[var(--text-secondary)] hover:bg-[var(--hover)] lg:hidden"
           aria-label="بستن منو"
         >
           <X className="h-4 w-4" />
@@ -133,14 +134,14 @@ export function AppSidebar({
               className={clsx(
                 "relative flex h-11 items-center gap-3 rounded-xl px-3 text-[13px] transition",
                 active
-                  ? "bg-blue-500/15 font-medium text-blue-300"
-                  : "text-slate-400 hover:bg-white/5 hover:text-slate-200",
+                  ? "bg-blue-500/15 font-medium text-[var(--primary)]"
+                  : "text-[var(--text-secondary)] hover:bg-[var(--hover)] hover:text-[var(--text-primary)]",
                 collapsed && "justify-center px-2",
               )}
               title={item.label}
             >
               {active ? (
-                <span className="absolute inset-y-2 right-0 w-[3px] rounded-full bg-blue-400" />
+                <span className="absolute inset-y-2 right-0 w-[3px] rounded-full bg-[var(--primary)]" />
               ) : null}
               <Icon className="h-4 w-4 shrink-0" />
               {!collapsed ? <span>{item.label}</span> : null}
@@ -150,13 +151,15 @@ export function AppSidebar({
       </nav>
 
       <div className="space-y-3 border-t border-[var(--border)] p-3">
+        <ThemeToggle className="w-full justify-center" compact={collapsed} />
+
         {!collapsed ? (
-          <div className="space-y-2.5 rounded-xl border border-[var(--border)] bg-[#0D1A30] p-3">
+          <div className="space-y-2.5 rounded-xl border border-[var(--border)] bg-[var(--panel-2)] p-3">
             <StatRow
               icon={<Activity className="h-3.5 w-3.5" />}
               label="کل رویدادها"
               value={stats.totalEvents}
-              color="#F8FAFC"
+              color="var(--text-primary)"
             />
             <StatRow
               icon={<Swords className="h-3.5 w-3.5" />}
@@ -203,7 +206,7 @@ export function AppSidebar({
         <div className="fixed inset-0 z-50 lg:hidden">
           <button
             type="button"
-            className="absolute inset-0 bg-black/60"
+            className="absolute inset-0 bg-[var(--overlay)]"
             aria-label="بستن پس‌زمینه منو"
             onClick={onCloseMobile}
           />
@@ -227,7 +230,7 @@ function StatRow({
 }) {
   return (
     <div className="flex items-center justify-between gap-2 text-xs">
-      <span className="flex items-center gap-1.5 text-slate-400">
+      <span className="flex items-center gap-1.5 text-[var(--text-secondary)]">
         <span style={{ color }}>{icon}</span>
         {label}
       </span>
@@ -243,7 +246,7 @@ export function MobileMenuButton({ onClick }: { onClick: () => void }) {
     <button
       type="button"
       onClick={onClick}
-      className="inline-flex rounded-xl border border-[var(--border)] bg-[#0D1A30] p-2 text-slate-200 lg:hidden"
+      className="inline-flex rounded-xl border border-[var(--border)] bg-[var(--panel-2)] p-2 text-[var(--text-primary)] lg:hidden"
       aria-label="باز کردن منو"
     >
       <Menu className="h-5 w-5" />

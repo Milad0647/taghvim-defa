@@ -455,7 +455,7 @@ export function TimelinePage({
       <button
         type="button"
         onClick={() => scrollToDay(days[0]?.date ?? "")}
-        className="fixed bottom-20 left-4 z-30 inline-flex items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-xs text-slate-200 shadow-lg md:bottom-6"
+        className="fixed bottom-20 left-4 z-30 inline-flex items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-xs text-[var(--text-primary)] shadow-lg md:bottom-6"
         aria-label="بازگشت به امروز"
       >
         <ArrowUp className="h-3.5 w-3.5" />

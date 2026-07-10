@@ -34,7 +34,7 @@ export function MapView({ days, onSelectProvince }: MapViewProps) {
 
   return (
     <section className="rounded-[16px] border border-[var(--border)] bg-[var(--surface-2)] p-4">
-      <h3 className="text-sm font-semibold text-white">نقشه رویدادها (استانی)</h3>
+      <h3 className="text-sm font-semibold text-[var(--text-primary)]">نقشه رویدادها (استانی)</h3>
       <p className="mt-1 text-xs text-[var(--text-secondary)]">
         نسخه فعلی به‌صورت خلاصه استانی است؛ نقشه تعاملی در فاز بعد اضافه می‌شود.
       </p>
@@ -50,7 +50,7 @@ export function MapView({ days, onSelectProvince }: MapViewProps) {
               className="rounded-[14px] border border-[var(--border)] bg-[var(--surface-3)] p-3 text-right hover:border-blue-400/30"
             >
               <div className="flex items-center justify-between gap-2">
-                <p className="font-semibold text-white">{province}</p>
+                <p className="font-semibold text-[var(--text-primary)]">{province}</p>
                 <span
                   className="rounded-full"
                   style={{
@@ -63,7 +63,7 @@ export function MapView({ days, onSelectProvince }: MapViewProps) {
                   }}
                 />
               </div>
-              <div className="mt-2 space-y-1 text-xs text-slate-400">
+              <div className="mt-2 space-y-1 text-xs text-[var(--text-secondary)]">
                 <p>کل: {total.toLocaleString("fa-IR")}</p>
                 <p className="text-red-300">
                   دشمن: {data.enemy.toLocaleString("fa-IR")}
@@ -71,7 +71,7 @@ export function MapView({ days, onSelectProvince }: MapViewProps) {
                 <p className="text-blue-300">
                   دولت: {data.government.toLocaleString("fa-IR")}
                 </p>
-                <p className="line-clamp-1 text-slate-300">آخرین: {data.lastTitle}</p>
+                <p className="line-clamp-1 text-[var(--text-secondary)]">آخرین: {data.lastTitle}</p>
               </div>
             </button>
           );

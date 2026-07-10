@@ -25,7 +25,7 @@ export function ViewSwitcher({ value, onChange, compact }: ViewSwitcherProps) {
 
   return (
     <div
-      className="flex gap-1 overflow-x-auto rounded-xl border border-[var(--border)] bg-[#0D1A30] p-1 scrollbar-thin"
+      className="flex gap-1 overflow-x-auto rounded-xl border border-[var(--border)] bg-[var(--panel-2)] p-1 scrollbar-thin"
       role="tablist"
       aria-label="تغییر نمای صفحه"
     >
@@ -41,8 +41,8 @@ export function ViewSwitcher({ value, onChange, compact }: ViewSwitcherProps) {
             className={clsx(
               "shrink-0 rounded-lg px-3 py-1.5 text-xs font-medium transition",
               active
-                ? "bg-blue-600 text-white shadow-md shadow-blue-900/40"
-                : "text-slate-400 hover:bg-white/5 hover:text-slate-200",
+                ? "bg-blue-600 text-white shadow-md shadow-blue-600/25"
+                : "text-[var(--text-secondary)] hover:bg-[var(--hover)] hover:text-[var(--text-primary)]",
             )}
           >
             {compact ? view.short : view.label}

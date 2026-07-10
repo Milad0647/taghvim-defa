@@ -71,36 +71,26 @@ export function EventDetailPanel({
         className="flex h-full flex-col overflow-hidden xl:rounded-[14px]"
         style={{
           background: isEnemy
-            ? `radial-gradient(circle at 55% 10%, rgba(109, 30, 48, 0.22), transparent 38%),
-               linear-gradient(180deg, #17101C 0%, #0E1322 70%, #0B1322 100%)`
-            : `radial-gradient(circle at 55% 10%, rgba(30, 58, 138, 0.22), transparent 38%),
-               linear-gradient(180deg, #0F172A 0%, #0B1322 100%)`,
+            ? "var(--detail-enemy-bg)"
+            : "var(--detail-gov-bg)",
           border: isEnemy
-            ? "1px solid rgba(207, 48, 62, 0.62)"
-            : "1px solid rgba(46, 116, 210, 0.55)",
-          boxShadow: isEnemy
-            ? "inset 0 0 40px rgba(174, 28, 49, 0.06)"
-            : "inset 0 0 40px rgba(30, 64, 175, 0.06)",
+            ? "1px solid var(--enemy-border)"
+            : "1px solid var(--government-border)",
         }}
       >
         <div
-          className="flex items-start justify-between gap-3 p-4"
-          style={{
-            borderBottom: isEnemy
-              ? "1px solid rgba(151, 56, 73, 0.25)"
-              : "1px solid rgba(59, 130, 246, 0.2)",
-          }}
+          className="flex items-start justify-between gap-3 border-b border-[var(--border)] p-4"
         >
           <div className="min-w-0">
             <div className="mb-2 flex flex-wrap items-center gap-2">
               {isEnemy ? (
-                <Bug className="h-[19px] w-[19px]" style={{ color: "#E83442" }} />
+                <Bug className="h-[19px] w-[19px] text-[var(--enemy)]" />
               ) : (
-                <Shield className="h-[19px] w-[19px]" style={{ color: "#3B82F6" }} />
+                <Shield className="h-[19px] w-[19px] text-[var(--government)]" />
               )}
               <span
                 className="text-[14px] font-bold"
-                style={{ color: isEnemy ? "#FF494F" : "#60A5FA" }}
+                style={{ color: isEnemy ? "var(--enemy)" : "var(--government)" }}
               >
                 {isEnemy ? "جزئیات اقدام دشمن" : "جزئیات اقدام دولت"}
               </span>
@@ -108,8 +98,8 @@ export function EventDetailPanel({
                 <span
                   className="rounded-lg px-[9px] py-1 text-[10px]"
                   style={{
-                    background: "rgba(171, 27, 43, 0.35)",
-                    color: "#FF555D",
+                    background: "var(--enemy-soft)",
+                    color: "var(--enemy)",
                   }}
                 >
                   {severityLabel(event.severity)}
@@ -120,18 +110,14 @@ export function EventDetailPanel({
                 />
               )}
             </div>
-            <h3
-              className="text-[16px] font-bold leading-7"
-              style={{ color: "#F7F3F5" }}
-            >
+            <h3 className="text-[16px] font-bold leading-7 text-[var(--text-primary)]">
               {event.title}
             </h3>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="shrink-0 rounded-lg p-2 hover:bg-white/5"
-            style={{ color: "#F3F4F6" }}
+            className="shrink-0 rounded-lg p-2 text-[var(--text-secondary)] hover:bg-[var(--hover)]"
             aria-label="بستن"
           >
             <X className="h-4 w-4" />
@@ -164,27 +150,21 @@ export function EventDetailPanel({
           </div>
 
           <section>
-            <h4
-              className="mb-1.5 flex items-center gap-2 text-[13px] font-bold"
-              style={{ color: "#ECE6E9" }}
-            >
+            <h4 className="mb-1.5 flex items-center gap-2 text-[13px] font-bold text-[var(--text-primary)]">
               <span
                 className="inline-block h-1.5 w-1.5 rounded-full"
-                style={{ background: isEnemy ? "#EE4C58" : "#3B82F6" }}
+                style={{ background: isEnemy ? "var(--enemy)" : "var(--government)" }}
               />
               خلاصه رویداد
             </h4>
-            <p className="text-[13px] leading-[1.85]" style={{ color: "#C6BEC4" }}>
+            <p className="text-[13px] leading-[1.85] text-[var(--text-secondary)]">
               {event.description || event.summary}
             </p>
           </section>
 
           {media.length > 0 ? (
             <section>
-              <h4
-                className="mb-2 text-[13px] font-bold"
-                style={{ color: "#EDE8EB" }}
-              >
+              <h4 className="mb-2 text-[13px] font-bold text-[var(--text-primary)]">
                 تصاویر و مدارک
               </h4>
               <div className="grid grid-cols-3 gap-2">
@@ -193,8 +173,7 @@ export function EventDetailPanel({
                     key={item.id}
                     type="button"
                     onClick={() => setLightbox(item.url)}
-                    className="relative overflow-hidden rounded-lg"
-                    style={{ border: "1px solid #25314A" }}
+                    className="relative overflow-hidden rounded-lg border border-[var(--border)]"
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
@@ -215,22 +194,19 @@ export function EventDetailPanel({
 
           {impacts.length > 0 ? (
             <section>
-              <h4
-                className="mb-2 flex items-center gap-2 text-[13px] font-bold"
-                style={{ color: "#ECE6E9" }}
-              >
+              <h4 className="mb-2 flex items-center gap-2 text-[13px] font-bold text-[var(--text-primary)]">
                 <span
                   className="inline-block h-1.5 w-1.5 rounded-full"
-                  style={{ background: isEnemy ? "#EE4C58" : "#3B82F6" }}
+                  style={{ background: isEnemy ? "var(--enemy)" : "var(--government)" }}
                 />
                 تأثیر و پیامد
               </h4>
-              <ul className="space-y-1.5 text-[13px]" style={{ color: "#D0C8CE" }}>
+              <ul className="space-y-1.5 text-[13px] text-[var(--text-secondary)]">
                 {impacts.map((item) => (
                   <li key={item} className="flex items-start gap-2">
                     <span
                       className="mt-2 h-[5px] w-[5px] shrink-0 rounded-full"
-                      style={{ background: isEnemy ? "#EE4C58" : "#3B82F6" }}
+                      style={{ background: isEnemy ? "var(--enemy)" : "var(--government)" }}
                     />
                     <span>{item}</span>
                   </li>
@@ -245,19 +221,13 @@ export function EventDetailPanel({
                 <span
                   key={tag}
                   className="rounded-full px-[15px] py-[5px] text-[11px]"
-                  style={
-                    isEnemy
-                      ? {
-                          background: "rgba(85, 19, 33, 0.28)",
-                          border: "1px solid rgba(223, 54, 69, 0.58)",
-                          color: "#FF555D",
-                        }
-                      : {
-                          background: "rgba(30, 58, 138, 0.28)",
-                          border: "1px solid rgba(59, 130, 246, 0.5)",
-                          color: "#55A1FF",
-                        }
-                  }
+                  style={{
+                    background: isEnemy ? "var(--enemy-soft)" : "var(--government-soft)",
+                    border: isEnemy
+                      ? "1px solid var(--enemy-border)"
+                      : "1px solid var(--government-border)",
+                    color: isEnemy ? "var(--enemy)" : "var(--government)",
+                  }}
                 >
                   {tag}
                 </span>
@@ -267,10 +237,7 @@ export function EventDetailPanel({
 
           {isEnemy ? (
             <section className="space-y-2">
-              <h4
-                className="text-[13px] font-bold"
-                style={{ color: "#ECE6E9" }}
-              >
+              <h4 className="text-[13px] font-bold text-[var(--text-primary)]">
                 پاسخ‌های مرتبط دولت
               </h4>
               {relatedResponses.length > 0 ? (
@@ -283,12 +250,12 @@ export function EventDetailPanel({
                   />
                 ))
               ) : (
-                <p className="rounded-xl bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
+                <p className="rounded-xl bg-amber-500/10 px-3 py-2 text-xs text-amber-700">
                   برای این رخداد هنوز پاسخ مرتبطی ثبت نشده است.
                 </p>
               )}
               {event.responseTimeMinutes != null ? (
-                <p className="text-xs text-cyan-300">
+                <p className="text-xs text-[var(--cyan)]">
                   زمان واکنش: {formatResponseTime(event.responseTimeMinutes)}
                 </p>
               ) : null}
@@ -296,22 +263,10 @@ export function EventDetailPanel({
           ) : null}
         </div>
 
-        <div
-          className="p-3"
-          style={{
-            borderTop: isEnemy
-              ? "1px solid rgba(151, 56, 73, 0.25)"
-              : "1px solid rgba(59, 130, 246, 0.2)",
-          }}
-        >
+        <div className="border-t border-[var(--border)] p-3">
           <button
             type="button"
-            className="inline-flex h-[38px] items-center justify-center gap-2 rounded-lg px-4 text-[11px]"
-            style={{
-              background: "linear-gradient(180deg, #171F35, #121A2E)",
-              border: "1px solid #25304B",
-              color: "#E5E7EC",
-            }}
+            className="inline-flex h-[38px] items-center justify-center gap-2 rounded-lg border border-[var(--border)] bg-[var(--panel-2)] px-4 text-[11px] text-[var(--text-primary)]"
           >
             <MessageCircle className="h-3.5 w-3.5" />
             مشاهده نظرات ({(event.commentsCount ?? 0).toLocaleString("fa-IR")})
@@ -320,7 +275,7 @@ export function EventDetailPanel({
       </div>
 
       {lightbox ? (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/80 p-4">
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-[var(--overlay)] p-4">
           <button
             type="button"
             className="absolute inset-0"
@@ -342,12 +297,8 @@ export function EventDetailPanel({
 function Meta({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <p className="text-[10px]" style={{ color: "#8E8792" }}>
-        {label}
-      </p>
-      <p className="mt-[5px] text-[11px]" style={{ color: "#E1DCE1" }}>
-        {value}
-      </p>
+      <p className="text-[10px] text-[var(--text-muted)]">{label}</p>
+      <p className="mt-[5px] text-[11px] text-[var(--text-primary)]">{value}</p>
     </div>
   );
 }

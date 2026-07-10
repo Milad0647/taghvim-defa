@@ -38,7 +38,7 @@ export function MobileNavigation({ value, onChange }: MobileNavigationProps) {
               onClick={() => onChange(item.id)}
               className={clsx(
                 "flex min-w-0 flex-1 flex-col items-center gap-1 rounded-xl px-1 py-1.5 text-[10px]",
-                active ? "bg-[var(--purple)]/20 text-indigo-200" : "text-slate-400",
+                active ? "bg-[var(--purple)]/20 text-indigo-200" : "text-[var(--text-secondary)]",
               )}
               aria-label={item.label}
             >

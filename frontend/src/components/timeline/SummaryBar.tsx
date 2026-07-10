@@ -67,7 +67,7 @@ function Card({
   return (
     <div className={`rounded-[14px] border p-3 ${toneClass} ${className}`}>
       <p className="text-[11px] text-[var(--text-secondary)]">{label}</p>
-      <p className="mt-1 text-xl font-extrabold text-white sm:text-2xl">{value}</p>
+      <p className="mt-1 text-xl font-extrabold text-[var(--text-primary)] sm:text-2xl">{value}</p>
     </div>
   );
 }

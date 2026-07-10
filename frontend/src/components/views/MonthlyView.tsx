@@ -28,17 +28,17 @@ export function MonthlyView({ days, onSelectDay }: MonthlyViewProps) {
             }}
           >
             <div className="flex items-center justify-between gap-2">
-              <span className="text-sm font-bold text-white">
+              <span className="text-sm font-bold text-[var(--text-primary)]">
                 {day.persianDate.split(" ")[0]}
               </span>
               <span
-                className="rounded px-1.5 py-0.5 text-[10px] text-white"
+                className="rounded px-1.5 py-0.5 text-[10px] text-[var(--text-primary)]"
                 style={{ backgroundColor: intensityColor(day.intensity) }}
               >
                 {day.totalEvents.toLocaleString("fa-IR")}
               </span>
             </div>
-            <p className="mt-1 text-[10px] text-slate-400">{day.weekday}</p>
+            <p className="mt-1 text-[10px] text-[var(--text-secondary)]">{day.weekday}</p>
             <div className="mt-2 flex gap-2 text-[10px]">
               <span className="text-red-300">
                 د {day.enemyActionsCount.toLocaleString("fa-IR")}

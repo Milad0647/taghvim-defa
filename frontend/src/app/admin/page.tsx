@@ -31,9 +31,9 @@ function AdminHomeContent() {
 
   return (
     <div className="space-y-4">
-      <section className="rounded-2xl border border-[var(--border)] bg-[#0A1428] p-5">
-        <h2 className="text-xl font-bold text-white">سلام، {name}</h2>
-        <p className="mt-1 text-sm text-slate-400">
+      <section className="rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-5">
+        <h2 className="text-xl font-bold text-[var(--text-primary)]">سلام، {name}</h2>
+        <p className="mt-1 text-sm text-[var(--text-secondary)]">
           نقش شما: {roleLabel}. از این بخش کاربران و تنظیمات داشبورد را مدیریت
           کنید.
         </p>
@@ -43,10 +43,10 @@ function AdminHomeContent() {
         {canUsers ? (
           <Link
             href="/admin/users"
-            className="rounded-2xl border border-[var(--border)] bg-[#0A1428] p-5 transition hover:border-blue-500/30"
+            className="rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-5 transition hover:border-blue-500/30"
           >
-            <h3 className="font-semibold text-white">کاربران و دسترسی‌ها</h3>
-            <p className="mt-2 text-sm text-slate-400">
+            <h3 className="font-semibold text-[var(--text-primary)]">کاربران و دسترسی‌ها</h3>
+            <p className="mt-2 text-sm text-[var(--text-secondary)]">
               ساخت کاربر جدید، تغییر نقش، فعال/غیرفعال کردن حساب
             </p>
           </Link>
@@ -55,10 +55,10 @@ function AdminHomeContent() {
         {canSettings ? (
           <Link
             href="/admin/settings"
-            className="rounded-2xl border border-[var(--border)] bg-[#0A1428] p-5 transition hover:border-blue-500/30"
+            className="rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-5 transition hover:border-blue-500/30"
           >
-            <h3 className="font-semibold text-white">تنظیمات داشبورد</h3>
-            <p className="mt-2 text-sm text-slate-400">
+            <h3 className="font-semibold text-[var(--text-primary)]">تنظیمات داشبورد</h3>
+            <p className="mt-2 text-sm text-[var(--text-secondary)]">
               بازه روز اول تا روز آخر، عنوان سایت، نمای پیش‌فرض
             </p>
           </Link>
@@ -66,10 +66,10 @@ function AdminHomeContent() {
 
         <Link
           href="/timeline"
-          className="rounded-2xl border border-[var(--border)] bg-[#0A1428] p-5 transition hover:border-blue-500/30 sm:col-span-2"
+          className="rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-5 transition hover:border-blue-500/30 sm:col-span-2"
         >
-          <h3 className="font-semibold text-white">مشاهده خط زمانی</h3>
-          <p className="mt-2 text-sm text-slate-400">
+          <h3 className="font-semibold text-[var(--text-primary)]">مشاهده خط زمانی</h3>
+          <p className="mt-2 text-sm text-[var(--text-secondary)]">
             بازگشت به صفحه عمومی گزارش زنده
           </p>
         </Link>

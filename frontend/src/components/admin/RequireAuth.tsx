@@ -13,6 +13,7 @@ import {
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
+import { ThemeToggle } from "@/components/theme/ThemeToggle";
 
 const NAV = [
   { href: "/admin", label: "داشبورد ادمین", icon: LayoutDashboard, exact: true },
@@ -57,7 +58,7 @@ export function RequireAuth({
 
   if (!ready || !user) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[var(--background)] text-slate-400">
+      <div className="flex min-h-screen items-center justify-center bg-[var(--background)] text-[var(--text-secondary)]">
         در حال بررسی دسترسی...
       </div>
     );
@@ -88,10 +89,10 @@ function AdminShell({
       style={{ direction: "rtl" }}
     >
       <div className="mx-auto flex min-h-screen max-w-6xl gap-4 p-4">
-        <aside className="sticky top-4 hidden h-[calc(100vh-2rem)] w-64 shrink-0 flex-col rounded-2xl border border-[var(--border)] bg-[#0A1428] lg:flex">
+        <aside className="sticky top-4 hidden h-[calc(100vh-2rem)] w-64 shrink-0 flex-col rounded-2xl border border-[var(--border)] bg-[var(--panel)] lg:flex">
           <div className="border-b border-[var(--border)] p-4">
-            <p className="text-xs text-slate-400">پنل مدیریت</p>
-            <h1 className="mt-1 text-lg font-bold text-white">تقویم دفاعی</h1>
+            <p className="text-xs text-[var(--text-secondary)]">پنل مدیریت</p>
+            <h1 className="mt-1 text-lg font-bold text-[var(--text-primary)]">تقویم دفاعی</h1>
           </div>
 
           <nav className="flex-1 space-y-1 p-2">
@@ -113,8 +114,8 @@ function AdminShell({
                   className={clsx(
                     "flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm transition",
                     active
-                      ? "bg-blue-500/15 text-blue-300"
-                      : "text-slate-300 hover:bg-white/5",
+                      ? "bg-blue-500/15 text-[var(--primary)]"
+                      : "text-[var(--text-secondary)] hover:bg-[var(--hover)]",
                   )}
                 >
                   <Icon className="h-4 w-4" />
@@ -125,15 +126,16 @@ function AdminShell({
           </nav>
 
           <div className="border-t border-[var(--border)] p-3">
-            <div className="mb-3 rounded-xl bg-[#0D1A30] p-3 text-xs">
-              <p className="font-semibold text-white">{user.name}</p>
-              <p className="mt-1 text-slate-400">{user.email}</p>
-              <p className="mt-1 text-blue-300">{ROLE_LABELS[user.role]}</p>
+            <ThemeToggle className="mb-3 w-full justify-center" />
+            <div className="mb-3 rounded-xl bg-[var(--panel-2)] p-3 text-xs">
+              <p className="font-semibold text-[var(--text-primary)]">{user.name}</p>
+              <p className="mt-1 text-[var(--text-secondary)]">{user.email}</p>
+              <p className="mt-1 text-[var(--primary)]">{ROLE_LABELS[user.role]}</p>
             </div>
             <button
               type="button"
               onClick={onLogout}
-              className="flex w-full items-center justify-center gap-2 rounded-xl border border-[var(--border)] px-3 py-2 text-sm text-slate-300 hover:bg-white/5"
+              className="flex w-full items-center justify-center gap-2 rounded-xl border border-[var(--border)] px-3 py-2 text-sm text-[var(--text-secondary)] hover:bg-[var(--hover)]"
             >
               <LogOut className="h-4 w-4" />
               خروج
@@ -142,10 +144,10 @@ function AdminShell({
         </aside>
 
         <main className="min-w-0 flex-1 space-y-4">
-          <div className="flex items-center justify-between gap-3 rounded-2xl border border-[var(--border)] bg-[#0A1428] px-4 py-3 lg:hidden">
+          <div className="flex items-center justify-between gap-3 rounded-2xl border border-[var(--border)] bg-[var(--panel)] px-4 py-3 lg:hidden">
             <div>
-              <p className="text-sm font-semibold text-white">{user.name}</p>
-              <p className="text-xs text-slate-400">{ROLE_LABELS[user.role]}</p>
+              <p className="text-sm font-semibold text-[var(--text-primary)]">{user.name}</p>
+              <p className="text-xs text-[var(--text-secondary)]">{ROLE_LABELS[user.role]}</p>
             </div>
             <button
               type="button"
@@ -166,7 +168,7 @@ function AdminShell({
                 <Link
                   key={item.href}
                   href={item.href}
-                  className="rounded-xl border border-[var(--border)] bg-[#0A1428] px-3 py-2 text-xs text-slate-300"
+                  className="rounded-xl border border-[var(--border)] bg-[var(--panel)] px-3 py-2 text-xs text-[var(--text-secondary)]"
                 >
                   {item.label}
                 </Link>

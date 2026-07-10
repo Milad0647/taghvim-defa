@@ -16,6 +16,8 @@ import {
   TimelineSkeleton,
 } from "@/components/timeline/TimelineSkeleton";
 import { AnalyticsView } from "@/components/views/AnalyticsView";
+import { DailyView } from "@/components/views/DailyView";
+import { DayDetailModal } from "@/components/views/daily/DayDetailModal";
 import { HeatmapView } from "@/components/views/HeatmapView";
 import { MapView } from "@/components/views/MapView";
 import { MonthlyView } from "@/components/views/MonthlyView";
@@ -54,6 +56,7 @@ type TimelinePageProps = {
 
 const VALID_VIEWS: TimelineViewMode[] = [
   "timeline",
+  "day",
   "week",
   "month",
   "map",
@@ -113,6 +116,7 @@ export function TimelinePage({
     },
   );
   const [detailOpen, setDetailOpen] = useState(true);
+  const [dayModalOpen, setDayModalOpen] = useState(false);
   const [pendingLiveUpdates, setPendingLiveUpdates] = useState(0);
   const [toast, setToast] = useState<string | null>(null);
   const [days] = useState(initialDays);
@@ -344,7 +348,23 @@ export function TimelinePage({
     syncUrl({ filters: next });
   };
 
+  const openDayModal = useCallback(
+    (date: string) => {
+      setSelectedDay(date);
+      const day = rangedDays.find((d) => d.date === date);
+      const top = day?.events[0] ?? null;
+      if (top) setSelectedEvent(top);
+      setDayModalOpen(true);
+      syncUrl({
+        date,
+        event: top?.id ?? null,
+      });
+    },
+    [rangedDays, syncUrl],
+  );
+
   const changeView = (view: TimelineViewMode) => {
+    setDayModalOpen(false);
     setSelectedView(view);
     syncUrl({ view });
   };
@@ -353,30 +373,37 @@ export function TimelinePage({
     <div className="min-w-0 flex-1 space-y-3 pb-24 md:pb-6">
       <TimelineHeader
         title={
-          selectedView === "week"
-            ? "نمای هفتگی"
-            : selectedView === "month"
-              ? "نمای ماهانه"
-              : selectedView === "map"
-                ? "نقشه رویدادها"
-                : selectedView === "analytics"
-                  ? "آمار و نمودارها"
-                  : "خط زمانی رویدادها و اقدامات"
+          selectedView === "day"
+            ? "نمای روزانه"
+            : selectedView === "week"
+              ? "نمای هفتگی"
+              : selectedView === "month"
+                ? "نمای ماهانه"
+                : selectedView === "map"
+                  ? "نقشه رویدادها"
+                  : selectedView === "analytics"
+                    ? "آمار و نمودارها"
+                    : "خط زمانی رویدادها و اقدامات"
         }
         subtitle={
-          selectedView === "week"
-            ? "نمای کلی رویدادها و اقدامات در بازه هفتگی"
-            : selectedView === "month"
-              ? "تقویم ماهانه رویدادها از روز اول تا آخر ماه"
-              : "نمایش زنده رخدادها و پاسخ‌های ثبت‌شده"
+          selectedView === "day"
+            ? "جزئیات کامل رویدادها و اقدامات یک روز"
+            : selectedView === "week"
+              ? "نمای کلی رویدادها و اقدامات در بازه هفتگی"
+              : selectedView === "month"
+                ? "تقویم ماهانه رویدادها از روز اول تا آخر ماه"
+                : "نمایش زنده رخدادها و پاسخ‌های ثبت‌شده"
         }
         showViewSwitcher={
           selectedView !== "timeline" &&
+          selectedView !== "day" &&
           selectedView !== "week" &&
           selectedView !== "month"
         }
         showDateFilters={
-          selectedView !== "week" && selectedView !== "month"
+          selectedView !== "day" &&
+          selectedView !== "week" &&
+          selectedView !== "month"
         }
         searchQuery={searchInput}
         onSearchChange={setSearchInput}
@@ -476,19 +503,34 @@ export function TimelinePage({
         )
       ) : null}
 
+      {!loading && !error && selectedView === "day" ? (
+        <DailyView
+          days={rangedDays}
+          selectedDay={selectedDay}
+          selectedEventId={selectedEvent?.id ?? null}
+          searchQuery={searchQuery}
+          showEnemy={dashboardSettings.showEnemySection}
+          showGovernment={dashboardSettings.showGovernmentSection}
+          relatedLookup={relatedLookup}
+          onSelectDay={(date) => {
+            setSelectedDay(date);
+            const day = rangedDays.find((d) => d.date === date);
+            const top = day?.events[0] ?? null;
+            if (top) setSelectedEvent(top);
+            else setSelectedEvent(null);
+            syncUrl({ date, view: "day", event: top?.id ?? null });
+          }}
+          onOpenEvent={openEvent}
+        />
+      ) : null}
+
       {!loading && !error && selectedView === "week" ? (
         <WeeklyView
           days={rangedDays}
           selectedDay={selectedDay}
           onOpenFilters={() => setFiltersOpen(true)}
           activeFilterCount={activeFilterCount}
-          onSelectDay={(date) => {
-            setSelectedDay(date);
-            const day = rangedDays.find((d) => d.date === date);
-            const top = day?.events[0] ?? null;
-            if (top) setSelectedEvent(top);
-            syncUrl({ date, view: "week", event: top?.id ?? null });
-          }}
+          onSelectDay={openDayModal}
         />
       ) : null}
       {!loading && !error && selectedView === "month" ? (
@@ -497,13 +539,7 @@ export function TimelinePage({
           selectedDay={selectedDay}
           onOpenFilters={() => setFiltersOpen(true)}
           activeFilterCount={activeFilterCount}
-          onSelectDay={(date) => {
-            setSelectedDay(date);
-            const day = rangedDays.find((d) => d.date === date);
-            const top = day?.events[0] ?? null;
-            if (top) setSelectedEvent(top);
-            syncUrl({ date, view: "month", event: top?.id ?? null });
-          }}
+          onSelectDay={openDayModal}
         />
       ) : null}
       {!loading && !error && selectedView === "heatmap" ? (
@@ -569,10 +605,27 @@ export function TimelinePage({
             onOpenRelated={openEvent}
           />
         }
-        detailOpen={selectedView === "timeline" && detailOpen}
+        detailOpen={
+          (selectedView === "timeline" || selectedView === "day") && detailOpen
+        }
         mobileNav={
           <MobileNavigation value={selectedView} onChange={changeView} />
         }
+      />
+
+      <DayDetailModal
+        open={dayModalOpen}
+        date={selectedDay}
+        days={rangedDays}
+        selectedEvent={selectedEvent}
+        relatedResponses={relatedResponses}
+        searchQuery={searchQuery}
+        showEnemy={dashboardSettings.showEnemySection}
+        showGovernment={dashboardSettings.showGovernmentSection}
+        relatedLookup={relatedLookup}
+        onClose={() => setDayModalOpen(false)}
+        onOpenEvent={openEvent}
+        onOpenRelated={openEvent}
       />
 
       <TimelineFilters

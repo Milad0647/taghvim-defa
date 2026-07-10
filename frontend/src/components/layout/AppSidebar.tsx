@@ -14,6 +14,7 @@ import {
   Plus,
   Settings,
   Shield,
+  Sun,
   Swords,
   Users,
   UserCheck,
@@ -29,6 +30,7 @@ import { IranEmblem } from "@/components/brand/IranEmblem";
 const MENU = [
   { href: "/overview", label: "نمای کلی", icon: LayoutDashboard, match: "overview" },
   { href: "/timeline?view=timeline", label: "خط زمانی", icon: CalendarRange, match: "timeline" },
+  { href: "/timeline?view=day", label: "نمای روزانه", icon: Sun, match: "day" },
   { href: "/timeline?view=week", label: "نمای هفتگی", icon: CalendarDays, match: "week" },
   { href: "/timeline?view=month", label: "نمای ماهانه", icon: CalendarDays, match: "month" },
   { href: "/timeline?view=map", label: "نقشه رویدادها", icon: Map, match: "map" },

@@ -5,6 +5,7 @@ import clsx from "clsx";
 
 const VIEWS: { id: TimelineViewMode; label: string; short: string }[] = [
   { id: "timeline", label: "خط زمانی", short: "خط زمانی" },
+  { id: "day", label: "نمای روزانه", short: "روزانه" },
   { id: "week", label: "نمای هفتگی", short: "هفتگی" },
   { id: "month", label: "نمای ماهانه", short: "ماهانه" },
   { id: "heatmap", label: "نقشه حرارتی", short: "حرارتی" },

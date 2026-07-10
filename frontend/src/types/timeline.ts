@@ -18,6 +18,7 @@ export type GovernmentActionStatus =
 
 export type TimelineViewMode =
   | "timeline"
+  | "day"
   | "week"
   | "month"
   | "map"

@@ -8,10 +8,12 @@ import {
   CalendarRange,
   Map,
   Grid3X3,
+  Sun,
 } from "lucide-react";
 
 const ITEMS: { id: TimelineViewMode; label: string; icon: typeof Map }[] = [
   { id: "timeline", label: "خط زمانی", icon: CalendarRange },
+  { id: "day", label: "روزانه", icon: Sun },
   { id: "week", label: "هفتگی", icon: CalendarDays },
   { id: "month", label: "ماهانه", icon: CalendarDays },
   { id: "heatmap", label: "نقشه حرارتی", icon: Grid3X3 },

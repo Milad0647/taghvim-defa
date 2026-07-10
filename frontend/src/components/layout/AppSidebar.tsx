@@ -7,16 +7,12 @@ import {
   CalendarRange,
   ChevronLeft,
   ChevronRight,
-  Info,
   LayoutDashboard,
   Map,
   Menu,
-  Plus,
-  Settings,
   Shield,
   Sun,
   Swords,
-  Users,
   UserCheck,
   X,
   Activity,
@@ -35,10 +31,6 @@ const MENU = [
   { href: "/timeline?view=month", label: "نمای ماهانه", icon: CalendarDays, match: "month" },
   { href: "/timeline?view=map", label: "نقشه رویدادها", icon: Map, match: "map" },
   { href: "/timeline?view=analytics", label: "آمار و نمودارها", icon: BarChart3, match: "analytics" },
-  { href: "/admin", label: "مدیریت محتوا", icon: Shield, match: "admin" },
-  { href: "/admin/users", label: "کاربران", icon: Users, match: "admin-users" },
-  { href: "/admin/settings", label: "تنظیمات", icon: Settings, match: "admin-settings" },
-  { href: "/admin/login", label: "ورود ادمین", icon: Info, match: "admin-login" },
 ] as const;
 
 type AppSidebarProps = {
@@ -46,7 +38,6 @@ type AppSidebarProps = {
   mobileOpen: boolean;
   onToggleCollapse: () => void;
   onCloseMobile: () => void;
-  onCreateEvent: () => void;
   stats: {
     totalEvents: number;
     enemy: number;
@@ -60,7 +51,6 @@ export function AppSidebar({
   mobileOpen,
   onToggleCollapse,
   onCloseMobile,
-  onCreateEvent,
   stats,
 }: AppSidebarProps) {
   const pathname = usePathname();
@@ -117,17 +107,9 @@ export function AppSidebar({
           const active =
             item.match === "overview"
               ? pathname.startsWith("/overview")
-              : item.match === "admin"
-                ? pathname === "/admin"
-                : item.match === "admin-users"
-                  ? pathname.startsWith("/admin/users")
-                  : item.match === "admin-settings"
-                    ? pathname.startsWith("/admin/settings")
-                    : item.match === "admin-login"
-                      ? pathname.startsWith("/admin/login")
-                      : item.match === "timeline"
-                        ? pathname.startsWith("/timeline") && view === "timeline"
-                        : pathname.startsWith("/timeline") && view === item.match;
+              : item.match === "timeline"
+                ? pathname.startsWith("/timeline") && view === "timeline"
+                : pathname.startsWith("/timeline") && view === item.match;
           const Icon = item.icon;
 
           return (
@@ -186,19 +168,6 @@ export function AppSidebar({
             />
           </div>
         ) : null}
-
-        <button
-          type="button"
-          onClick={onCreateEvent}
-          className={clsx(
-            "flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-blue-600 text-sm font-semibold text-white transition hover:bg-blue-500",
-            collapsed && "px-2",
-          )}
-          aria-label="ثبت رویداد جدید"
-        >
-          <Plus className="h-4 w-4" />
-          {!collapsed ? <span>ثبت رویداد جدید</span> : null}
-        </button>
       </div>
     </div>
   );

@@ -3,7 +3,6 @@
 import { AppShell } from "@/components/layout/AppShell";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { MobileNavigation } from "@/components/layout/MobileNavigation";
-import { CreateEventForm } from "@/components/forms/CreateEventForm";
 import { ActiveFilterChips } from "@/components/timeline/ActiveFilterChips";
 import { EventIntensityPanel } from "@/components/timeline/EventIntensityPanel";
 import { EventDetailPanel } from "@/components/timeline/EventDetailPanel";
@@ -84,7 +83,6 @@ export function TimelinePage({
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const [createOpen, setCreateOpen] = useState(false);
   const [searchInput, setSearchInput] = useState(searchParams.get("q") ?? "");
   const [searchQuery, setSearchQuery] = useState(searchParams.get("q") ?? "");
   const [filters, setFilters] = useState<TimelineFiltersState>(() => ({
@@ -586,7 +584,6 @@ export function TimelinePage({
             mobileOpen={mobileMenuOpen}
             onToggleCollapse={() => setSidebarCollapsed((v) => !v)}
             onCloseMobile={() => setMobileMenuOpen(false)}
-            onCreateEvent={() => setCreateOpen(true)}
             stats={{
               totalEvents: summary.totalEvents,
               enemy: summary.enemy,
@@ -638,8 +635,6 @@ export function TimelinePage({
           syncUrl({ filters: next });
         }}
       />
-
-      <CreateEventForm open={createOpen} onClose={() => setCreateOpen(false)} />
 
       {toast ? (
         <div className="fixed bottom-24 left-4 z-[70] rounded-xl border border-amber-400/30 bg-[var(--surface-3)] px-4 py-3 text-sm text-amber-100 shadow-xl md:bottom-6">

@@ -6,6 +6,7 @@ import clsx from "clsx";
 import {
   LayoutDashboard,
   LogOut,
+  Plus,
   Settings,
   Shield,
   Users,
@@ -15,6 +16,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { IranEmblem } from "@/components/brand/IranEmblem";
+import { CreateEventForm } from "@/components/forms/CreateEventForm";
 
 const NAV = [
   { href: "/admin", label: "داشبورد ادمین", icon: LayoutDashboard, exact: true },
@@ -78,6 +80,7 @@ function AdminShell({
   const pathname = usePathname();
   const router = useRouter();
   const perms = ROLE_PERMISSIONS[user.role];
+  const [createOpen, setCreateOpen] = useState(false);
 
   async function onLogout() {
     await logoutRequest();
@@ -110,7 +113,10 @@ function AdminShell({
 
               const active = item.exact
                 ? pathname === item.href
-                : pathname === item.href || pathname.startsWith(`${item.href}/`);
+                : item.href === "/timeline"
+                  ? pathname.startsWith("/timeline")
+                  : pathname === item.href ||
+                    pathname.startsWith(`${item.href}/`);
               const Icon = item.icon;
 
               return (
@@ -131,9 +137,19 @@ function AdminShell({
             })}
           </nav>
 
-          <div className="border-t border-[var(--border)] p-3">
-            <ThemeToggle className="mb-3 w-full justify-center" />
-            <div className="mb-3 rounded-xl bg-[var(--panel-2)] p-3 text-xs">
+          <div className="space-y-2 border-t border-[var(--border)] p-3">
+            {perms.manageContent ? (
+              <button
+                type="button"
+                onClick={() => setCreateOpen(true)}
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-3 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-500"
+              >
+                <Plus className="h-4 w-4" />
+                ثبت رویداد جدید
+              </button>
+            ) : null}
+            <ThemeToggle className="w-full justify-center" />
+            <div className="rounded-xl bg-[var(--panel-2)] p-3 text-xs">
               <p className="font-semibold text-[var(--text-primary)]">{user.name}</p>
               <p className="mt-1 text-[var(--text-secondary)]">{user.email}</p>
               <p className="mt-1 text-[var(--primary)]">{ROLE_LABELS[user.role]}</p>
@@ -155,13 +171,24 @@ function AdminShell({
               <p className="text-sm font-semibold text-[var(--text-primary)]">{user.name}</p>
               <p className="text-xs text-[var(--text-secondary)]">{ROLE_LABELS[user.role]}</p>
             </div>
-            <button
-              type="button"
-              onClick={onLogout}
-              className="rounded-xl border border-[var(--border)] px-3 py-2 text-xs"
-            >
-              خروج
-            </button>
+            <div className="flex items-center gap-2">
+              {perms.manageContent ? (
+                <button
+                  type="button"
+                  onClick={() => setCreateOpen(true)}
+                  className="rounded-xl bg-blue-600 px-3 py-2 text-xs font-semibold text-white"
+                >
+                  ثبت رویداد
+                </button>
+              ) : null}
+              <button
+                type="button"
+                onClick={onLogout}
+                className="rounded-xl border border-[var(--border)] px-3 py-2 text-xs"
+              >
+                خروج
+              </button>
+            </div>
           </div>
 
           <div className="flex flex-wrap gap-2 lg:hidden">
@@ -185,6 +212,10 @@ function AdminShell({
           {children}
         </main>
       </div>
+
+      {perms.manageContent ? (
+        <CreateEventForm open={createOpen} onClose={() => setCreateOpen(false)} />
+      ) : null}
     </div>
   );
 }

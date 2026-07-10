@@ -20,9 +20,6 @@ function OverviewContent() {
         mobileOpen={mobileOpen}
         onToggleCollapse={() => setCollapsed((v) => !v)}
         onCloseMobile={() => setMobileOpen(false)}
-        onCreateEvent={() => {
-          window.location.href = "/timeline";
-        }}
         stats={{
           totalEvents: summary.totalEvents,
           enemy: summary.enemy,

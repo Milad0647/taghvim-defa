@@ -1,69 +1,177 @@
 "use client";
 
-import { intensityColor } from "@/lib/timeline";
+import { MonthlyDayCellCard } from "@/components/views/monthly/MonthlyDayCell";
+import { MonthlyToolbar } from "@/components/views/monthly/MonthlyToolbar";
+import {
+  WEEKDAY_LABELS,
+  buildMonthCells,
+  findMonthOption,
+  listMonthOptions,
+  monthLabel,
+  resolveMonthFromDate,
+  shiftPersianMonth,
+  summarizeMonth,
+  toMonthlyDateString,
+  getPersianYmd,
+} from "@/lib/monthly";
 import type { TimelineDay } from "@/types/timeline";
+import { useMemo, useState } from "react";
 
 type MonthlyViewProps = {
   days: TimelineDay[];
+  selectedDay?: string | null;
   onSelectDay: (date: string) => void;
+  onOpenFilters: () => void;
+  activeFilterCount?: number;
 };
 
-export function MonthlyView({ days, onSelectDay }: MonthlyViewProps) {
-  return (
-    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-7">
-      {days.slice(0, 28).map((day) => {
-        const thumbs = day.events
-          .map((e) => e.imageUrl)
-          .filter(Boolean)
-          .slice(0, 3) as string[];
+export function MonthlyView({
+  days,
+  selectedDay = null,
+  onSelectDay,
+  onOpenFilters,
+  activeFilterCount = 0,
+}: MonthlyViewProps) {
+  const months = useMemo(() => listMonthOptions(days), [days]);
 
-        return (
-          <button
-            key={day.date}
-            type="button"
-            onClick={() => onSelectDay(day.date)}
-            className="min-h-[120px] rounded-[14px] border border-[var(--border)] bg-[var(--surface-2)] p-2.5 text-right transition hover:border-white/20"
-            style={{
-              boxShadow: `inset 0 0 0 1px ${intensityColor(day.intensity)}33`,
-            }}
-          >
-            <div className="flex items-center justify-between gap-2">
-              <span className="text-sm font-bold text-[var(--text-primary)]">
-                {day.persianDate.split(" ")[0]}
-              </span>
-              <span
-                className="rounded px-1.5 py-0.5 text-[10px] text-[var(--text-primary)]"
-                style={{ backgroundColor: intensityColor(day.intensity) }}
-              >
-                {day.totalEvents.toLocaleString("fa-IR")}
-              </span>
-            </div>
-            <p className="mt-1 text-[10px] text-[var(--text-secondary)]">{day.weekday}</p>
-            <div className="mt-2 flex gap-2 text-[10px]">
-              <span className="text-red-300">
-                د {day.enemyActionsCount.toLocaleString("fa-IR")}
-              </span>
-              <span className="text-blue-300">
-                و {day.governmentActionsCount.toLocaleString("fa-IR")}
-              </span>
-            </div>
-            {thumbs.length > 0 ? (
-              <div className="mt-2 flex gap-1">
-                {thumbs.map((url) => (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    key={url}
-                    src={url}
-                    alt=""
-                    className="h-6 w-6 rounded object-cover"
-                    loading="lazy"
-                  />
-                ))}
-              </div>
-            ) : null}
-          </button>
-        );
-      })}
+  const defaultDate =
+    selectedDay ?? days[0]?.date ?? toMonthlyDateString(new Date());
+
+  const initial = resolveMonthFromDate(defaultDate, months);
+  const fallback = getPersianYmd(defaultDate);
+
+  const [cursor, setCursor] = useState(() => ({
+    year: initial?.year ?? fallback.year,
+    month: initial?.month ?? fallback.month,
+  }));
+
+  const activeMonth =
+    findMonthOption(months, cursor.year, cursor.month) ??
+    months[months.length - 1] ??
+    null;
+
+  const year = activeMonth?.year ?? cursor.year;
+  const month = activeMonth?.month ?? cursor.month;
+  const activeKey = `${year}-${String(month).padStart(2, "0")}`;
+
+  const cells = useMemo(
+    () => buildMonthCells(year, month, days),
+    [year, month, days],
+  );
+
+  const summary = useMemo(() => summarizeMonth(cells), [cells]);
+  const title = monthLabel(year, month);
+
+  const activeIndex = months.findIndex((m) => m.key === activeKey);
+  const canGoPrev = activeIndex > 0 || months.length === 0;
+  const canGoNext =
+    (activeIndex >= 0 && activeIndex < months.length - 1) || months.length === 0;
+
+  const selectMonthKey = (key: string) => {
+    const found = months.find((m) => m.key === key);
+    if (!found) return;
+    setCursor({ year: found.year, month: found.month });
+  };
+
+  const goPrev = () => {
+    if (activeIndex > 0) {
+      const prev = months[activeIndex - 1]!;
+      setCursor({ year: prev.year, month: prev.month });
+      return;
+    }
+    setCursor((c) => shiftPersianMonth(c.year, c.month, -1));
+  };
+
+  const goNext = () => {
+    if (activeIndex >= 0 && activeIndex < months.length - 1) {
+      const next = months[activeIndex + 1]!;
+      setCursor({ year: next.year, month: next.month });
+      return;
+    }
+    setCursor((c) => shiftPersianMonth(c.year, c.month, 1));
+  };
+
+  return (
+    <section
+      className="space-y-3"
+      style={{ direction: "rtl", textAlign: "right" }}
+    >
+      <MonthlyToolbar
+        months={months}
+        activeKey={activeKey}
+        title={title}
+        onSelectMonth={selectMonthKey}
+        onPrevMonth={goPrev}
+        onNextMonth={goNext}
+        onOpenFilters={onOpenFilters}
+        activeFilterCount={activeFilterCount}
+        canGoPrev={canGoPrev}
+        canGoNext={canGoNext}
+      />
+
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+        <Kpi
+          label="روزهای ماه"
+          value={summary.dayCount.toLocaleString("fa-IR")}
+        />
+        <Kpi
+          label="روز فعال"
+          value={summary.activeDays.toLocaleString("fa-IR")}
+        />
+        <Kpi
+          label="اقدام دشمن"
+          value={summary.enemy.toLocaleString("fa-IR")}
+          tone="var(--enemy)"
+        />
+        <Kpi
+          label="اقدام دولت"
+          value={summary.government.toLocaleString("fa-IR")}
+          tone="var(--government)"
+        />
+      </div>
+
+      <div className="overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-2 sm:p-3">
+        <div className="mb-2 grid grid-cols-7 gap-1.5 text-center text-[11px] font-medium text-[var(--text-muted)]">
+          {WEEKDAY_LABELS.map((label) => (
+            <span key={label} className="py-1">
+              {label}
+            </span>
+          ))}
+        </div>
+
+        <div className="grid grid-cols-7 gap-1.5">
+          {cells.map((cell) => (
+            <MonthlyDayCellCard
+              key={cell.key}
+              cell={cell}
+              selected={!!cell.date && selectedDay === cell.date}
+              onSelect={onSelectDay}
+            />
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function Kpi({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: string;
+  tone?: string;
+}) {
+  return (
+    <div className="rounded-xl border border-[var(--border)] bg-[var(--panel)] px-3 py-2.5">
+      <p className="m-0 text-[11px] text-[var(--text-secondary)]">{label}</p>
+      <p
+        className="mt-1 mb-0 text-lg font-bold tabular-nums text-[var(--text-primary)]"
+        style={tone ? { color: tone } : undefined}
+      >
+        {value}
+      </p>
     </div>
   );
 }

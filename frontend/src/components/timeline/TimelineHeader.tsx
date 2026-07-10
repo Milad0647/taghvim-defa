@@ -10,6 +10,7 @@ type TimelineHeaderProps = {
   title?: string;
   subtitle?: string;
   showViewSwitcher?: boolean;
+  showDateFilters?: boolean;
   searchQuery: string;
   onSearchChange: (value: string) => void;
   dateFrom: string;
@@ -40,6 +41,7 @@ export function TimelineHeader({
   onViewChange,
   dateRangeLabel,
   showViewSwitcher = true,
+  showDateFilters = true,
 }: TimelineHeaderProps) {
   return (
     <header className="sticky top-0 z-30 space-y-3 bg-[var(--background)]/95 pb-1 backdrop-blur-md">
@@ -98,23 +100,25 @@ export function TimelineHeader({
               <ViewSwitcher value={selectedView} onChange={onViewChange} compact />
             ) : null}
 
-            <div className="flex items-center gap-1.5 rounded-xl border border-[var(--border)] bg-[var(--panel-2)] px-2 py-1.5">
-              <input
-                type="date"
-                value={dateFrom}
-                onChange={(e) => onDateFromChange(e.target.value)}
-                className="bg-transparent text-[11px] text-[var(--text-secondary)] outline-none"
-                aria-label="از تاریخ"
-              />
-              <span className="text-[var(--text-muted)]">|</span>
-              <input
-                type="date"
-                value={dateTo}
-                onChange={(e) => onDateToChange(e.target.value)}
-                className="bg-transparent text-[11px] text-[var(--text-secondary)] outline-none"
-                aria-label="تا تاریخ"
-              />
-            </div>
+            {showDateFilters ? (
+              <div className="flex items-center gap-1.5 rounded-xl border border-[var(--border)] bg-[var(--panel-2)] px-2 py-1.5">
+                <input
+                  type="date"
+                  value={dateFrom}
+                  onChange={(e) => onDateFromChange(e.target.value)}
+                  className="bg-transparent text-[11px] text-[var(--text-secondary)] outline-none"
+                  aria-label="از تاریخ"
+                />
+                <span className="text-[var(--text-muted)]">|</span>
+                <input
+                  type="date"
+                  value={dateTo}
+                  onChange={(e) => onDateToChange(e.target.value)}
+                  className="bg-transparent text-[11px] text-[var(--text-secondary)] outline-none"
+                  aria-label="تا تاریخ"
+                />
+              </div>
+            ) : null}
 
             {dateRangeLabel ? (
               <span className="hidden text-[11px] text-[var(--text-muted)] xl:inline">

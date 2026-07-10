@@ -366,10 +366,17 @@ export function TimelinePage({
         subtitle={
           selectedView === "week"
             ? "نمای کلی رویدادها و اقدامات در بازه هفتگی"
-            : "نمایش زنده رخدادها و پاسخ‌های ثبت‌شده"
+            : selectedView === "month"
+              ? "تقویم ماهانه رویدادها از روز اول تا آخر ماه"
+              : "نمایش زنده رخدادها و پاسخ‌های ثبت‌شده"
         }
         showViewSwitcher={
-          selectedView !== "timeline" && selectedView !== "week"
+          selectedView !== "timeline" &&
+          selectedView !== "week" &&
+          selectedView !== "month"
+        }
+        showDateFilters={
+          selectedView !== "week" && selectedView !== "month"
         }
         searchQuery={searchInput}
         onSearchChange={setSearchInput}
@@ -486,8 +493,17 @@ export function TimelinePage({
       ) : null}
       {!loading && !error && selectedView === "month" ? (
         <MonthlyView
-          days={filteredDays}
-          onSelectDay={(date) => scrollToDay(date, true)}
+          days={rangedDays}
+          selectedDay={selectedDay}
+          onOpenFilters={() => setFiltersOpen(true)}
+          activeFilterCount={activeFilterCount}
+          onSelectDay={(date) => {
+            setSelectedDay(date);
+            const day = rangedDays.find((d) => d.date === date);
+            const top = day?.events[0] ?? null;
+            if (top) setSelectedEvent(top);
+            syncUrl({ date, view: "month", event: top?.id ?? null });
+          }}
         />
       ) : null}
       {!loading && !error && selectedView === "heatmap" ? (

@@ -4,7 +4,7 @@ import { MobileMenuButton } from "@/components/layout/AppSidebar";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { ViewSwitcher } from "@/components/timeline/ViewSwitcher";
 import type { TimelineViewMode } from "@/types/timeline";
-import { Bell, Download, Filter, Search, UserRound } from "lucide-react";
+import { Bell, Filter, Search, UserRound } from "lucide-react";
 
 type TimelineHeaderProps = {
   title?: string;
@@ -138,14 +138,6 @@ export function TimelineHeader({
                   {activeFilterCount.toLocaleString("fa-IR")}
                 </span>
               ) : null}
-            </button>
-
-            <button
-              type="button"
-              className="inline-flex items-center gap-1.5 rounded-xl border border-blue-500/25 bg-blue-500/10 px-3 py-2 text-xs text-[var(--primary)] hover:bg-blue-500/20"
-            >
-              <Download className="h-3.5 w-3.5" />
-              صادرات
             </button>
           </div>
         </div>

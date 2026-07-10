@@ -2,7 +2,7 @@
 
 import { WeeklyWeekSelector } from "@/components/views/weekly/WeeklyWeekSelector";
 import type { WeekOption } from "@/lib/weekly";
-import { ChevronLeft, ChevronRight, Download, Filter, RefreshCw } from "lucide-react";
+import { ChevronLeft, ChevronRight, Filter, RefreshCw } from "lucide-react";
 
 type WeeklyToolbarProps = {
   rangeLabel: string;
@@ -31,13 +31,6 @@ export function WeeklyToolbar({
     <div className="flex flex-col gap-3 rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-3 sm:p-4">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            className="inline-flex items-center gap-1.5 rounded-xl border border-blue-500/25 bg-blue-500/10 px-3 py-2 text-xs text-[var(--primary)] hover:bg-blue-500/20"
-          >
-            <Download className="h-3.5 w-3.5" />
-            خروجی گزارش
-          </button>
           <button
             type="button"
             onClick={onRefresh}

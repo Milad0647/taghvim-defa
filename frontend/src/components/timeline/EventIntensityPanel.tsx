@@ -3,7 +3,14 @@
 import { intensityLabel } from "@/lib/timeline";
 import type { TimelineDay } from "@/types/timeline";
 import clsx from "clsx";
-import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type PointerEvent as ReactPointerEvent,
+} from "react";
 
 const LEGEND_COLORS = [
   "#315B9A",
@@ -13,6 +20,9 @@ const LEGEND_COLORS = [
   "#F0774D",
   "#D93445",
 ] as const;
+
+const MIN_BAR_WIDTH = 10;
+const BAR_GAP = 2;
 
 function pickColor(normalized: number): string {
   if (normalized < 0.18) return "#193D78";
@@ -27,10 +37,61 @@ function pickColor(normalized: number): string {
   return "#B8233C";
 }
 
-function shortPersianLabel(day: TimelineDay): string {
+function shortPersianLabel(day: Pick<TimelineDay, "persianDate">): string {
   const parts = day.persianDate.split(" ");
   if (parts.length >= 2) return `${parts[0]} ${parts[1]}`;
   return day.persianDate;
+}
+
+function toLocalDateString(date: Date): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+function persianParts(date: Date): { weekday: string; persianDate: string } {
+  const weekday = new Intl.DateTimeFormat("fa-IR", { weekday: "long" }).format(
+    date,
+  );
+  const persianDate = new Intl.DateTimeFormat("fa-IR", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  }).format(date);
+  return { weekday, persianDate };
+}
+
+function emptyDay(dateStr: string): TimelineDay {
+  const date = new Date(`${dateStr}T12:00:00`);
+  const { weekday, persianDate } = persianParts(date);
+  return {
+    date: dateStr,
+    persianDate,
+    weekday,
+    totalEvents: 0,
+    enemyActionsCount: 0,
+    governmentActionsCount: 0,
+    intensity: 0,
+    events: [],
+  };
+}
+
+/** Fill every calendar day between first and last so the chart has no gaps */
+function fillContinuousDays(days: TimelineDay[]): TimelineDay[] {
+  if (days.length === 0) return [];
+  const byDate = new Map(days.map((d) => [d.date, d]));
+  const sorted = [...days].sort((a, b) => a.date.localeCompare(b.date));
+  const start = new Date(`${sorted[0]!.date}T12:00:00`);
+  const end = new Date(`${sorted[sorted.length - 1]!.date}T12:00:00`);
+  const filled: TimelineDay[] = [];
+
+  for (const cursor = new Date(start); cursor <= end; cursor.setDate(cursor.getDate() + 1)) {
+    const key = toLocalDateString(cursor);
+    filled.push(byDate.get(key) ?? emptyDay(key));
+  }
+
+  return filled;
 }
 
 type EventIntensityPanelProps = {
@@ -47,12 +108,19 @@ export function EventIntensityPanel({
   className,
 }: EventIntensityPanelProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
-  const [hoveredDate, setHoveredDate] = useState<string | null>(null);
+  const trackRef = useRef<HTMLDivElement>(null);
+  const dragRef = useRef<{
+    active: boolean;
+    startX: number;
+    startScroll: number;
+    moved: boolean;
+  }>({ active: false, startX: 0, startScroll: 0, moved: false });
 
-  const chronological = useMemo(
-    () => [...days].sort((a, b) => a.date.localeCompare(b.date)),
-    [days],
-  );
+  const [hoveredDate, setHoveredDate] = useState<string | null>(null);
+  const [containerWidth, setContainerWidth] = useState(0);
+  const [canPan, setCanPan] = useState(false);
+
+  const chronological = useMemo(() => fillContinuousDays(days), [days]);
 
   const maxEvents = useMemo(
     () => Math.max(1, ...chronological.map((d) => d.totalEvents)),
@@ -64,26 +132,41 @@ export function EventIntensityPanel({
       chronological.map((day) => {
         const normalized = Math.min(1, day.intensity / 100);
         const eventNorm = day.totalEvents / maxEvents;
-        const score = Math.max(normalized, eventNorm * 0.85);
-        const height = Math.round(5 + score * 25);
+        const score =
+          day.totalEvents === 0
+            ? 0.06
+            : Math.max(normalized, eventNorm * 0.85);
+        const height = Math.round(4 + score * 28);
 
         return {
           day,
           height,
-          color: pickColor(score),
+          color: day.totalEvents === 0 ? "rgba(148,163,184,0.22)" : pickColor(score),
           shortLabel: shortPersianLabel(day),
+          isEmpty: day.totalEvents === 0,
         };
       }),
     [chronological, maxEvents],
   );
 
+  const barSlotWidth = useMemo(() => {
+    if (bars.length === 0 || containerWidth <= 0) return MIN_BAR_WIDTH;
+    const available = containerWidth - Math.max(0, bars.length - 1) * BAR_GAP;
+    return Math.max(MIN_BAR_WIDTH, available / bars.length);
+  }, [bars.length, containerWidth]);
+
+  const trackWidth = useMemo(() => {
+    if (bars.length === 0) return 0;
+    return bars.length * barSlotWidth + Math.max(0, bars.length - 1) * BAR_GAP;
+  }, [bars.length, barSlotWidth]);
+
   const axisLabels = useMemo(() => {
     if (bars.length === 0) return [];
-    if (bars.length <= 6) {
+    if (bars.length <= 8) {
       return bars.map((b, index) => ({ ...b, index }));
     }
     const indexes = new Set<number>();
-    const steps = 5;
+    const steps = Math.min(7, bars.length - 1);
     for (let i = 0; i <= steps; i++) {
       indexes.add(Math.round((i / steps) * (bars.length - 1)));
     }
@@ -92,8 +175,21 @@ export function EventIntensityPanel({
       .map((index) => ({ ...bars[index]!, index }));
   }, [bars]);
 
-  const hovered = bars.find((b) => b.day.date === hoveredDate) ?? null;
-  const selected = activeDate;
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+
+    const measure = () => {
+      const width = el.clientWidth;
+      setContainerWidth(width);
+      setCanPan(el.scrollWidth > el.clientWidth + 2);
+    };
+
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [bars.length, trackWidth]);
 
   useEffect(() => {
     if (!activeDate || !scrollRef.current) return;
@@ -114,6 +210,41 @@ export function EventIntensityPanel({
     container.scrollBy({ left: delta, behavior: "smooth" });
   }, [activeDate]);
 
+  const onPointerDown = useCallback((e: ReactPointerEvent<HTMLDivElement>) => {
+    if (!scrollRef.current) return;
+    dragRef.current = {
+      active: true,
+      startX: e.clientX,
+      startScroll: scrollRef.current.scrollLeft,
+      moved: false,
+    };
+    scrollRef.current.setPointerCapture(e.pointerId);
+  }, []);
+
+  const onPointerMove = useCallback((e: ReactPointerEvent<HTMLDivElement>) => {
+    const drag = dragRef.current;
+    if (!drag.active || !scrollRef.current) return;
+    const dx = e.clientX - drag.startX;
+    if (Math.abs(dx) > 4) drag.moved = true;
+    scrollRef.current.scrollLeft = drag.startScroll - dx;
+  }, []);
+
+  const endDrag = useCallback((e: ReactPointerEvent<HTMLDivElement>) => {
+    const drag = dragRef.current;
+    drag.active = false;
+    if (scrollRef.current?.hasPointerCapture(e.pointerId)) {
+      scrollRef.current.releasePointerCapture(e.pointerId);
+    }
+  }, []);
+
+  const handleBarClick = useCallback(
+    (date: string) => {
+      if (dragRef.current.moved) return;
+      onSelectDay?.(date);
+    },
+    [onSelectDay],
+  );
+
   if (bars.length === 0) {
     return (
       <div
@@ -127,21 +258,20 @@ export function EventIntensityPanel({
     );
   }
 
-  const rangeLabel =
-    bars.length > 0
-      ? `${bars[0]!.shortLabel} تا ${bars[bars.length - 1]!.shortLabel}`
-      : "";
+  const rangeLabel = `${bars[0]!.shortLabel} تا ${bars[bars.length - 1]!.shortLabel}`;
+  const hovered = bars.find((b) => b.day.date === hoveredDate) ?? null;
+  const selected = activeDate;
 
   return (
     <div
       className={clsx(
-        "event-intensity-panel grid h-[116px] grid-cols-[110px_1fr] items-stretch gap-3.5 overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--panel)] px-4",
+        "event-intensity-panel grid h-[124px] grid-cols-[118px_1fr] items-stretch gap-3 overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--panel)] px-4",
         className,
       )}
       style={{ direction: "rtl" }}
       aria-label="شدت رویدادها"
     >
-      <div className="flex max-w-[115px] min-w-[105px] flex-col justify-center gap-2">
+      <div className="flex min-w-0 flex-col justify-center gap-2">
         <p className="m-0 text-xs font-medium leading-tight text-[var(--text-secondary)]">
           شدت رویدادها
         </p>
@@ -163,17 +293,25 @@ export function EventIntensityPanel({
         <p className="m-0 text-[9px] leading-snug text-[var(--text-muted)]">
           {rangeLabel}
           <br />
-          اسکرول افقی برای همه روزها
+          {bars.length.toLocaleString("fa-IR")} روز · برای جابه‌جایی بکشید
         </p>
       </div>
 
       <div
         ref={scrollRef}
-        className="scrollbar-thin relative min-w-0 overflow-x-auto overflow-y-hidden pt-2 pb-1"
+        className={clsx(
+          "scrollbar-thin relative min-w-0 overflow-x-auto overflow-y-hidden pt-2 pb-1 select-none",
+          canPan ? "cursor-grab active:cursor-grabbing" : "cursor-default",
+        )}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={endDrag}
+        onPointerCancel={endDrag}
       >
         <div
+          ref={trackRef}
           className="relative flex h-full flex-col justify-end pb-5"
-          style={{ minWidth: Math.max(bars.length * 11, 320) }}
+          style={{ width: Math.max(trackWidth, containerWidth || trackWidth) }}
         >
           {hovered ? (
             <div
@@ -181,7 +319,8 @@ export function EventIntensityPanel({
               className="pointer-events-none absolute top-0 z-20 w-[180px] rounded-[10px] border border-[var(--border)] bg-[var(--panel-2)] px-2.5 py-2 shadow-xl"
               style={{
                 right:
-                  bars.findIndex((b) => b.day.date === hovered.day.date) * 11,
+                  bars.findIndex((b) => b.day.date === hovered.day.date) *
+                  (barSlotWidth + BAR_GAP),
                 transform: "translateX(30%)",
               }}
             >
@@ -199,17 +338,18 @@ export function EventIntensityPanel({
                 دولت
               </p>
               <p className="mt-1 mb-0 text-[10px] text-[var(--text-secondary)]">
-                شدت: {intensityLabel(hovered.day.intensity)}
+                شدت:{" "}
+                {hovered.isEmpty
+                  ? "بدون فعالیت"
+                  : intensityLabel(hovered.day.intensity)}
               </p>
-              {hovered.day.events[0] ? (
-                <p className="mt-1.5 mb-0 text-[10px] leading-snug text-[var(--text-muted)]">
-                  {hovered.day.events[0].title}
-                </p>
-              ) : null}
             </div>
           ) : null}
 
-          <div className="relative z-[1] flex h-[34px] items-end gap-[3px]">
+          <div
+            className="relative z-[1] flex h-[36px] items-end"
+            style={{ gap: BAR_GAP }}
+          >
             {bars.map((bar) => {
               const isActive = selected === bar.day.date;
               const isHovered = hoveredDate === bar.day.date;
@@ -224,10 +364,11 @@ export function EventIntensityPanel({
                   onMouseLeave={() => setHoveredDate(null)}
                   onFocus={() => setHoveredDate(bar.day.date)}
                   onBlur={() => setHoveredDate(null)}
-                  onClick={() => onSelectDay?.(bar.day.date)}
-                  className="min-w-2 cursor-pointer border-0 p-0 transition-[box-shadow,transform] duration-120"
+                  onClick={() => handleBarClick(bar.day.date)}
+                  className="cursor-pointer border-0 p-0 transition-[box-shadow,transform] duration-120"
                   style={{
-                    width: 8,
+                    width: barSlotWidth,
+                    minWidth: barSlotWidth,
                     height: bar.height,
                     background: bar.color,
                     borderTopLeftRadius: 2,
@@ -237,13 +378,12 @@ export function EventIntensityPanel({
                       : isHovered
                         ? `0 0 8px ${bar.color}55`
                         : "none",
-                    outline: isActive
-                      ? "1px solid var(--primary)"
-                      : "none",
+                    outline: isActive ? "1px solid var(--primary)" : "none",
                     outlineOffset: 1,
                     transform:
                       isHovered || isActive ? "scaleY(1.06)" : "none",
                     transformOrigin: "bottom",
+                    opacity: bar.isEmpty ? 0.7 : 1,
                   }}
                 />
               );
@@ -251,32 +391,30 @@ export function EventIntensityPanel({
           </div>
 
           <div className="relative mt-0 h-px w-full bg-[var(--border)]">
-            {axisLabels.map((item) => {
-              const leftPx = item.index * 11 + 4;
-              return (
-                <span
-                  key={`tick-${item.day.date}`}
-                  className="absolute top-0 h-[5px] w-px bg-[var(--border)]"
-                  style={{ right: leftPx }}
-                />
-              );
-            })}
+            {axisLabels.map((item) => (
+              <span
+                key={`tick-${item.day.date}`}
+                className="absolute top-0 h-[5px] w-px bg-[var(--border)]"
+                style={{
+                  right: item.index * (barSlotWidth + BAR_GAP) + barSlotWidth / 2,
+                }}
+              />
+            ))}
           </div>
 
           <div className="relative mt-0.5 h-[22px]">
             {axisLabels.map((item) => {
-              const leftPx = item.index * 11 + 4;
               const isSelected = selected === item.day.date;
-
               return (
                 <button
                   key={`label-${item.day.date}`}
                   type="button"
-                  onClick={() => onSelectDay?.(item.day.date)}
+                  onClick={() => handleBarClick(item.day.date)}
                   className="absolute cursor-pointer whitespace-nowrap text-[10px] leading-none"
                   style={{
                     top: isSelected ? -2 : 4,
-                    right: leftPx,
+                    right:
+                      item.index * (barSlotWidth + BAR_GAP) + barSlotWidth / 2,
                     transform: "translateX(50%)",
                     border: isSelected
                       ? "1px solid var(--primary)"
@@ -284,9 +422,7 @@ export function EventIntensityPanel({
                     background: isSelected
                       ? "linear-gradient(180deg, #3478ed 0%, #1957c8 100%)"
                       : "transparent",
-                    color: isSelected
-                      ? "#ffffff"
-                      : "var(--text-muted)",
+                    color: isSelected ? "#ffffff" : "var(--text-muted)",
                     borderRadius: isSelected ? 7 : 0,
                     padding: isSelected ? "4px 10px" : 0,
                     boxShadow: isSelected

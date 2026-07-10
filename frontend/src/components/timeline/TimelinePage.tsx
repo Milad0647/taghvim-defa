@@ -410,7 +410,7 @@ export function TimelinePage({
         ) : (
           <>
             <EventIntensityPanel
-              days={filteredDays}
+              days={rangedDays}
               activeDate={selectedDay}
               onSelectDay={(date) => scrollToDay(date, false)}
             />

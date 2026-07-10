@@ -14,6 +14,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
+import { IranEmblem } from "@/components/brand/IranEmblem";
 
 const NAV = [
   { href: "/admin", label: "داشبورد ادمین", icon: LayoutDashboard, exact: true },
@@ -91,8 +92,13 @@ function AdminShell({
       <div className="mx-auto flex min-h-screen max-w-6xl gap-4 p-4">
         <aside className="sticky top-4 hidden h-[calc(100vh-2rem)] w-64 shrink-0 flex-col rounded-2xl border border-[var(--border)] bg-[var(--panel)] lg:flex">
           <div className="border-b border-[var(--border)] p-4">
-            <p className="text-xs text-[var(--text-secondary)]">پنل مدیریت</p>
-            <h1 className="mt-1 text-lg font-bold text-[var(--text-primary)]">تقویم دفاعی</h1>
+            <div className="mb-2 flex items-center gap-2">
+              <IranEmblem className="h-7 w-7 text-[var(--logo)]" />
+              <div>
+                <p className="text-xs text-[var(--text-secondary)]">پنل مدیریت</p>
+                <h1 className="text-lg font-bold text-[var(--text-primary)]">تقویم دفاعی</h1>
+              </div>
+            </div>
           </div>
 
           <nav className="flex-1 space-y-1 p-2">

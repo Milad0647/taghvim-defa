@@ -3,7 +3,7 @@
 import { loginRequest } from "@/lib/auth";
 import { getSession } from "@/lib/admin-store";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
-import { Shield } from "lucide-react";
+import { IranEmblem } from "@/components/brand/IranEmblem";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -46,8 +46,8 @@ export default function AdminLoginPage() {
       </div>
       <div className="w-full max-w-md rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-6 shadow-2xl">
         <div className="mb-6 flex items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-500/15">
-            <Shield className="h-5 w-5 text-[var(--primary)]" />
+          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[var(--hover)]">
+            <IranEmblem className="h-7 w-7 text-[var(--logo)]" />
           </div>
           <div>
             <h1 className="text-xl font-bold text-[var(--text-primary)]">ورود به پنل مدیریت</h1>

@@ -24,6 +24,7 @@ import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
+import { IranEmblem } from "@/components/brand/IranEmblem";
 
 const MENU = [
   { href: "/overview", label: "نمای کلی", icon: LayoutDashboard, match: "overview" },
@@ -79,8 +80,8 @@ export function AppSidebar({
         {!collapsed ? (
           <div>
             <div className="mb-0.5 flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-500/15">
-                <Shield className="h-4 w-4 text-[var(--primary)]" />
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[var(--hover)]">
+                <IranEmblem className="h-6 w-6 text-[var(--logo)]" />
               </div>
               <div>
                 <p className="text-sm font-bold text-[var(--text-primary)]">گزارش زنده</p>
@@ -89,7 +90,7 @@ export function AppSidebar({
             </div>
           </div>
         ) : (
-          <Shield className="mx-auto h-5 w-5 text-[var(--primary)]" />
+          <IranEmblem className="mx-auto h-6 w-6 text-[var(--logo)]" />
         )}
         <button
           type="button"

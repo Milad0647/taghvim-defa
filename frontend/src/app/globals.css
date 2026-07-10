@@ -32,6 +32,7 @@
   --mark-text: #e0e7ff;
   --scrollbar: rgba(148, 163, 184, 0.25);
   --overlay: rgba(0, 0, 0, 0.6);
+  --logo: #f1f5f9;
   --event-enemy-bg: linear-gradient(
     90deg,
     rgba(46, 16, 27, 0.92) 0%,
@@ -91,6 +92,7 @@
   --mark-text: #312e81;
   --scrollbar: rgba(100, 116, 139, 0.35);
   --overlay: rgba(15, 23, 42, 0.45);
+  --logo: #0f172a;
   --event-enemy-bg: linear-gradient(
     90deg,
     #fff1f2 0%,

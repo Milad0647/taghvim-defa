@@ -30,8 +30,7 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     restart: unless-stopped
-    ports:
-      - "${API_PORT:-8001}:80"
+    # No host ports — Coolify/Traefik routes via domain
     expose:
       - "80"
     env_file:
@@ -39,7 +38,7 @@ services:
     environment:
       APP_ENV: production
       APP_DEBUG: "false"
-      APP_URL: ${APP_URL:-http://localhost:8001}
+      APP_URL: ${APP_URL:-http://localhost:8000}
       DB_CONNECTION: pgsql
       DB_HOST: postgres
       DB_PORT: 5432
@@ -70,14 +69,12 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8001/api/v1}
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000/api/v1}
     restart: unless-stopped
-    ports:
-      - "${FRONTEND_PORT:-3001}:3000"
     expose:
       - "3000"
     environment:
-      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8001/api/v1}
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000/api/v1}
     depends_on:
       backend:
         condition: service_healthy

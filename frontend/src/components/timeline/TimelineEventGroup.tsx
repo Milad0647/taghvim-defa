@@ -43,12 +43,12 @@ export function TimelineEventGroup({
           style={{
             width: 7,
             height: 7,
-            background: isEnemy ? "#EF3945" : "#4196FF",
+            background: isEnemy ? "var(--enemy)" : "var(--government)",
           }}
         />
         <h4
           className="text-[15px] font-bold"
-          style={{ color: isEnemy ? "#FF474D" : "#4196FF" }}
+          style={{ color: isEnemy ? "var(--enemy)" : "var(--government)" }}
         >
           {title}
         </h4>

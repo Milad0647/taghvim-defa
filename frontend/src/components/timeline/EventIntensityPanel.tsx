@@ -28,7 +28,6 @@ function pickColor(normalized: number): string {
 }
 
 function shortPersianLabel(day: TimelineDay): string {
-  // e.g. "۱۳ تیر ۱۴۰۵" → "۱۳ تیر"
   const parts = day.persianDate.split(" ");
   if (parts.length >= 2) return `${parts[0]} ${parts[1]}`;
   return day.persianDate;
@@ -50,7 +49,6 @@ export function EventIntensityPanel({
   const scrollRef = useRef<HTMLDivElement>(null);
   const [hoveredDate, setHoveredDate] = useState<string | null>(null);
 
-  /** Oldest → newest so in RTL flex the oldest sits on the right */
   const chronological = useMemo(
     () => [...days].sort((a, b) => a.date.localeCompare(b.date)),
     [days],
@@ -79,7 +77,6 @@ export function EventIntensityPanel({
     [chronological, maxEvents],
   );
 
-  /** Axis labels: first, last, and evenly spaced middles */
   const axisLabels = useMemo(() => {
     if (bars.length === 0) return [];
     if (bars.length <= 6) {
@@ -98,7 +95,6 @@ export function EventIntensityPanel({
   const hovered = bars.find((b) => b.day.date === hoveredDate) ?? null;
   const selected = activeDate;
 
-  // Keep active bar visible horizontally without moving the page scroll
   useEffect(() => {
     if (!activeDate || !scrollRef.current) return;
     const container = scrollRef.current;
@@ -121,18 +117,10 @@ export function EventIntensityPanel({
   if (bars.length === 0) {
     return (
       <div
-        className={clsx(className)}
-        style={{
-          background: "#07101f",
-          border: "1px solid #17233a",
-          borderRadius: 12,
-          height: 116,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          color: "#8290a8",
-          fontSize: 12,
-        }}
+        className={clsx(
+          "flex h-[116px] items-center justify-center rounded-xl border border-[var(--border)] bg-[var(--panel)] text-xs text-[var(--text-secondary)]",
+          className,
+        )}
       >
         در این بازه روزی برای نمایش شدت وجود ندارد.
       </div>
@@ -146,70 +134,33 @@ export function EventIntensityPanel({
 
   return (
     <div
-      className={clsx("event-intensity-panel", className)}
-      style={{
-        direction: "rtl",
-        background: "#07101f",
-        border: "1px solid #17233a",
-        borderRadius: 12,
-        height: 116,
-        overflow: "hidden",
-        paddingInline: 16,
-        display: "grid",
-        gridTemplateColumns: "110px 1fr",
-        gap: 14,
-        alignItems: "stretch",
-      }}
+      className={clsx(
+        "event-intensity-panel grid h-[116px] grid-cols-[110px_1fr] items-stretch gap-3.5 overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--panel)] px-4",
+        className,
+      )}
+      style={{ direction: "rtl" }}
       aria-label="شدت رویدادها"
     >
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "center",
-          gap: 8,
-          minWidth: 105,
-          maxWidth: 115,
-        }}
-      >
-        <p
-          style={{
-            margin: 0,
-            fontSize: 12,
-            fontWeight: 500,
-            color: "#94A3B8",
-            lineHeight: 1.2,
-          }}
-        >
+      <div className="flex max-w-[115px] min-w-[105px] flex-col justify-center gap-2">
+        <p className="m-0 text-xs font-medium leading-tight text-[var(--text-secondary)]">
           شدت رویدادها
         </p>
 
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 6,
-          }}
-        >
-          <span style={{ fontSize: 10, color: "#8290a8" }}>کم</span>
-          <div style={{ display: "flex", alignItems: "center", gap: 2 }}>
+        <div className="flex items-center gap-1.5">
+          <span className="text-[10px] text-[var(--text-muted)]">کم</span>
+          <div className="flex items-center gap-0.5">
             {LEGEND_COLORS.map((color) => (
               <span
                 key={color}
-                style={{
-                  width: 10,
-                  height: 7,
-                  borderRadius: 1.5,
-                  background: color,
-                  display: "inline-block",
-                }}
+                className="inline-block h-[7px] w-2.5 rounded-[1.5px]"
+                style={{ background: color }}
               />
             ))}
           </div>
-          <span style={{ fontSize: 10, color: "#8290a8" }}>زیاد</span>
+          <span className="text-[10px] text-[var(--text-muted)]">زیاد</span>
         </div>
 
-        <p style={{ margin: 0, fontSize: 9, color: "#64748B", lineHeight: 1.4 }}>
+        <p className="m-0 text-[9px] leading-snug text-[var(--text-muted)]">
           {rangeLabel}
           <br />
           اسکرول افقی برای همه روزها
@@ -218,97 +169,47 @@ export function EventIntensityPanel({
 
       <div
         ref={scrollRef}
-        className="scrollbar-thin"
-        style={{
-          position: "relative",
-          minWidth: 0,
-          overflowX: "auto",
-          overflowY: "hidden",
-          paddingBottom: 4,
-          paddingTop: 8,
-        }}
+        className="scrollbar-thin relative min-w-0 overflow-x-auto overflow-y-hidden pt-2 pb-1"
       >
         <div
-          style={{
-            position: "relative",
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "flex-end",
-            minWidth: Math.max(bars.length * 11, 320),
-            height: "100%",
-            paddingBottom: 20,
-          }}
+          className="relative flex h-full flex-col justify-end pb-5"
+          style={{ minWidth: Math.max(bars.length * 11, 320) }}
         >
-          {/* Hover tooltip */}
           {hovered ? (
             <div
               role="tooltip"
+              className="pointer-events-none absolute top-0 z-20 w-[180px] rounded-[10px] border border-[var(--border)] bg-[var(--panel-2)] px-2.5 py-2 shadow-xl"
               style={{
-                position: "absolute",
-                top: 0,
-                zIndex: 20,
-                // Place near hovered bar using its index
-                right: hovered
-                  ? bars.findIndex((b) => b.day.date === hovered.day.date) * 11
-                  : 0,
+                right:
+                  bars.findIndex((b) => b.day.date === hovered.day.date) * 11,
                 transform: "translateX(30%)",
-                width: 180,
-                borderRadius: 10,
-                border: "1px solid #17233a",
-                background: "#0B1528",
-                padding: "8px 10px",
-                boxShadow: "0 8px 24px rgba(0,0,0,0.45)",
-                pointerEvents: "none",
               }}
             >
-              <p
-                style={{
-                  margin: 0,
-                  fontSize: 11,
-                  fontWeight: 600,
-                  color: "#F8FAFC",
-                }}
-              >
+              <p className="m-0 text-[11px] font-semibold text-[var(--text-primary)]">
                 {hovered.day.weekday} {hovered.day.persianDate}
               </p>
-              <p style={{ margin: "6px 0 0", fontSize: 10, color: "#CBD5E1" }}>
+              <p className="mt-1.5 mb-0 text-[10px] text-[var(--text-secondary)]">
                 {hovered.day.totalEvents.toLocaleString("fa-IR")} رویداد
               </p>
-              <p style={{ margin: "2px 0 0", fontSize: 10, color: "#FCA5A5" }}>
+              <p className="mt-0.5 mb-0 text-[10px] text-[var(--enemy)]">
                 {hovered.day.enemyActionsCount.toLocaleString("fa-IR")} اقدام دشمن
               </p>
-              <p style={{ margin: "2px 0 0", fontSize: 10, color: "#93C5FD" }}>
+              <p className="mt-0.5 mb-0 text-[10px] text-[var(--government)]">
                 {hovered.day.governmentActionsCount.toLocaleString("fa-IR")} اقدام
                 دولت
               </p>
-              <p style={{ margin: "4px 0 0", fontSize: 10, color: "#94A3B8" }}>
+              <p className="mt-1 mb-0 text-[10px] text-[var(--text-secondary)]">
                 شدت: {intensityLabel(hovered.day.intensity)}
               </p>
               {hovered.day.events[0] ? (
-                <p
-                  style={{
-                    margin: "6px 0 0",
-                    fontSize: 10,
-                    color: "#64748B",
-                    lineHeight: 1.5,
-                  }}
-                >
+                <p className="mt-1.5 mb-0 text-[10px] leading-snug text-[var(--text-muted)]">
                   {hovered.day.events[0].title}
                 </p>
               ) : null}
             </div>
           ) : null}
 
-          <div
-            style={{
-              display: "flex",
-              alignItems: "flex-end",
-              gap: 3,
-              height: 34,
-              position: "relative",
-              zIndex: 1,
-            }}
-          >
+          <div className="relative z-[1] flex h-[34px] items-end gap-[3px]">
             {bars.map((bar) => {
               const isActive = selected === bar.day.date;
               const isHovered = hoveredDate === bar.day.date;
@@ -324,13 +225,10 @@ export function EventIntensityPanel({
                   onFocus={() => setHoveredDate(bar.day.date)}
                   onBlur={() => setHoveredDate(null)}
                   onClick={() => onSelectDay?.(bar.day.date)}
+                  className="min-w-2 cursor-pointer border-0 p-0 transition-[box-shadow,transform] duration-120"
                   style={{
                     width: 8,
-                    minWidth: 8,
                     height: bar.height,
-                    padding: 0,
-                    border: "none",
-                    cursor: "pointer",
                     background: bar.color,
                     borderTopLeftRadius: 2,
                     borderTopRightRadius: 2,
@@ -339,10 +237,12 @@ export function EventIntensityPanel({
                       : isHovered
                         ? `0 0 8px ${bar.color}55`
                         : "none",
-                    outline: isActive ? "1px solid #448cff" : "none",
+                    outline: isActive
+                      ? "1px solid var(--primary)"
+                      : "none",
                     outlineOffset: 1,
-                    transition: "box-shadow 120ms ease, transform 120ms ease",
-                    transform: isHovered || isActive ? "scaleY(1.06)" : "none",
+                    transform:
+                      isHovered || isActive ? "scaleY(1.06)" : "none",
                     transformOrigin: "bottom",
                   }}
                 />
@@ -350,34 +250,20 @@ export function EventIntensityPanel({
             })}
           </div>
 
-          <div
-            style={{
-              height: 1,
-              width: "100%",
-              background: "#182840",
-              position: "relative",
-              marginTop: 0,
-            }}
-          >
+          <div className="relative mt-0 h-px w-full bg-[var(--border)]">
             {axisLabels.map((item) => {
               const leftPx = item.index * 11 + 4;
               return (
                 <span
                   key={`tick-${item.day.date}`}
-                  style={{
-                    position: "absolute",
-                    top: 0,
-                    right: leftPx,
-                    width: 1,
-                    height: 5,
-                    background: "#182840",
-                  }}
+                  className="absolute top-0 h-[5px] w-px bg-[var(--border)]"
+                  style={{ right: leftPx }}
                 />
               );
             })}
           </div>
 
-          <div style={{ position: "relative", height: 22, marginTop: 2 }}>
+          <div className="relative mt-0.5 h-[22px]">
             {axisLabels.map((item) => {
               const leftPx = item.index * 11 + 4;
               const isSelected = selected === item.day.date;
@@ -387,22 +273,22 @@ export function EventIntensityPanel({
                   key={`label-${item.day.date}`}
                   type="button"
                   onClick={() => onSelectDay?.(item.day.date)}
+                  className="absolute cursor-pointer whitespace-nowrap text-[10px] leading-none"
                   style={{
-                    position: "absolute",
                     top: isSelected ? -2 : 4,
                     right: leftPx,
                     transform: "translateX(50%)",
-                    border: isSelected ? "1px solid #448cff" : "none",
+                    border: isSelected
+                      ? "1px solid var(--primary)"
+                      : "none",
                     background: isSelected
                       ? "linear-gradient(180deg, #3478ed 0%, #1957c8 100%)"
                       : "transparent",
-                    color: isSelected ? "#ffffff" : "#8290a8",
+                    color: isSelected
+                      ? "#ffffff"
+                      : "var(--text-muted)",
                     borderRadius: isSelected ? 7 : 0,
                     padding: isSelected ? "4px 10px" : 0,
-                    fontSize: 10,
-                    lineHeight: 1,
-                    whiteSpace: "nowrap",
-                    cursor: "pointer",
                     boxShadow: isSelected
                       ? "0 0 12px rgba(39, 112, 255, 0.32)"
                       : "none",

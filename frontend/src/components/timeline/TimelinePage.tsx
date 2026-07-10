@@ -8,7 +8,6 @@ import { ActiveFilterChips } from "@/components/timeline/ActiveFilterChips";
 import { EventIntensityPanel } from "@/components/timeline/EventIntensityPanel";
 import { EventDetailPanel } from "@/components/timeline/EventDetailPanel";
 import { LiveUpdateBanner } from "@/components/timeline/LiveUpdateBanner";
-import { SummaryBar } from "@/components/timeline/SummaryBar";
 import { TimelineDaySection } from "@/components/timeline/TimelineDay";
 import { TimelineFilters } from "@/components/timeline/TimelineFilters";
 import { TimelineHeader } from "@/components/timeline/TimelineHeader";
@@ -400,16 +399,6 @@ export function TimelinePage({
           scrollToDay(days[0]?.date ?? "");
         }}
       />
-
-      {selectedView === "timeline" ? (
-        <SummaryBar
-          totalEvents={summary.totalEvents}
-          enemy={summary.enemy}
-          government={summary.government}
-          responseRatio={summary.responseRatio}
-          avgResponseMinutes={summary.avgResponseMinutes}
-        />
-      ) : null}
 
       {selectedView === "timeline" ? (
         <ActiveFilterChips

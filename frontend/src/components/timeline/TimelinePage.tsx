@@ -42,6 +42,7 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
   useTransition,
 } from "react";
@@ -51,6 +52,22 @@ type TimelinePageProps = {
   loading?: boolean;
   error?: string | null;
 };
+
+const VALID_VIEWS: TimelineViewMode[] = [
+  "timeline",
+  "week",
+  "month",
+  "map",
+  "analytics",
+  "heatmap",
+];
+
+function parseViewParam(value: string | null): TimelineViewMode {
+  if (value && VALID_VIEWS.includes(value as TimelineViewMode)) {
+    return value as TimelineViewMode;
+  }
+  return "timeline";
+}
 
 export function TimelinePage({
   initialDays = timelineMockDays,
@@ -79,7 +96,7 @@ export function TimelinePage({
     dateTo: searchParams.get("to") ?? "",
   }));
   const [selectedView, setSelectedView] = useState<TimelineViewMode>(
-    (searchParams.get("view") as TimelineViewMode) || "timeline",
+    parseViewParam(searchParams.get("view")),
   );
   const [selectedDay, setSelectedDay] = useState<string | null>(
     searchParams.get("date") ?? initialDays[0]?.date ?? null,
@@ -105,22 +122,43 @@ export function TimelinePage({
       ? getDashboardSettings()
       : defaultDashboardSettings,
   );
+  const appliedDefaultView = useRef(false);
 
   useEffect(() => {
     setDashboardSettings(getDashboardSettings());
   }, []);
 
+  // Keep local view state in sync with URL (sidebar Link changes query without remount)
+  useEffect(() => {
+    const viewFromUrl = searchParams.get("view");
+
+    if (
+      !viewFromUrl &&
+      !appliedDefaultView.current &&
+      dashboardSettings.defaultView !== "timeline"
+    ) {
+      appliedDefaultView.current = true;
+      setSelectedView(dashboardSettings.defaultView);
+      return;
+    }
+
+    appliedDefaultView.current = true;
+    setSelectedView(parseViewParam(viewFromUrl));
+
+    const date = searchParams.get("date");
+    if (date) setSelectedDay(date);
+
+    const eventId = searchParams.get("event");
+    if (eventId) {
+      const found = findEventById(eventId, days);
+      if (found) setSelectedEvent(found);
+    }
+  }, [searchParams, days, dashboardSettings.defaultView]);
+
   useEffect(() => {
     const timer = setTimeout(() => setSearchQuery(searchInput), 300);
     return () => clearTimeout(timer);
   }, [searchInput]);
-
-  useEffect(() => {
-    if (searchParams.get("view")) return;
-    if (dashboardSettings.defaultView !== "timeline") {
-      setSelectedView(dashboardSettings.defaultView);
-    }
-  }, [dashboardSettings.defaultView, searchParams]);
 
   useEffect(() => {
     if (!dashboardSettings.liveEnabled) return;
@@ -153,7 +191,7 @@ export function TimelinePage({
       const q = next.q === undefined ? searchQuery : next.q;
       const f = next.filters ?? filters;
 
-      if (view && view !== "timeline") params.set("view", view);
+      if (view) params.set("view", view);
       else params.delete("view");
       if (date) params.set("date", date);
       else params.delete("date");

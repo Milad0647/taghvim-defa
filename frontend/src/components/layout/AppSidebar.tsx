@@ -28,7 +28,7 @@ import { IranEmblem } from "@/components/brand/IranEmblem";
 
 const MENU = [
   { href: "/overview", label: "نمای کلی", icon: LayoutDashboard, match: "overview" },
-  { href: "/timeline", label: "خط زمانی", icon: CalendarRange, match: "timeline" },
+  { href: "/timeline?view=timeline", label: "خط زمانی", icon: CalendarRange, match: "timeline" },
   { href: "/timeline?view=week", label: "نمای هفتگی", icon: CalendarDays, match: "week" },
   { href: "/timeline?view=month", label: "نمای ماهانه", icon: CalendarDays, match: "month" },
   { href: "/timeline?view=map", label: "نقشه رویدادها", icon: Map, match: "map" },
@@ -132,6 +132,8 @@ export function AppSidebar({
             <Link
               key={item.label}
               href={item.href}
+              scroll={false}
+              replace={pathname.startsWith("/timeline") && item.href.startsWith("/timeline")}
               className={clsx(
                 "relative flex h-11 items-center gap-3 rounded-xl px-3 text-[13px] transition",
                 active

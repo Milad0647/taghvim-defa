@@ -8,6 +8,8 @@ import { Bell, Download, Filter, Search, UserRound } from "lucide-react";
 
 type TimelineHeaderProps = {
   title?: string;
+  subtitle?: string;
+  showViewSwitcher?: boolean;
   searchQuery: string;
   onSearchChange: (value: string) => void;
   dateFrom: string;
@@ -24,6 +26,7 @@ type TimelineHeaderProps = {
 
 export function TimelineHeader({
   title = "خط زمانی رویدادها و اقدامات",
+  subtitle = "نمایش زنده رخدادها و پاسخ‌های ثبت‌شده",
   searchQuery,
   onSearchChange,
   dateFrom,
@@ -36,6 +39,7 @@ export function TimelineHeader({
   selectedView,
   onViewChange,
   dateRangeLabel,
+  showViewSwitcher = true,
 }: TimelineHeaderProps) {
   return (
     <header className="sticky top-0 z-30 space-y-3 bg-[var(--background)]/95 pb-1 backdrop-blur-md">
@@ -85,12 +89,14 @@ export function TimelineHeader({
               {title}
             </h1>
             <p className="mt-0.5 text-xs text-[var(--text-secondary)]">
-              نمایش زنده رخدادها و پاسخ‌های ثبت‌شده
+              {subtitle}
             </p>
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            <ViewSwitcher value={selectedView} onChange={onViewChange} compact />
+            {showViewSwitcher ? (
+              <ViewSwitcher value={selectedView} onChange={onViewChange} compact />
+            ) : null}
 
             <div className="flex items-center gap-1.5 rounded-xl border border-[var(--border)] bg-[var(--panel-2)] px-2 py-1.5">
               <input

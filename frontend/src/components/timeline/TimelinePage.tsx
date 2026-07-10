@@ -315,6 +315,23 @@ export function TimelinePage({
   const main = (
     <div className="min-w-0 flex-1 space-y-3 pb-24 md:pb-6">
       <TimelineHeader
+        title={
+          selectedView === "week"
+            ? "نمای هفتگی"
+            : selectedView === "month"
+              ? "نمای ماهانه"
+              : selectedView === "map"
+                ? "نقشه رویدادها"
+                : selectedView === "analytics"
+                  ? "آمار و نمودارها"
+                  : "خط زمانی رویدادها و اقدامات"
+        }
+        subtitle={
+          selectedView === "week"
+            ? "نمای کلی رویدادها و اقدامات در بازه هفتگی"
+            : "نمایش زنده رخدادها و پاسخ‌های ثبت‌شده"
+        }
+        showViewSwitcher={selectedView !== "week"}
         searchQuery={searchInput}
         onSearchChange={setSearchInput}
         dateFrom={filters.dateFrom}
@@ -346,22 +363,26 @@ export function TimelinePage({
         }}
       />
 
-      <SummaryBar
-        totalEvents={summary.totalEvents}
-        enemy={summary.enemy}
-        government={summary.government}
-        responseRatio={summary.responseRatio}
-        avgResponseMinutes={summary.avgResponseMinutes}
-      />
+      {selectedView === "timeline" ? (
+        <SummaryBar
+          totalEvents={summary.totalEvents}
+          enemy={summary.enemy}
+          government={summary.government}
+          responseRatio={summary.responseRatio}
+          avgResponseMinutes={summary.avgResponseMinutes}
+        />
+      ) : null}
 
-      <ActiveFilterChips
-        chips={chips}
-        onRemove={removeChip}
-        onClearAll={() => {
-          setFilters(defaultFilters);
-          syncUrl({ filters: defaultFilters });
-        }}
-      />
+      {selectedView === "timeline" ? (
+        <ActiveFilterChips
+          chips={chips}
+          onRemove={removeChip}
+          onClearAll={() => {
+            setFilters(defaultFilters);
+            syncUrl({ filters: defaultFilters });
+          }}
+        />
+      ) : null}
 
       {loading ? <TimelineSkeleton /> : null}
       {error ? (
@@ -422,7 +443,18 @@ export function TimelinePage({
       {!loading && !error && selectedView === "week" ? (
         <WeeklyView
           days={filteredDays}
-          onSelectDay={(date) => scrollToDay(date, true)}
+          selectedDay={selectedDay}
+          selectedView={selectedView}
+          onViewChange={changeView}
+          onOpenFilters={() => setFiltersOpen(true)}
+          activeFilterCount={activeFilterCount}
+          onSelectDay={(date) => {
+            setSelectedDay(date);
+            const day = filteredDays.find((d) => d.date === date);
+            const top = day?.events[0] ?? null;
+            if (top) setSelectedEvent(top);
+            syncUrl({ date, view: "week", event: top?.id ?? null });
+          }}
         />
       ) : null}
       {!loading && !error && selectedView === "month" ? (
@@ -452,15 +484,17 @@ export function TimelinePage({
         <AnalyticsView days={filteredDays} />
       ) : null}
 
-      <button
-        type="button"
-        onClick={() => scrollToDay(days[0]?.date ?? "")}
-        className="fixed bottom-20 left-4 z-30 inline-flex items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-xs text-[var(--text-primary)] shadow-lg md:bottom-6"
-        aria-label="بازگشت به امروز"
-      >
-        <ArrowUp className="h-3.5 w-3.5" />
-        بازگشت به امروز
-      </button>
+      {selectedView === "timeline" ? (
+        <button
+          type="button"
+          onClick={() => scrollToDay(days[0]?.date ?? "")}
+          className="fixed bottom-20 left-4 z-30 inline-flex items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-xs text-[var(--text-primary)] shadow-lg md:bottom-6"
+          aria-label="بازگشت به امروز"
+        >
+          <ArrowUp className="h-3.5 w-3.5" />
+          بازگشت به امروز
+        </button>
+      ) : null}
     </div>
   );
 
@@ -492,7 +526,7 @@ export function TimelinePage({
             onOpenRelated={openEvent}
           />
         }
-        detailOpen
+        detailOpen={selectedView === "timeline" && detailOpen}
         mobileNav={
           <MobileNavigation value={selectedView} onChange={changeView} />
         }

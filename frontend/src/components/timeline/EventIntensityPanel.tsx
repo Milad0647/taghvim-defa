@@ -117,6 +117,7 @@ export function EventIntensityPanel({
   }>({ active: false, startX: 0, startScroll: 0, moved: false });
 
   const [hoveredDate, setHoveredDate] = useState<string | null>(null);
+  const [isPanning, setIsPanning] = useState(false);
   const [containerWidth, setContainerWidth] = useState(0);
   const [canPan, setCanPan] = useState(false);
 
@@ -212,6 +213,8 @@ export function EventIntensityPanel({
 
   const onPointerDown = useCallback((e: ReactPointerEvent<HTMLDivElement>) => {
     if (!scrollRef.current) return;
+    // Only start pan with primary button / touch
+    if (e.pointerType === "mouse" && e.button !== 0) return;
     dragRef.current = {
       active: true,
       startX: e.clientX,
@@ -225,24 +228,49 @@ export function EventIntensityPanel({
     const drag = dragRef.current;
     if (!drag.active || !scrollRef.current) return;
     const dx = e.clientX - drag.startX;
-    if (Math.abs(dx) > 4) drag.moved = true;
-    scrollRef.current.scrollLeft = drag.startScroll - dx;
+    if (Math.abs(dx) > 4) {
+      if (!drag.moved) {
+        drag.moved = true;
+        setIsPanning(true);
+        setHoveredDate(null);
+      }
+      scrollRef.current.scrollLeft = drag.startScroll - dx;
+    }
   }, []);
 
   const endDrag = useCallback((e: ReactPointerEvent<HTMLDivElement>) => {
     const drag = dragRef.current;
+    const wasPanning = drag.moved;
     drag.active = false;
     if (scrollRef.current?.hasPointerCapture(e.pointerId)) {
       scrollRef.current.releasePointerCapture(e.pointerId);
+    }
+    if (wasPanning) {
+      setHoveredDate(null);
+      // Keep hover suppressed briefly so mouseenter after drag doesn't flash tooltip
+      window.setTimeout(() => setIsPanning(false), 120);
+    } else {
+      setIsPanning(false);
     }
   }, []);
 
   const handleBarClick = useCallback(
     (date: string) => {
-      if (dragRef.current.moved) return;
+      if (dragRef.current.moved || isPanning) return;
       onSelectDay?.(date);
     },
-    [onSelectDay],
+    [onSelectDay, isPanning],
+  );
+
+  const handleBarHover = useCallback(
+    (date: string | null) => {
+      if (dragRef.current.active || dragRef.current.moved || isPanning) {
+        setHoveredDate(null);
+        return;
+      }
+      setHoveredDate(date);
+    },
+    [isPanning],
   );
 
   if (bars.length === 0) {
@@ -259,7 +287,10 @@ export function EventIntensityPanel({
   }
 
   const rangeLabel = `${bars[0]!.shortLabel} تا ${bars[bars.length - 1]!.shortLabel}`;
-  const hovered = bars.find((b) => b.day.date === hoveredDate) ?? null;
+  const hovered =
+    !isPanning && hoveredDate
+      ? (bars.find((b) => b.day.date === hoveredDate) ?? null)
+      : null;
   const selected = activeDate;
 
   return (
@@ -302,11 +333,15 @@ export function EventIntensityPanel({
         className={clsx(
           "scrollbar-thin relative min-w-0 overflow-x-auto overflow-y-hidden pt-2 pb-1 select-none",
           canPan ? "cursor-grab active:cursor-grabbing" : "cursor-default",
+          isPanning && "[&_button]:pointer-events-none",
         )}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={endDrag}
         onPointerCancel={endDrag}
+        onPointerLeave={(e) => {
+          if (dragRef.current.active) endDrag(e);
+        }}
       >
         <div
           ref={trackRef}
@@ -360,12 +395,12 @@ export function EventIntensityPanel({
                   type="button"
                   data-day={bar.day.date}
                   aria-label={`${bar.day.persianDate}، ${bar.day.totalEvents} رویداد`}
-                  onMouseEnter={() => setHoveredDate(bar.day.date)}
-                  onMouseLeave={() => setHoveredDate(null)}
-                  onFocus={() => setHoveredDate(bar.day.date)}
-                  onBlur={() => setHoveredDate(null)}
+                  onMouseEnter={() => handleBarHover(bar.day.date)}
+                  onMouseLeave={() => handleBarHover(null)}
+                  onFocus={() => handleBarHover(bar.day.date)}
+                  onBlur={() => handleBarHover(null)}
                   onClick={() => handleBarClick(bar.day.date)}
-                  className="cursor-pointer border-0 p-0 transition-[box-shadow,transform] duration-120"
+                  className="pointer-events-auto cursor-pointer border-0 p-0 transition-[box-shadow,transform] duration-120"
                   style={{
                     width: barSlotWidth,
                     minWidth: barSlotWidth,

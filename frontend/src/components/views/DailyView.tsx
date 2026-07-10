@@ -60,6 +60,8 @@ export function DailyView({
         day={day}
         dayOptions={sortedDays}
         onPickDay={onSelectDay}
+        minDate={minDate}
+        maxDate={maxDate}
         canGoPrev={canGoPrev}
         canGoNext={canGoNext}
         onPrevDay={() => {

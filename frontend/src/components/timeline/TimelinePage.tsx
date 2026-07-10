@@ -480,15 +480,13 @@ export function TimelinePage({
 
       {!loading && !error && selectedView === "week" ? (
         <WeeklyView
-          days={filteredDays}
+          days={rangedDays}
           selectedDay={selectedDay}
-          selectedView={selectedView}
-          onViewChange={changeView}
           onOpenFilters={() => setFiltersOpen(true)}
           activeFilterCount={activeFilterCount}
           onSelectDay={(date) => {
             setSelectedDay(date);
-            const day = filteredDays.find((d) => d.date === date);
+            const day = rangedDays.find((d) => d.date === date);
             const top = day?.events[0] ?? null;
             if (top) setSelectedEvent(top);
             syncUrl({ date, view: "week", event: top?.id ?? null });

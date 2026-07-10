@@ -5,21 +5,21 @@ import { WeeklyKpiCards } from "@/components/views/weekly/WeeklyKpiCards";
 import { WeeklyLegend } from "@/components/views/weekly/WeeklyLegend";
 import { WeeklyToolbar } from "@/components/views/weekly/WeeklyToolbar";
 import {
+  findWeekOption,
   formatWeekRangeLabel,
   getWeekModels,
+  listWeekOptions,
   shiftWeek,
   startOfWeekSaturday,
   summarizeWeek,
   toWeeklyDateString,
 } from "@/lib/weekly";
-import type { TimelineDay, TimelineViewMode } from "@/types/timeline";
+import type { TimelineDay } from "@/types/timeline";
 import { useMemo, useState } from "react";
 
 type WeeklyViewProps = {
   days: TimelineDay[];
   selectedDay?: string | null;
-  selectedView: TimelineViewMode;
-  onViewChange: (view: TimelineViewMode) => void;
   onSelectDay: (date: string) => void;
   onOpenFilters: () => void;
   activeFilterCount?: number;
@@ -28,12 +28,12 @@ type WeeklyViewProps = {
 export function WeeklyView({
   days,
   selectedDay = null,
-  selectedView,
-  onViewChange,
   onSelectDay,
   onOpenFilters,
   activeFilterCount = 0,
 }: WeeklyViewProps) {
+  const weeks = useMemo(() => listWeekOptions(days), [days]);
+
   const defaultAnchor =
     selectedDay ?? days[0]?.date ?? toWeeklyDateString(new Date());
 
@@ -41,29 +41,63 @@ export function WeeklyView({
     toWeeklyDateString(startOfWeekSaturday(defaultAnchor)),
   );
 
+  const activeWeek =
+    findWeekOption(weeks, weekAnchor) ?? weeks[weeks.length - 1] ?? null;
+
+  const resolvedAnchor = activeWeek?.startDate ?? weekAnchor;
+
   const models = useMemo(
-    () => getWeekModels(days, weekAnchor),
-    [days, weekAnchor],
+    () => getWeekModels(days, resolvedAnchor),
+    [days, resolvedAnchor],
   );
 
   const summary = useMemo(() => summarizeWeek(models), [models]);
-  const rangeLabel = formatWeekRangeLabel(models);
+  const rangeLabel = activeWeek
+    ? `${activeWeek.label} · ${formatWeekRangeLabel(models) || activeWeek.shortRange}`
+    : formatWeekRangeLabel(models);
+
   const activeDate =
     selectedDay && models.some((m) => m.day.date === selectedDay)
       ? selectedDay
-      : models.reduce((best, m) =>
-          m.day.totalEvents > (best?.day.totalEvents ?? -1) ? m : best,
+      : models.reduce(
+          (best, m) =>
+            m.day.totalEvents > (best?.day.totalEvents ?? -1) ? m : best,
           models[0],
         )?.day.date ?? null;
+
+  const selectWeek = (startDate: string) => {
+    setWeekAnchor(startDate);
+  };
+
+  const goPrevWeek = () => {
+    if (!activeWeek || weeks.length === 0) {
+      setWeekAnchor((prev) => shiftWeek(prev, -1));
+      return;
+    }
+    const idx = weeks.findIndex((w) => w.startDate === activeWeek.startDate);
+    if (idx > 0) setWeekAnchor(weeks[idx - 1]!.startDate);
+  };
+
+  const goNextWeek = () => {
+    if (!activeWeek || weeks.length === 0) {
+      setWeekAnchor((prev) => shiftWeek(prev, 1));
+      return;
+    }
+    const idx = weeks.findIndex((w) => w.startDate === activeWeek.startDate);
+    if (idx >= 0 && idx < weeks.length - 1) {
+      setWeekAnchor(weeks[idx + 1]!.startDate);
+    }
+  };
 
   return (
     <section className="space-y-3" style={{ direction: "rtl", textAlign: "right" }}>
       <WeeklyToolbar
         rangeLabel={rangeLabel || "بازه هفتگی"}
-        selectedView={selectedView}
-        onViewChange={onViewChange}
-        onPrevWeek={() => setWeekAnchor((prev) => shiftWeek(prev, -1))}
-        onNextWeek={() => setWeekAnchor((prev) => shiftWeek(prev, 1))}
+        weeks={weeks}
+        activeWeekStart={resolvedAnchor}
+        onSelectWeek={selectWeek}
+        onPrevWeek={goPrevWeek}
+        onNextWeek={goNextWeek}
         onOpenFilters={onOpenFilters}
         onRefresh={() => setWeekAnchor((prev) => prev)}
         activeFilterCount={activeFilterCount}

@@ -1,13 +1,14 @@
 "use client";
 
-import { ViewSwitcher } from "@/components/timeline/ViewSwitcher";
-import type { TimelineViewMode } from "@/types/timeline";
+import { WeeklyWeekSelector } from "@/components/views/weekly/WeeklyWeekSelector";
+import type { WeekOption } from "@/lib/weekly";
 import { ChevronLeft, ChevronRight, Download, Filter, RefreshCw } from "lucide-react";
 
 type WeeklyToolbarProps = {
   rangeLabel: string;
-  selectedView: TimelineViewMode;
-  onViewChange: (view: TimelineViewMode) => void;
+  weeks: WeekOption[];
+  activeWeekStart: string;
+  onSelectWeek: (startDate: string) => void;
   onPrevWeek: () => void;
   onNextWeek: () => void;
   onOpenFilters: () => void;
@@ -17,8 +18,9 @@ type WeeklyToolbarProps = {
 
 export function WeeklyToolbar({
   rangeLabel,
-  selectedView,
-  onViewChange,
+  weeks,
+  activeWeekStart,
+  onSelectWeek,
   onPrevWeek,
   onNextWeek,
   onOpenFilters,
@@ -80,9 +82,13 @@ export function WeeklyToolbar({
             <ChevronLeft className="h-4 w-4" />
           </button>
         </div>
-
-        <ViewSwitcher value={selectedView} onChange={onViewChange} />
       </div>
+
+      <WeeklyWeekSelector
+        weeks={weeks}
+        activeStartDate={activeWeekStart}
+        onSelectWeek={onSelectWeek}
+      />
     </div>
   );
 }

@@ -171,6 +171,56 @@ export function formatWeekRangeLabel(models: WeeklyDayModel[]): string {
   return `${first} - ${last}`;
 }
 
+export type WeekOption = {
+  index: number;
+  startDate: string;
+  endDate: string;
+  label: string;
+  shortRange: string;
+};
+
+function persianShortDate(dateStr: string): string {
+  const date = new Date(`${dateStr}T12:00:00`);
+  return new Intl.DateTimeFormat("fa-IR", {
+    day: "numeric",
+    month: "short",
+  }).format(date);
+}
+
+/** Build هفته ۱..N from available timeline days (oldest week = 1) */
+export function listWeekOptions(days: TimelineDay[]): WeekOption[] {
+  if (days.length === 0) return [];
+
+  const starts = new Set<string>();
+  for (const day of days) {
+    starts.add(toDateString(startOfWeekSaturday(day.date)));
+  }
+
+  const sortedStarts = [...starts].sort((a, b) => a.localeCompare(b));
+
+  return sortedStarts.map((startDate, i) => {
+    const end = new Date(`${startDate}T12:00:00`);
+    end.setDate(end.getDate() + 6);
+    const endDate = toDateString(end);
+    const index = i + 1;
+    return {
+      index,
+      startDate,
+      endDate,
+      label: `هفته ${index.toLocaleString("fa-IR")}`,
+      shortRange: `${persianShortDate(startDate)} تا ${persianShortDate(endDate)}`,
+    };
+  });
+}
+
+export function findWeekOption(
+  options: WeekOption[],
+  weekStartDate: string,
+): WeekOption | null {
+  const key = toDateString(startOfWeekSaturday(weekStartDate));
+  return options.find((o) => o.startDate === key) ?? null;
+}
+
 export function summarizeWeek(models: WeeklyDayModel[]) {
   const totalEvents = models.reduce((s, m) => s + m.day.totalEvents, 0);
   const enemy = models.reduce((s, m) => s + m.day.enemyActionsCount, 0);

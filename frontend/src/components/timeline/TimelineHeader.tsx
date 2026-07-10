@@ -6,6 +6,7 @@ import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { ViewSwitcher } from "@/components/timeline/ViewSwitcher";
 import type { TimelineViewMode } from "@/types/timeline";
 import { Bell, Filter, Search, UserRound } from "lucide-react";
+import Link from "next/link";
 
 type TimelineHeaderProps = {
   showViewSwitcher?: boolean;

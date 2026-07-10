@@ -21,16 +21,12 @@ type MonthlyViewProps = {
   days: TimelineDay[];
   selectedDay?: string | null;
   onSelectDay: (date: string) => void;
-  onOpenFilters: () => void;
-  activeFilterCount?: number;
 };
 
 export function MonthlyView({
   days,
   selectedDay = null,
   onSelectDay,
-  onOpenFilters,
-  activeFilterCount = 0,
 }: MonthlyViewProps) {
   const months = useMemo(() => listMonthOptions(days), [days]);
 
@@ -103,8 +99,6 @@ export function MonthlyView({
         onSelectMonth={selectMonthKey}
         onPrevMonth={goPrev}
         onNextMonth={goNext}
-        onOpenFilters={onOpenFilters}
-        activeFilterCount={activeFilterCount}
         canGoPrev={canGoPrev}
         canGoNext={canGoNext}
       />

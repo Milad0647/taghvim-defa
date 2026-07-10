@@ -8,8 +8,6 @@ import type { TimelineViewMode } from "@/types/timeline";
 import { Bell, Filter, Search, UserRound } from "lucide-react";
 
 type TimelineHeaderProps = {
-  title?: string;
-  subtitle?: string;
   showViewSwitcher?: boolean;
   showDateFilters?: boolean;
   searchQuery: string;
@@ -23,12 +21,9 @@ type TimelineHeaderProps = {
   activeFilterCount?: number;
   selectedView: TimelineViewMode;
   onViewChange: (view: TimelineViewMode) => void;
-  dateRangeLabel?: string;
 };
 
 export function TimelineHeader({
-  title = "خط زمانی رویدادها و اقدامات",
-  subtitle = "نمایش زنده رخدادها و پاسخ‌های ثبت‌شده",
   searchQuery,
   onSearchChange,
   dateFrom,
@@ -40,13 +35,14 @@ export function TimelineHeader({
   activeFilterCount = 0,
   selectedView,
   onViewChange,
-  dateRangeLabel,
-  showViewSwitcher = true,
-  showDateFilters = true,
+  showViewSwitcher = false,
+  showDateFilters = false,
 }: TimelineHeaderProps) {
+  const showExtras = showViewSwitcher || showDateFilters;
+
   return (
-    <header className="sticky top-0 z-30 space-y-3 bg-[var(--background)]/95 pb-1 backdrop-blur-md">
-      <div className="flex items-center gap-3">
+    <header className="sticky top-0 z-30 space-y-2 bg-[var(--background)]/95 pb-1 backdrop-blur-md">
+      <div className="flex items-center gap-2 sm:gap-3">
         <MobileMenuButton onClick={onOpenMobileMenu} />
 
         <label className="relative min-w-0 flex-1">
@@ -60,11 +56,25 @@ export function TimelineHeader({
           />
         </label>
 
+        <button
+          type="button"
+          onClick={onOpenFilters}
+          className="inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-[var(--border)] bg-[var(--panel)] px-3 py-2.5 text-xs text-[var(--text-primary)] hover:bg-[var(--hover)]"
+        >
+          <Filter className="h-3.5 w-3.5" />
+          <span className="hidden sm:inline">فیلترها</span>
+          {activeFilterCount > 0 ? (
+            <span className="rounded-md bg-blue-500/15 px-1.5 text-[10px] text-[var(--primary)]">
+              {activeFilterCount.toLocaleString("fa-IR")}
+            </span>
+          ) : null}
+        </button>
+
         <ThemeToggle />
 
         <button
           type="button"
-          className="relative shrink-0 rounded-xl border border-[var(--border)] bg-[var(--panel)] p-2.5 text-[var(--text-secondary)] hover:bg-[var(--hover)]"
+          className="relative hidden shrink-0 rounded-xl border border-[var(--border)] bg-[var(--panel)] p-2.5 text-[var(--text-secondary)] hover:bg-[var(--hover)] sm:inline-flex"
           aria-label="اعلان‌ها"
         >
           <Bell className="h-4 w-4" />
@@ -73,78 +83,45 @@ export function TimelineHeader({
           </span>
         </button>
 
-        <div className="flex shrink-0 items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--panel)] px-2.5 py-1.5">
+        <div className="hidden shrink-0 items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--panel)] px-2.5 py-1.5 md:flex">
           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 text-xs font-bold text-white">
             ع
           </div>
-          <div className="hidden text-xs sm:block">
+          <div className="hidden text-xs lg:block">
             <p className="font-semibold text-[var(--text-primary)]">علی رضایی</p>
             <p className="text-[var(--text-secondary)]">مدیر</p>
           </div>
-          <UserRound className="hidden h-3.5 w-3.5 text-[var(--text-muted)] sm:block" />
+          <UserRound className="hidden h-3.5 w-3.5 text-[var(--text-muted)] xl:block" />
         </div>
       </div>
 
-      <div className="flex flex-col gap-3 rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-3 sm:p-4">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-          <div>
-            <h1 className="text-lg font-bold text-[var(--text-primary)] sm:text-xl">
-              {title}
-            </h1>
-            <p className="mt-0.5 text-xs text-[var(--text-secondary)]">
-              {subtitle}
-            </p>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2">
-            {showViewSwitcher ? (
-              <ViewSwitcher value={selectedView} onChange={onViewChange} compact />
-            ) : null}
-
-            {showDateFilters ? (
-              <div className="flex min-w-0 flex-wrap items-center gap-1.5">
-                <PersianDatePicker
-                  compact
-                  value={dateFrom}
-                  onChange={onDateFromChange}
-                  placeholder="از تاریخ"
-                  ariaLabel="از تاریخ"
-                  className="min-w-[140px] flex-1"
-                />
-                <span className="text-[var(--text-muted)]">|</span>
-                <PersianDatePicker
-                  compact
-                  value={dateTo}
-                  onChange={onDateToChange}
-                  placeholder="تا تاریخ"
-                  ariaLabel="تا تاریخ"
-                  className="min-w-[140px] flex-1"
-                />
-              </div>
-            ) : null}
-
-            {dateRangeLabel ? (
-              <span className="hidden text-[11px] text-[var(--text-muted)] xl:inline">
-                {dateRangeLabel}
-              </span>
-            ) : null}
-
-            <button
-              type="button"
-              onClick={onOpenFilters}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-[var(--border)] bg-[var(--panel-2)] px-3 py-2 text-xs text-[var(--text-primary)] hover:bg-[var(--hover)]"
-            >
-              <Filter className="h-3.5 w-3.5" />
-              فیلترها
-              {activeFilterCount > 0 ? (
-                <span className="rounded-md bg-blue-500/15 px-1.5 text-[10px] text-[var(--primary)]">
-                  {activeFilterCount.toLocaleString("fa-IR")}
-                </span>
-              ) : null}
-            </button>
-          </div>
+      {showExtras ? (
+        <div className="flex flex-wrap items-center gap-2">
+          {showViewSwitcher ? (
+            <ViewSwitcher value={selectedView} onChange={onViewChange} compact />
+          ) : null}
+          {showDateFilters ? (
+            <>
+              <PersianDatePicker
+                compact
+                value={dateFrom}
+                onChange={onDateFromChange}
+                placeholder="از تاریخ"
+                ariaLabel="از تاریخ"
+                className="min-w-[130px]"
+              />
+              <PersianDatePicker
+                compact
+                value={dateTo}
+                onChange={onDateToChange}
+                placeholder="تا تاریخ"
+                ariaLabel="تا تاریخ"
+                className="min-w-[130px]"
+              />
+            </>
+          ) : null}
         </div>
-      </div>
+      ) : null}
     </header>
   );
 }

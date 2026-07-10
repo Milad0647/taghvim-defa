@@ -2,7 +2,7 @@
 
 import { WeeklyWeekSelector } from "@/components/views/weekly/WeeklyWeekSelector";
 import type { WeekOption } from "@/lib/weekly";
-import { ChevronLeft, ChevronRight, Filter, RefreshCw } from "lucide-react";
+import { ChevronLeft, ChevronRight, RefreshCw } from "lucide-react";
 
 type WeeklyToolbarProps = {
   rangeLabel: string;
@@ -11,9 +11,7 @@ type WeeklyToolbarProps = {
   onSelectWeek: (startDate: string) => void;
   onPrevWeek: () => void;
   onNextWeek: () => void;
-  onOpenFilters: () => void;
   onRefresh?: () => void;
-  activeFilterCount?: number;
 };
 
 export function WeeklyToolbar({
@@ -23,36 +21,19 @@ export function WeeklyToolbar({
   onSelectWeek,
   onPrevWeek,
   onNextWeek,
-  onOpenFilters,
   onRefresh,
-  activeFilterCount = 0,
 }: WeeklyToolbarProps) {
   return (
     <div className="flex flex-col gap-3 rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-3 sm:p-4">
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-        <div className="flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            onClick={onRefresh}
-            className="inline-flex items-center gap-1.5 rounded-xl border border-[var(--border)] bg-[var(--panel-2)] px-3 py-2 text-xs text-[var(--text-primary)] hover:bg-[var(--hover)]"
-          >
-            <RefreshCw className="h-3.5 w-3.5" />
-            تازه‌سازی
-          </button>
-          <button
-            type="button"
-            onClick={onOpenFilters}
-            className="inline-flex items-center gap-1.5 rounded-xl border border-[var(--border)] bg-[var(--panel-2)] px-3 py-2 text-xs text-[var(--text-primary)] hover:bg-[var(--hover)]"
-          >
-            <Filter className="h-3.5 w-3.5" />
-            فیلترها
-            {activeFilterCount > 0 ? (
-              <span className="rounded-md bg-[var(--enemy)]/20 px-1.5 text-[10px] text-[var(--enemy)]">
-                {activeFilterCount.toLocaleString("fa-IR")}
-              </span>
-            ) : null}
-          </button>
-        </div>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <button
+          type="button"
+          onClick={onRefresh}
+          className="inline-flex w-fit items-center gap-1.5 rounded-xl border border-[var(--border)] bg-[var(--panel-2)] px-3 py-2 text-xs text-[var(--text-primary)] hover:bg-[var(--hover)]"
+        >
+          <RefreshCw className="h-3.5 w-3.5" />
+          تازه‌سازی
+        </button>
 
         <div className="flex items-center justify-center gap-2">
           <button

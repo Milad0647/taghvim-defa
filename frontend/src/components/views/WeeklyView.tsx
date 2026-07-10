@@ -21,16 +21,12 @@ type WeeklyViewProps = {
   days: TimelineDay[];
   selectedDay?: string | null;
   onSelectDay: (date: string) => void;
-  onOpenFilters: () => void;
-  activeFilterCount?: number;
 };
 
 export function WeeklyView({
   days,
   selectedDay = null,
   onSelectDay,
-  onOpenFilters,
-  activeFilterCount = 0,
 }: WeeklyViewProps) {
   const weeks = useMemo(() => listWeekOptions(days), [days]);
 
@@ -98,9 +94,7 @@ export function WeeklyView({
         onSelectWeek={selectWeek}
         onPrevWeek={goPrevWeek}
         onNextWeek={goNextWeek}
-        onOpenFilters={onOpenFilters}
         onRefresh={() => setWeekAnchor((prev) => prev)}
-        activeFilterCount={activeFilterCount}
       />
 
       <WeeklyKpiCards

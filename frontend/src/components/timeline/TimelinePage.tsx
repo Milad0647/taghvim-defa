@@ -6,7 +6,6 @@ import { MobileNavigation } from "@/components/layout/MobileNavigation";
 import { ActiveFilterChips } from "@/components/timeline/ActiveFilterChips";
 import { EventIntensityPanel } from "@/components/timeline/EventIntensityPanel";
 import { EventDetailPanel } from "@/components/timeline/EventDetailPanel";
-import { LiveUpdateBanner } from "@/components/timeline/LiveUpdateBanner";
 import { TimelineDaySection } from "@/components/timeline/TimelineDay";
 import { TimelineFilters } from "@/components/timeline/TimelineFilters";
 import { TimelineHeader } from "@/components/timeline/TimelineHeader";
@@ -115,7 +114,6 @@ export function TimelinePage({
   );
   const [detailOpen, setDetailOpen] = useState(true);
   const [dayModalOpen, setDayModalOpen] = useState(false);
-  const [pendingLiveUpdates, setPendingLiveUpdates] = useState(0);
   const [toast, setToast] = useState<string | null>(null);
   const [days] = useState(initialDays);
   const [dashboardSettings, setDashboardSettings] = useState(() =>
@@ -164,7 +162,6 @@ export function TimelinePage({
   useEffect(() => {
     if (!dashboardSettings.liveEnabled) return;
     const liveTimer = setTimeout(() => {
-      setPendingLiveUpdates(3);
       setToast("۳ رخداد جدید ثبت شد");
     }, 16000);
     return () => clearTimeout(liveTimer);
@@ -370,28 +367,6 @@ export function TimelinePage({
   const main = (
     <div className="min-w-0 flex-1 space-y-3 pb-24 md:pb-6">
       <TimelineHeader
-        title={
-          selectedView === "day"
-            ? "نمای روزانه"
-            : selectedView === "week"
-              ? "نمای هفتگی"
-              : selectedView === "month"
-                ? "نمای ماهانه"
-                : selectedView === "map"
-                  ? "نقشه رویدادها"
-                  : selectedView === "analytics"
-                    ? "آمار و نمودارها"
-                    : "خط زمانی رویدادها و اقدامات"
-        }
-        subtitle={
-          selectedView === "day"
-            ? "جزئیات کامل رویدادها و اقدامات یک روز"
-            : selectedView === "week"
-              ? "نمای کلی رویدادها و اقدامات در بازه هفتگی"
-              : selectedView === "month"
-                ? "تقویم ماهانه رویدادها از روز اول تا آخر ماه"
-                : "نمایش زنده رخدادها و پاسخ‌های ثبت‌شده"
-        }
         showViewSwitcher={
           selectedView !== "timeline" &&
           selectedView !== "day" &&
@@ -422,16 +397,6 @@ export function TimelinePage({
         activeFilterCount={activeFilterCount}
         selectedView={selectedView}
         onViewChange={changeView}
-      />
-
-      <LiveUpdateBanner
-        lastUpdatedLabel="۲ دقیقه پیش"
-        pendingCount={pendingLiveUpdates}
-        onShowNew={() => {
-          setPendingLiveUpdates(0);
-          setToast(null);
-          scrollToDay(days[0]?.date ?? "");
-        }}
       />
 
       {selectedView === "timeline" ? (
@@ -526,8 +491,6 @@ export function TimelinePage({
         <WeeklyView
           days={rangedDays}
           selectedDay={selectedDay}
-          onOpenFilters={() => setFiltersOpen(true)}
-          activeFilterCount={activeFilterCount}
           onSelectDay={openDayModal}
         />
       ) : null}
@@ -535,8 +498,6 @@ export function TimelinePage({
         <MonthlyView
           days={rangedDays}
           selectedDay={selectedDay}
-          onOpenFilters={() => setFiltersOpen(true)}
-          activeFilterCount={activeFilterCount}
           onSelectDay={openDayModal}
         />
       ) : null}

@@ -257,7 +257,7 @@ export function CreateEventForm({ open, onClose }: CreateEventFormProps) {
                 localStorage.removeItem("taghvim_event_draft");
                 onClose();
               }}
-              className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-[var(--text-primary)]"
+              className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white"
             >
               انتشار / ثبت
             </button>

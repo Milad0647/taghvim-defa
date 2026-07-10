@@ -40,7 +40,7 @@ function OverviewContent() {
           </div>
           <Link
             href="/timeline"
-            className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-[var(--text-primary)]"
+            className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white"
           >
             رفتن به خط زمانی
           </Link>

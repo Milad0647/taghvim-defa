@@ -38,13 +38,16 @@ export default function AdminLoginPage() {
 
   return (
     <main
-      className="flex min-h-screen items-center justify-center bg-[var(--background)] px-4"
+      className="relative flex min-h-screen items-center justify-center bg-[var(--background)] px-4"
       style={{ direction: "rtl" }}
     >
+      <div className="absolute top-4 left-4 z-10">
+        <ThemeToggle />
+      </div>
       <div className="w-full max-w-md rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-6 shadow-2xl">
         <div className="mb-6 flex items-center gap-3">
           <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-500/15">
-            <Shield className="h-5 w-5 text-blue-400" />
+            <Shield className="h-5 w-5 text-[var(--primary)]" />
           </div>
           <div>
             <h1 className="text-xl font-bold text-[var(--text-primary)]">ورود به پنل مدیریت</h1>
@@ -78,7 +81,7 @@ export default function AdminLoginPage() {
           </label>
 
           {error ? (
-            <p className="rounded-xl bg-red-500/15 px-3 py-2 text-sm text-red-200">
+            <p className="rounded-xl bg-red-500/15 px-3 py-2 text-sm text-red-600">
               {error}
             </p>
           ) : null}
@@ -86,7 +89,7 @@ export default function AdminLoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-xl bg-blue-600 py-2.5 text-sm font-semibold text-[var(--text-primary)] hover:bg-blue-500 disabled:opacity-60"
+            className="w-full rounded-xl bg-blue-600 py-2.5 text-sm font-semibold text-white hover:bg-blue-500 disabled:opacity-60"
           >
             {loading ? "در حال ورود..." : "ورود"}
           </button>
@@ -101,7 +104,7 @@ export default function AdminLoginPage() {
 
         <Link
           href="/timeline"
-          className="mt-4 block text-center text-sm text-blue-300 hover:underline"
+          className="mt-4 block text-center text-sm text-[var(--primary)] hover:underline"
         >
           بازگشت به خط زمانی
         </Link>

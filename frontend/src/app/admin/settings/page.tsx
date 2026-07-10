@@ -156,7 +156,7 @@ function SettingsForm() {
         <div className="flex items-center gap-3">
           <button
             type="submit"
-            className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-[var(--text-primary)] hover:bg-blue-500"
+            className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-500"
           >
             <Save className="h-4 w-4" />
             ذخیره تنظیمات

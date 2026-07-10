@@ -49,7 +49,7 @@ function UsersManager() {
             setCreating(true);
             setEditing(null);
           }}
-          className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-[var(--text-primary)] hover:bg-blue-500"
+          className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500"
         >
           <UserPlus className="h-4 w-4" />
           کاربر جدید
@@ -258,7 +258,7 @@ function UserFormModal({
           <div className="flex gap-2 pt-2">
             <button
               type="submit"
-              className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 font-semibold text-[var(--text-primary)]"
+              className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 font-semibold text-white"
             >
               <Plus className="h-4 w-4" />
               ذخیره

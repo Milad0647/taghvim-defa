@@ -23,9 +23,9 @@ import { WeeklyView } from "@/components/views/WeeklyView";
 import {
   computeSummary,
   findEventById,
-  timelineMockDays,
 } from "@/data/timeline.mock";
 import { getDashboardSettings } from "@/lib/admin-store";
+import { loadTimelineDays } from "@/lib/timeline-store";
 import { buildFilterChips, filterTimelineDays } from "@/lib/timeline";
 import { defaultDashboardSettings } from "@/types/settings";
 import {
@@ -70,7 +70,7 @@ function parseViewParam(value: string | null): TimelineViewMode {
 }
 
 export function TimelinePage({
-  initialDays = timelineMockDays,
+  initialDays,
   loading = false,
   error = null,
 }: TimelinePageProps) {
@@ -97,8 +97,9 @@ export function TimelinePage({
   const [selectedView, setSelectedView] = useState<TimelineViewMode>(
     parseViewParam(searchParams.get("view")),
   );
+  const [days, setDays] = useState<TimelineDay[]>(() => initialDays ?? []);
   const [selectedDay, setSelectedDay] = useState<string | null>(
-    searchParams.get("date") ?? initialDays[0]?.date ?? null,
+    searchParams.get("date") ?? null,
   );
   const [collapsedDays, setCollapsedDays] = useState<Record<string, boolean>>(
     {},
@@ -106,21 +107,36 @@ export function TimelinePage({
   const [selectedEvent, setSelectedEvent] = useState<TimelineEvent | null>(
     () => {
       const id = searchParams.get("event");
-      if (id) return findEventById(id, initialDays) || null;
-      const firstDay = initialDays[0];
-      if (!firstDay || firstDay.events.length === 0) return null;
-      return firstDay.events[firstDay.events.length - 1] ?? null;
+      if (id && initialDays) return findEventById(id, initialDays) || null;
+      return null;
     },
   );
   const [detailOpen, setDetailOpen] = useState(true);
   const [dayModalOpen, setDayModalOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
-  const [days] = useState(initialDays);
   const [dashboardSettings, setDashboardSettings] = useState(() =>
     typeof window !== "undefined"
       ? getDashboardSettings()
       : defaultDashboardSettings,
   );
+
+  useEffect(() => {
+    const loaded = initialDays ?? loadTimelineDays();
+    setDays(loaded);
+    setSelectedDay(
+      (prev) => prev ?? searchParams.get("date") ?? loaded[0]?.date ?? null,
+    );
+    setSelectedEvent((prev) => {
+      if (prev) return prev;
+      const id = searchParams.get("event");
+      if (id) return findEventById(id, loaded) || null;
+      const firstDay = loaded[0];
+      if (!firstDay || firstDay.events.length === 0) return null;
+      return firstDay.events[0] ?? null;
+    });
+    // Intentionally run on mount / when server-provided days change
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialDays]);
   const appliedDefaultView = useRef(false);
 
   useEffect(() => {

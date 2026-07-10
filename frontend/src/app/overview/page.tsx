@@ -3,15 +3,24 @@
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { SummaryBar } from "@/components/timeline/SummaryBar";
 import { EventIntensityPanel } from "@/components/timeline/EventIntensityPanel";
-import { computeSummary, timelineMockDays } from "@/data/timeline.mock";
+import { computeSummary } from "@/data/timeline.mock";
+import { loadTimelineDays } from "@/lib/timeline-store";
+import type { TimelineDay } from "@/types/timeline";
 import Link from "next/link";
-import { Suspense, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 
 function OverviewContent() {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [activeDate, setActiveDate] = useState(timelineMockDays[0]?.date ?? null);
-  const summary = useMemo(() => computeSummary(timelineMockDays), []);
+  const [days, setDays] = useState<TimelineDay[]>([]);
+  const [activeDate, setActiveDate] = useState<string | null>(null);
+  const summary = useMemo(() => computeSummary(days), [days]);
+
+  useEffect(() => {
+    const loaded = loadTimelineDays();
+    setDays(loaded);
+    setActiveDate(loaded[0]?.date ?? null);
+  }, []);
 
   return (
     <div className="flex min-h-screen gap-4 bg-[var(--background)] p-3 lg:p-4">
@@ -43,22 +52,31 @@ function OverviewContent() {
           </Link>
         </div>
 
-        <SummaryBar
-          totalEvents={summary.totalEvents}
-          enemy={summary.enemy}
-          government={summary.government}
-          responseRatio={summary.responseRatio}
-          avgResponseMinutes={summary.avgResponseMinutes}
-        />
+        {days.length === 0 ? (
+          <div className="rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-8 text-center text-sm text-[var(--text-secondary)]">
+            داده‌ای برای نمایش وجود ندارد. از پنل ادمین می‌توانید داده نمونه را
+            بازیابی کنید یا رویداد واقعی ثبت کنید.
+          </div>
+        ) : (
+          <>
+            <SummaryBar
+              totalEvents={summary.totalEvents}
+              enemy={summary.enemy}
+              government={summary.government}
+              responseRatio={summary.responseRatio}
+              avgResponseMinutes={summary.avgResponseMinutes}
+            />
 
-        <EventIntensityPanel
-          days={timelineMockDays}
-          activeDate={activeDate}
-          onSelectDay={(date) => {
-            setActiveDate(date);
-            window.location.href = `/timeline?date=${date}`;
-          }}
-        />
+            <EventIntensityPanel
+              days={days}
+              activeDate={activeDate}
+              onSelectDay={(date) => {
+                setActiveDate(date);
+                window.location.href = `/timeline?date=${date}`;
+              }}
+            />
+          </>
+        )}
       </main>
     </div>
   );

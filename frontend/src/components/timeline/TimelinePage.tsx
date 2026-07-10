@@ -368,7 +368,9 @@ export function TimelinePage({
             ? "نمای کلی رویدادها و اقدامات در بازه هفتگی"
             : "نمایش زنده رخدادها و پاسخ‌های ثبت‌شده"
         }
-        showViewSwitcher={selectedView !== "week"}
+        showViewSwitcher={
+          selectedView !== "timeline" && selectedView !== "week"
+        }
         searchQuery={searchInput}
         onSearchChange={setSearchInput}
         dateFrom={filters.dateFrom}

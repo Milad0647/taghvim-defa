@@ -23,6 +23,7 @@ const LEGEND_COLORS = [
 
 const MIN_BAR_WIDTH = 10;
 const BAR_GAP = 2;
+const MONTH_GAP = 14;
 
 function pickColor(normalized: number): string {
   if (normalized < 0.18) return "#193D78";
@@ -41,6 +42,19 @@ function shortPersianLabel(day: Pick<TimelineDay, "persianDate">): string {
   const parts = day.persianDate.split(" ");
   if (parts.length >= 2) return `${parts[0]} ${parts[1]}`;
   return day.persianDate;
+}
+
+function persianMonthKey(dateStr: string): string {
+  const date = new Date(`${dateStr}T12:00:00`);
+  return new Intl.DateTimeFormat("fa-IR", {
+    year: "numeric",
+    month: "long",
+  }).format(date);
+}
+
+function persianMonthShort(dateStr: string): string {
+  const date = new Date(`${dateStr}T12:00:00`);
+  return new Intl.DateTimeFormat("fa-IR", { month: "short" }).format(date);
 }
 
 function toLocalDateString(date: Date): string {
@@ -130,7 +144,7 @@ export function EventIntensityPanel({
 
   const bars = useMemo(
     () =>
-      chronological.map((day) => {
+      chronological.map((day, index) => {
         const normalized = Math.min(1, day.intensity / 100);
         const eventNorm = day.totalEvents / maxEvents;
         const score =
@@ -138,6 +152,9 @@ export function EventIntensityPanel({
             ? 0.06
             : Math.max(normalized, eventNorm * 0.85);
         const height = Math.round(4 + score * 28);
+        const monthKey = persianMonthKey(day.date);
+        const prevMonthKey =
+          index > 0 ? persianMonthKey(chronological[index - 1]!.date) : null;
 
         return {
           day,
@@ -145,21 +162,53 @@ export function EventIntensityPanel({
           color: day.totalEvents === 0 ? "rgba(148,163,184,0.22)" : pickColor(score),
           shortLabel: shortPersianLabel(day),
           isEmpty: day.totalEvents === 0,
+          monthKey,
+          monthLabel: persianMonthShort(day.date),
+          isMonthStart: index === 0 || monthKey !== prevMonthKey,
         };
       }),
     [chronological, maxEvents],
   );
 
+  const monthGapCount = useMemo(
+    () => bars.filter((b, i) => i > 0 && b.isMonthStart).length,
+    [bars],
+  );
+
   const barSlotWidth = useMemo(() => {
     if (bars.length === 0 || containerWidth <= 0) return MIN_BAR_WIDTH;
-    const available = containerWidth - Math.max(0, bars.length - 1) * BAR_GAP;
+    const gaps =
+      Math.max(0, bars.length - 1) * BAR_GAP + monthGapCount * MONTH_GAP;
+    const available = containerWidth - gaps;
     return Math.max(MIN_BAR_WIDTH, available / bars.length);
-  }, [bars.length, containerWidth]);
+  }, [bars.length, containerWidth, monthGapCount]);
+
+  const barOffsets = useMemo(() => {
+    const offsets: number[] = [];
+    let x = 0;
+    for (let i = 0; i < bars.length; i++) {
+      if (i > 0) {
+        x += BAR_GAP;
+        if (bars[i]!.isMonthStart) x += MONTH_GAP;
+      }
+      offsets.push(x);
+      x += barSlotWidth;
+    }
+    return offsets;
+  }, [bars, barSlotWidth]);
 
   const trackWidth = useMemo(() => {
-    if (bars.length === 0) return 0;
-    return bars.length * barSlotWidth + Math.max(0, bars.length - 1) * BAR_GAP;
-  }, [bars.length, barSlotWidth]);
+    if (bars.length === 0 || barOffsets.length === 0) return 0;
+    return barOffsets[barOffsets.length - 1]! + barSlotWidth;
+  }, [bars.length, barOffsets, barSlotWidth]);
+
+  const monthMarkers = useMemo(
+    () =>
+      bars
+        .map((bar, index) => ({ bar, index }))
+        .filter(({ bar }) => bar.isMonthStart),
+    [bars],
+  );
 
   const axisLabels = useMemo(() => {
     if (bars.length === 0) return [];
@@ -354,8 +403,9 @@ export function EventIntensityPanel({
               className="pointer-events-none absolute top-0 z-20 w-[180px] rounded-[10px] border border-[var(--border)] bg-[var(--panel-2)] px-2.5 py-2 shadow-xl"
               style={{
                 right:
-                  bars.findIndex((b) => b.day.date === hovered.day.date) *
-                  (barSlotWidth + BAR_GAP),
+                  barOffsets[
+                    bars.findIndex((b) => b.day.date === hovered.day.date)
+                  ] ?? 0,
                 transform: "translateX(30%)",
               }}
             >
@@ -385,9 +435,9 @@ export function EventIntensityPanel({
             className="relative z-[1] flex h-[36px] items-end"
             style={{ gap: BAR_GAP }}
           >
-            {bars.map((bar) => {
+            {bars.map((bar, index) => {
               const isActive = selected === bar.day.date;
-              const isHovered = hoveredDate === bar.day.date;
+              const isHovered = !isPanning && hoveredDate === bar.day.date;
 
               return (
                 <button
@@ -405,6 +455,8 @@ export function EventIntensityPanel({
                     width: barSlotWidth,
                     minWidth: barSlotWidth,
                     height: bar.height,
+                    marginInlineStart:
+                      index > 0 && bar.isMonthStart ? MONTH_GAP : 0,
                     background: bar.color,
                     borderTopLeftRadius: 2,
                     borderTopRightRadius: 2,
@@ -431,13 +483,38 @@ export function EventIntensityPanel({
                 key={`tick-${item.day.date}`}
                 className="absolute top-0 h-[5px] w-px bg-[var(--border)]"
                 style={{
-                  right: item.index * (barSlotWidth + BAR_GAP) + barSlotWidth / 2,
+                  right: (barOffsets[item.index] ?? 0) + barSlotWidth / 2,
                 }}
               />
             ))}
+            {monthMarkers.map(({ bar, index }) =>
+              index > 0 ? (
+                <span
+                  key={`month-sep-${bar.day.date}`}
+                  className="absolute top-[-34px] h-[34px] w-px"
+                  style={{
+                    right: (barOffsets[index] ?? 0) - MONTH_GAP / 2 - BAR_GAP / 2,
+                    background:
+                      "linear-gradient(to top, var(--border), transparent)",
+                  }}
+                />
+              ) : null,
+            )}
           </div>
 
           <div className="relative mt-0.5 h-[22px]">
+            {monthMarkers.map(({ bar, index }) => (
+              <span
+                key={`month-${bar.day.date}`}
+                className="pointer-events-none absolute top-0 text-[9px] font-medium text-[var(--text-muted)]"
+                style={{
+                  right: (barOffsets[index] ?? 0) + barSlotWidth / 2,
+                  transform: "translateX(50%)",
+                }}
+              >
+                {bar.monthLabel}
+              </span>
+            ))}
             {axisLabels.map((item) => {
               const isSelected = selected === item.day.date;
               return (
@@ -447,9 +524,8 @@ export function EventIntensityPanel({
                   onClick={() => handleBarClick(item.day.date)}
                   className="absolute cursor-pointer whitespace-nowrap text-[10px] leading-none"
                   style={{
-                    top: isSelected ? -2 : 4,
-                    right:
-                      item.index * (barSlotWidth + BAR_GAP) + barSlotWidth / 2,
+                    top: isSelected ? -2 : 12,
+                    right: (barOffsets[item.index] ?? 0) + barSlotWidth / 2,
                     transform: "translateX(50%)",
                     border: isSelected
                       ? "1px solid var(--primary)"
@@ -466,7 +542,7 @@ export function EventIntensityPanel({
                     zIndex: isSelected ? 2 : 1,
                   }}
                 >
-                  {item.shortLabel}
+                  {isSelected ? item.shortLabel : null}
                 </button>
               );
             })}

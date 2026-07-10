@@ -3,7 +3,9 @@
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\CalendarDayController;
 use App\Http\Controllers\Api\V1\CategoryController;
+use App\Http\Controllers\Api\V1\SettingsController;
 use App\Http\Controllers\Api\V1\TimelineController;
+use App\Http\Controllers\Api\V1\UserController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/health', fn () => response()->json([
@@ -23,6 +25,7 @@ Route::get('/timeline', [TimelineController::class, 'index']);
 Route::get('/timeline/stats', [TimelineController::class, 'stats']);
 Route::get('/timeline/{date}', [TimelineController::class, 'show']);
 Route::get('/categories', [CategoryController::class, 'index']);
+Route::get('/settings', [SettingsController::class, 'show']);
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/days', [CalendarDayController::class, 'index']);
@@ -37,4 +40,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/government-actions/{governmentAction}/media', [CalendarDayController::class, 'uploadGovernmentMedia']);
 
     Route::post('/categories', [CategoryController::class, 'store']);
+
+    Route::get('/users', [UserController::class, 'index']);
+    Route::post('/users', [UserController::class, 'store']);
+    Route::put('/users/{user}', [UserController::class, 'update']);
+    Route::delete('/users/{user}', [UserController::class, 'destroy']);
+
+    Route::put('/settings', [SettingsController::class, 'update']);
 });

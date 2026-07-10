@@ -1,0 +1,521 @@
+"use client";
+
+import { AppShell } from "@/components/layout/AppShell";
+import { AppSidebar } from "@/components/layout/AppSidebar";
+import { MobileNavigation } from "@/components/layout/MobileNavigation";
+import { CreateEventForm } from "@/components/forms/CreateEventForm";
+import { ActiveFilterChips } from "@/components/timeline/ActiveFilterChips";
+import { EventIntensityPanel } from "@/components/timeline/EventIntensityPanel";
+import { EventDetailPanel } from "@/components/timeline/EventDetailPanel";
+import { LiveUpdateBanner } from "@/components/timeline/LiveUpdateBanner";
+import { SummaryBar } from "@/components/timeline/SummaryBar";
+import { TimelineDaySection } from "@/components/timeline/TimelineDay";
+import { TimelineFilters } from "@/components/timeline/TimelineFilters";
+import { TimelineHeader } from "@/components/timeline/TimelineHeader";
+import {
+  EmptyTimelineState,
+  TimelineSkeleton,
+} from "@/components/timeline/TimelineSkeleton";
+import { AnalyticsView } from "@/components/views/AnalyticsView";
+import { HeatmapView } from "@/components/views/HeatmapView";
+import { MapView } from "@/components/views/MapView";
+import { MonthlyView } from "@/components/views/MonthlyView";
+import { WeeklyView } from "@/components/views/WeeklyView";
+import {
+  computeSummary,
+  findEventById,
+  timelineMockDays,
+} from "@/data/timeline.mock";
+import { getDashboardSettings } from "@/lib/admin-store";
+import { buildFilterChips, filterTimelineDays } from "@/lib/timeline";
+import { defaultDashboardSettings } from "@/types/settings";
+import {
+  defaultFilters,
+  type TimelineDay,
+  type TimelineEvent,
+  type TimelineFiltersState,
+  type TimelineViewMode,
+} from "@/types/timeline";
+import { ArrowUp } from "lucide-react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  useTransition,
+} from "react";
+
+type TimelinePageProps = {
+  initialDays?: TimelineDay[];
+  loading?: boolean;
+  error?: string | null;
+};
+
+export function TimelinePage({
+  initialDays = timelineMockDays,
+  loading = false,
+  error = null,
+}: TimelinePageProps) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const [, startTransition] = useTransition();
+
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [searchInput, setSearchInput] = useState(searchParams.get("q") ?? "");
+  const [searchQuery, setSearchQuery] = useState(searchParams.get("q") ?? "");
+  const [filters, setFilters] = useState<TimelineFiltersState>(() => ({
+    ...defaultFilters,
+    eventType:
+      (searchParams.get("type") as TimelineFiltersState["eventType"]) || "all",
+    severity:
+      (searchParams.get("severity") as TimelineFiltersState["severity"]) || "all",
+    province: searchParams.get("province") || "all",
+    dateFrom: searchParams.get("from") ?? "",
+    dateTo: searchParams.get("to") ?? "",
+  }));
+  const [selectedView, setSelectedView] = useState<TimelineViewMode>(
+    (searchParams.get("view") as TimelineViewMode) || "timeline",
+  );
+  const [selectedDay, setSelectedDay] = useState<string | null>(
+    searchParams.get("date") ?? initialDays[0]?.date ?? null,
+  );
+  const [collapsedDays, setCollapsedDays] = useState<Record<string, boolean>>(
+    {},
+  );
+  const [selectedEvent, setSelectedEvent] = useState<TimelineEvent | null>(
+    () => {
+      const id = searchParams.get("event");
+      if (id) return findEventById(id, initialDays) || null;
+      const firstDay = initialDays[0];
+      if (!firstDay || firstDay.events.length === 0) return null;
+      return firstDay.events[firstDay.events.length - 1] ?? null;
+    },
+  );
+  const [detailOpen, setDetailOpen] = useState(true);
+  const [pendingLiveUpdates, setPendingLiveUpdates] = useState(0);
+  const [toast, setToast] = useState<string | null>(null);
+  const [days] = useState(initialDays);
+  const [dashboardSettings, setDashboardSettings] = useState(() =>
+    typeof window !== "undefined"
+      ? getDashboardSettings()
+      : defaultDashboardSettings,
+  );
+
+  useEffect(() => {
+    setDashboardSettings(getDashboardSettings());
+  }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setSearchQuery(searchInput), 300);
+    return () => clearTimeout(timer);
+  }, [searchInput]);
+
+  useEffect(() => {
+    if (searchParams.get("view")) return;
+    if (dashboardSettings.defaultView !== "timeline") {
+      setSelectedView(dashboardSettings.defaultView);
+    }
+  }, [dashboardSettings.defaultView, searchParams]);
+
+  useEffect(() => {
+    if (!dashboardSettings.liveEnabled) return;
+    const liveTimer = setTimeout(() => {
+      setPendingLiveUpdates(3);
+      setToast("۳ رخداد جدید ثبت شد");
+    }, 16000);
+    return () => clearTimeout(liveTimer);
+  }, [dashboardSettings.liveEnabled]);
+
+  useEffect(() => {
+    if (!toast) return;
+    const t = setTimeout(() => setToast(null), 4500);
+    return () => clearTimeout(t);
+  }, [toast]);
+
+  const syncUrl = useCallback(
+    (next: {
+      view?: TimelineViewMode;
+      date?: string | null;
+      event?: string | null;
+      q?: string;
+      filters?: TimelineFiltersState;
+    }) => {
+      const params = new URLSearchParams(searchParams.toString());
+      const view = next.view ?? selectedView;
+      const date = next.date === undefined ? selectedDay : next.date;
+      const eventId =
+        next.event === undefined ? selectedEvent?.id ?? null : next.event;
+      const q = next.q === undefined ? searchQuery : next.q;
+      const f = next.filters ?? filters;
+
+      if (view && view !== "timeline") params.set("view", view);
+      else params.delete("view");
+      if (date) params.set("date", date);
+      else params.delete("date");
+      if (eventId) params.set("event", eventId);
+      else params.delete("event");
+      if (q) params.set("q", q);
+      else params.delete("q");
+      if (f.eventType !== "all") params.set("type", f.eventType);
+      else params.delete("type");
+      if (f.severity !== "all") params.set("severity", f.severity);
+      else params.delete("severity");
+      if (f.province !== "all") params.set("province", f.province);
+      else params.delete("province");
+      if (f.dateFrom) params.set("from", f.dateFrom);
+      else params.delete("from");
+      if (f.dateTo) params.set("to", f.dateTo);
+      else params.delete("to");
+
+      startTransition(() => {
+        router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+      });
+    },
+    [
+      filters,
+      pathname,
+      router,
+      searchParams,
+      searchQuery,
+      selectedDay,
+      selectedEvent?.id,
+      selectedView,
+    ],
+  );
+
+  useEffect(() => {
+    syncUrl({ q: searchQuery });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchQuery]);
+
+  const rangedDays = useMemo(() => {
+    return days.filter((day) => {
+      if (dashboardSettings.rangeStart && day.date < dashboardSettings.rangeStart) {
+        return false;
+      }
+      if (dashboardSettings.rangeEnd && day.date > dashboardSettings.rangeEnd) {
+        return false;
+      }
+      return true;
+    });
+  }, [days, dashboardSettings.rangeStart, dashboardSettings.rangeEnd]);
+
+  const filteredDays = useMemo(
+    () => filterTimelineDays(rangedDays, filters, searchQuery),
+    [rangedDays, filters, searchQuery],
+  );
+
+  const summary = useMemo(() => computeSummary(rangedDays), [rangedDays]);
+  const chips = useMemo(() => buildFilterChips(filters), [filters]);
+  const activeFilterCount = chips.length;
+
+  useEffect(() => {
+    if (selectedView !== "timeline") return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((e) => e.isIntersecting)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+        if (visible?.target.id.startsWith("day-")) {
+          setSelectedDay(visible.target.id.replace("day-", ""));
+        }
+      },
+      { rootMargin: "-20% 0px -55% 0px", threshold: [0.15, 0.4, 0.7] },
+    );
+
+    filteredDays.forEach((day) => {
+      const el = document.getElementById(`day-${day.date}`);
+      if (el) observer.observe(el);
+    });
+    return () => observer.disconnect();
+  }, [filteredDays, selectedView]);
+
+  const scrollToDay = useCallback(
+    (date: string, switchToTimeline = true) => {
+      if (switchToTimeline) setSelectedView("timeline");
+      setSelectedDay(date);
+      setCollapsedDays((prev) => ({ ...prev, [date]: false }));
+      syncUrl({
+        date,
+        view: switchToTimeline ? "timeline" : selectedView,
+      });
+      requestAnimationFrame(() => {
+        document.getElementById(`day-${date}`)?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      });
+    },
+    [selectedView, syncUrl],
+  );
+
+  const relatedLookup = useCallback(
+    (event: TimelineEvent) => {
+      if (event.eventType !== "enemy") return { hasResponse: false };
+      const hasResponse = (
+        event.relatedResponseIds ??
+        event.relatedEventIds ??
+        []
+      ).some((id) => findEventById(id, days)?.eventType === "government");
+      return { hasResponse, responseTimeMinutes: event.responseTimeMinutes };
+    },
+    [days],
+  );
+
+  const relatedResponses = useMemo(() => {
+    if (!selectedEvent) return [];
+    return (selectedEvent.relatedResponseIds ?? selectedEvent.relatedEventIds ?? [])
+      .map((id) => findEventById(id, days))
+      .filter((e): e is TimelineEvent => !!e && e.eventType === "government");
+  }, [selectedEvent, days]);
+
+  const openEvent = (event: TimelineEvent) => {
+    setSelectedEvent(event);
+    setDetailOpen(true);
+    setSelectedDay(event.date);
+    syncUrl({ event: event.id, date: event.date });
+  };
+
+  const closeDetail = () => {
+    // Keep the left details panel always open; just keep current event.
+    setDetailOpen(true);
+  };
+
+  const removeChip = (key: string) => {
+    const next = { ...filters };
+    if (key === "eventType") next.eventType = "all";
+    if (key === "severity") next.severity = "all";
+    if (key === "category") next.category = "all";
+    if (key === "province") next.province = "all";
+    if (key === "city") next.city = "all";
+    if (key === "organization") next.organization = "all";
+    if (key === "verificationStatus") next.verificationStatus = "all";
+    if (key === "hasResponse") next.hasResponse = "all";
+    if (key === "hasImage") next.hasImage = false;
+    if (key === "hasVideo") next.hasVideo = false;
+    if (key === "source") next.source = "all";
+    if (key === "dateRange") {
+      next.dateFrom = "";
+      next.dateTo = "";
+    }
+    setFilters(next);
+    syncUrl({ filters: next });
+  };
+
+  const changeView = (view: TimelineViewMode) => {
+    setSelectedView(view);
+    syncUrl({ view });
+  };
+
+  const main = (
+    <div className="min-w-0 flex-1 space-y-3 pb-24 md:pb-6">
+      <TimelineHeader
+        searchQuery={searchInput}
+        onSearchChange={setSearchInput}
+        dateFrom={filters.dateFrom}
+        dateTo={filters.dateTo}
+        onDateFromChange={(value) => {
+          const next = { ...filters, dateFrom: value };
+          setFilters(next);
+          syncUrl({ filters: next });
+        }}
+        onDateToChange={(value) => {
+          const next = { ...filters, dateTo: value };
+          setFilters(next);
+          syncUrl({ filters: next });
+        }}
+        onOpenFilters={() => setFiltersOpen(true)}
+        onOpenMobileMenu={() => setMobileMenuOpen(true)}
+        activeFilterCount={activeFilterCount}
+        selectedView={selectedView}
+        onViewChange={changeView}
+      />
+
+      <LiveUpdateBanner
+        lastUpdatedLabel="۲ دقیقه پیش"
+        pendingCount={pendingLiveUpdates}
+        onShowNew={() => {
+          setPendingLiveUpdates(0);
+          setToast(null);
+          scrollToDay(days[0]?.date ?? "");
+        }}
+      />
+
+      <SummaryBar
+        totalEvents={summary.totalEvents}
+        enemy={summary.enemy}
+        government={summary.government}
+        responseRatio={summary.responseRatio}
+        avgResponseMinutes={summary.avgResponseMinutes}
+      />
+
+      <ActiveFilterChips
+        chips={chips}
+        onRemove={removeChip}
+        onClearAll={() => {
+          setFilters(defaultFilters);
+          syncUrl({ filters: defaultFilters });
+        }}
+      />
+
+      {loading ? <TimelineSkeleton /> : null}
+      {error ? (
+        <EmptyTimelineState
+          title="دریافت اطلاعات با خطا مواجه شد."
+          description={error}
+          onRetry={() => window.location.reload()}
+        />
+      ) : null}
+
+      {!loading && !error && selectedView === "timeline" ? (
+        filteredDays.length === 0 ? (
+          <EmptyTimelineState
+            title={
+              searchQuery
+                ? "نتیجه‌ای برای جست‌وجوی شما پیدا نشد."
+                : "در این بازه رویدادی ثبت نشده است."
+            }
+            onRetry={() => {
+              setFilters(defaultFilters);
+              setSearchInput("");
+              setSearchQuery("");
+            }}
+          />
+        ) : (
+          <>
+            <EventIntensityPanel
+              days={filteredDays}
+              activeDate={selectedDay}
+              onSelectDay={(date) => scrollToDay(date, false)}
+            />
+            <div className="space-y-4">
+              {filteredDays.map((day) => (
+                <TimelineDaySection
+                  key={day.date}
+                  day={day}
+                  collapsed={!!collapsedDays[day.date]}
+                  isActive={selectedDay === day.date}
+                  searchQuery={searchQuery}
+                  selectedEventId={selectedEvent?.id}
+                  showEnemy={dashboardSettings.showEnemySection}
+                  showGovernment={dashboardSettings.showGovernmentSection}
+                  relatedLookup={relatedLookup}
+                  onToggle={(date) =>
+                    setCollapsedDays((prev) => ({
+                      ...prev,
+                      [date]: !prev[date],
+                    }))
+                  }
+                  onOpenEvent={openEvent}
+                />
+              ))}
+            </div>
+          </>
+        )
+      ) : null}
+
+      {!loading && !error && selectedView === "week" ? (
+        <WeeklyView
+          days={filteredDays}
+          onSelectDay={(date) => scrollToDay(date, true)}
+        />
+      ) : null}
+      {!loading && !error && selectedView === "month" ? (
+        <MonthlyView
+          days={filteredDays}
+          onSelectDay={(date) => scrollToDay(date, true)}
+        />
+      ) : null}
+      {!loading && !error && selectedView === "heatmap" ? (
+        <HeatmapView
+          days={filteredDays}
+          onSelectDay={(date) => scrollToDay(date, true)}
+        />
+      ) : null}
+      {!loading && !error && selectedView === "map" ? (
+        <MapView
+          days={filteredDays}
+          onSelectProvince={(province) => {
+            const next = { ...filters, province };
+            setFilters(next);
+            setSelectedView("timeline");
+            syncUrl({ filters: next, view: "timeline" });
+          }}
+        />
+      ) : null}
+      {!loading && !error && selectedView === "analytics" ? (
+        <AnalyticsView days={filteredDays} />
+      ) : null}
+
+      <button
+        type="button"
+        onClick={() => scrollToDay(days[0]?.date ?? "")}
+        className="fixed bottom-20 left-4 z-30 inline-flex items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-xs text-slate-200 shadow-lg md:bottom-6"
+        aria-label="بازگشت به امروز"
+      >
+        <ArrowUp className="h-3.5 w-3.5" />
+        بازگشت به امروز
+      </button>
+    </div>
+  );
+
+  return (
+    <>
+      <AppShell
+        sidebar={
+          <AppSidebar
+            collapsed={sidebarCollapsed}
+            mobileOpen={mobileMenuOpen}
+            onToggleCollapse={() => setSidebarCollapsed((v) => !v)}
+            onCloseMobile={() => setMobileMenuOpen(false)}
+            onCreateEvent={() => setCreateOpen(true)}
+            stats={{
+              totalEvents: summary.totalEvents,
+              enemy: summary.enemy,
+              government: summary.government,
+              activeUsers: summary.activeUsers,
+            }}
+          />
+        }
+        main={main}
+        detail={
+          <EventDetailPanel
+            open
+            event={selectedEvent}
+            relatedResponses={relatedResponses}
+            onClose={closeDetail}
+            onOpenRelated={openEvent}
+          />
+        }
+        detailOpen
+        mobileNav={
+          <MobileNavigation value={selectedView} onChange={changeView} />
+        }
+      />
+
+      <TimelineFilters
+        open={filtersOpen}
+        days={days}
+        value={filters}
+        onClose={() => setFiltersOpen(false)}
+        onApply={(next) => {
+          setFilters(next);
+          syncUrl({ filters: next });
+        }}
+      />
+
+      <CreateEventForm open={createOpen} onClose={() => setCreateOpen(false)} />
+
+      {toast ? (
+        <div className="fixed bottom-24 left-4 z-[70] rounded-xl border border-amber-400/30 bg-[var(--surface-3)] px-4 py-3 text-sm text-amber-100 shadow-xl md:bottom-6">
+          {toast}
+        </div>
+      ) : null}
+    </>
+  );
+}

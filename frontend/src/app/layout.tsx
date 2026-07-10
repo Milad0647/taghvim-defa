@@ -9,9 +9,9 @@ const vazir = Vazirmatn({
 });
 
 export const metadata: Metadata = {
-  title: "تقویم دفاعی | گزارش زنده",
+  title: "تقویم دفاعی | خط زمانی رخدادها",
   description:
-    "گزارش روزبه‌روز اقدامات دشمن و پاسخ‌های دولت — تایم‌لاین زنده دفاعی",
+    "داشبورد RTL گزارش زنده اقدامات دشمن و پاسخ‌های دولت",
 };
 
 export default function RootLayout({

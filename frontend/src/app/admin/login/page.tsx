@@ -1,14 +1,24 @@
 "use client";
 
-import { API_BASE } from "@/lib/api";
-import { useState } from "react";
+import { loginRequest } from "@/lib/auth";
+import { getSession } from "@/lib/admin-store";
+import { Shield } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 export default function AdminLoginPage() {
+  const router = useRouter();
   const [email, setEmail] = useState("admin@taghvim.local");
   const [password, setPassword] = useState("password");
-  const [token, setToken] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (getSession()) {
+      router.replace("/admin");
+    }
+  }, [router]);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -16,43 +26,40 @@ export default function AdminLoginPage() {
     setError(null);
 
     try {
-      const response = await fetch(`${API_BASE}/auth/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Accept: "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
-
-      const payload = await response.json();
-
-      if (!response.ok) {
-        throw new Error(payload.message || "ورود ناموفق بود");
-      }
-
-      setToken(payload.token);
-      localStorage.setItem("taghvim_token", payload.token);
+      await loginRequest(email, password);
+      router.replace("/admin");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "خطای ناشناخته");
+      setError(err instanceof Error ? err.message : "ورود ناموفق بود");
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-4">
-      <div className="rounded-2xl border border-white/10 bg-[#121a2e]/90 p-6 shadow-2xl backdrop-blur">
-        <h1 className="text-2xl font-bold text-white">ورود پنل مدیریت</h1>
-        <p className="mt-2 text-sm text-slate-400">
-          برای ثبت روز و اقدامات از این بخش وارد شوید.
-        </p>
+    <main
+      className="flex min-h-screen items-center justify-center bg-[var(--background)] px-4"
+      style={{ direction: "rtl" }}
+    >
+      <div className="w-full max-w-md rounded-2xl border border-[var(--border)] bg-[#0A1428] p-6 shadow-2xl">
+        <div className="mb-6 flex items-center gap-3">
+          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-500/15">
+            <Shield className="h-5 w-5 text-blue-400" />
+          </div>
+          <div>
+            <h1 className="text-xl font-bold text-white">ورود به پنل مدیریت</h1>
+            <p className="text-xs text-slate-400">تقویم دفاعی — گزارش زنده</p>
+          </div>
+        </div>
 
-        <form onSubmit={onSubmit} className="mt-6 space-y-4">
+        <form onSubmit={onSubmit} className="space-y-4">
           <label className="block space-y-1.5 text-sm">
             <span className="text-slate-300">ایمیل</span>
             <input
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               type="email"
-              className="w-full rounded-xl border border-white/10 bg-slate-950/60 px-3 py-2.5 outline-none ring-violet-500 focus:ring-2"
+              autoComplete="username"
+              className="w-full rounded-xl border border-[var(--border)] bg-[#0D1A30] px-3 py-2.5 text-white outline-none focus:ring-2 focus:ring-blue-500"
               required
             />
           </label>
@@ -63,32 +70,40 @@ export default function AdminLoginPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               type="password"
-              className="w-full rounded-xl border border-white/10 bg-slate-950/60 px-3 py-2.5 outline-none ring-violet-500 focus:ring-2"
+              autoComplete="current-password"
+              className="w-full rounded-xl border border-[var(--border)] bg-[#0D1A30] px-3 py-2.5 text-white outline-none focus:ring-2 focus:ring-blue-500"
               required
             />
           </label>
 
           {error ? (
-            <p className="rounded-lg bg-red-500/15 px-3 py-2 text-sm text-red-200">
+            <p className="rounded-xl bg-red-500/15 px-3 py-2 text-sm text-red-200">
               {error}
-            </p>
-          ) : null}
-
-          {token ? (
-            <p className="rounded-lg bg-emerald-500/15 px-3 py-2 text-sm text-emerald-200">
-              ورود موفق — توکن ذخیره شد. می‌توانید از API برای ثبت داده استفاده
-              کنید.
             </p>
           ) : null}
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-xl bg-gradient-to-l from-violet-600 to-fuchsia-500 px-4 py-2.5 font-semibold text-white transition hover:opacity-90 disabled:opacity-60"
+            className="w-full rounded-xl bg-blue-600 py-2.5 text-sm font-semibold text-white hover:bg-blue-500 disabled:opacity-60"
           >
             {loading ? "در حال ورود..." : "ورود"}
           </button>
         </form>
+
+        <div className="mt-5 rounded-xl border border-[var(--border)] bg-[#0D1A30] p-3 text-xs text-slate-400">
+          <p className="mb-1 font-medium text-slate-300">حساب‌های نمونه:</p>
+          <p>admin@taghvim.local / password</p>
+          <p>editor@taghvim.local / password</p>
+          <p>viewer@taghvim.local / password</p>
+        </div>
+
+        <Link
+          href="/timeline"
+          className="mt-4 block text-center text-sm text-blue-300 hover:underline"
+        >
+          بازگشت به خط زمانی
+        </Link>
       </div>
     </main>
   );

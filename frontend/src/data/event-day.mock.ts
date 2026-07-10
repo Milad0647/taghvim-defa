@@ -11,7 +11,7 @@ export const eventDayMock: EventDayMock = {
       description:
         "گروه هکری مرتبط با دشمن اقدام به حمله DDoS علیه زیرساخت‌های بانکداری کشور نمودند که خوشبختانه با هوشیاری تیم‌های امنیتی دفع شد.",
       time: "10:30",
-      image: "/images/events/radar.svg",
+      image: "/images/events/radar.jpg",
       status: "شدید",
       statusColor: "red",
       tags: ["زیرساخت", "سایبری"],
@@ -23,7 +23,7 @@ export const eventDayMock: EventDayMock = {
       description:
         "شبکه‌های معاند اقدام به انتشار اخبار جعلی و تحریف واقعیت در خصوص وضعیت اقتصادی کشور نمودند.",
       time: "14:15",
-      image: "/images/events/diplomacy.svg",
+      image: "/images/events/diplomacy.jpg",
       status: "متوسط",
       statusColor: "orange",
       tags: ["روانی", "رسانه‌ای"],
@@ -35,7 +35,7 @@ export const eventDayMock: EventDayMock = {
       description:
         "فاز جدید پالایشگاه با ظرفیت ۳۴۰ هزار بشکه در روز با حضور رئیس جمهور افتتاح و به بهره‌برداری رسید.",
       time: "09:00",
-      image: "/images/events/base.svg",
+      image: "/images/events/base.jpg",
       status: "موفق",
       statusColor: "green",
       tags: ["اقتصادی", "زیرساخت"],
@@ -47,7 +47,7 @@ export const eventDayMock: EventDayMock = {
       description:
         "برگزاری جلسه فوق‌العاده ستاد اقتصادی برای بررسی و تصمیم‌گیری در خصوص اقدامات مقابله‌ای.",
       time: "16:45",
-      image: "/images/events/city.svg",
+      image: "/images/events/city.jpg",
       status: "اطلاع‌رسانی",
       statusColor: "blue",
       tags: ["سیاسی", "مدیریتی"],
@@ -64,9 +64,9 @@ export const eventDayMock: EventDayMock = {
       summary:
         "گروه هکری مرتبط با کشورهای متخاصم اقدام به حمله DDoS گسترده علیه زیرساخت‌های بانکداری کشور نمودند. حجم حمله بیش از ۲ ترابیت بر ثانیه بود که با آمادگی تیم‌های امنیتی دفع شد.",
       evidenceImages: [
-        "/images/events/radar.svg",
-        "/images/events/strike.svg",
-        "/images/events/missile.svg",
+        "/images/events/radar.jpg",
+        "/images/events/strike.jpg",
+        "/images/events/missile.jpg",
       ],
       evidenceExtraCount: 3,
       impacts: [

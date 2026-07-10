@@ -33,21 +33,21 @@ function eventBase(
   };
 }
 
-/** Local assets — Unsplash/CDN URLs often fail on restricted networks. */
+/** Local real photos (bundled under public/) so images load without external CDN. */
 const IMG = {
-  strike: "/images/events/strike.svg",
-  missile: "/images/events/missile.svg",
-  radar: "/images/events/radar.svg",
-  diplomacy: "/images/events/diplomacy.svg",
-  base: "/images/events/base.svg",
-  city: "/images/events/city.svg",
-  sea: "/images/events/sea.svg",
+  strike: "/images/events/strike.jpg",
+  missile: "/images/events/missile.jpg",
+  radar: "/images/events/radar.jpg",
+  diplomacy: "/images/events/diplomacy.jpg",
+  base: "/images/events/base.jpg",
+  city: "/images/events/city.jpg",
+  sea: "/images/events/sea.jpg",
 } as const;
 
 /** Inclusive seed window: 9 Esfand 1404 → today */
 export const SEED_RANGE_START = "2026-02-28";
 export const SEED_RANGE_END = "2026-07-10";
-export const TIMELINE_SEED_VERSION = "conflict-2026-local-images-v4";
+export const TIMELINE_SEED_VERSION = "conflict-2026-real-images-v5";
 
 const IMG_POOL = [
   IMG.strike,

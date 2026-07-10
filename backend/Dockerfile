@@ -23,7 +23,12 @@ RUN composer dump-autoload --optimize \
     && chown -R application:application storage bootstrap/cache \
     && chmod -R 775 storage bootstrap/cache
 
-COPY docker/laravel-init.sh /opt/docker/provision/entrypoint.d/20-laravel.sh
-RUN chmod +x /opt/docker/provision/entrypoint.d/20-laravel.sh
+# Run after webdevops php/nginx setup (99-*), never block boot
+COPY docker/laravel-init.sh /opt/docker/provision/entrypoint.d/99-laravel.sh
+RUN chmod +x /opt/docker/provision/entrypoint.d/99-laravel.sh \
+    && apk add --no-cache curl 2>/dev/null || true
 
 EXPOSE 80
+
+HEALTHCHECK --interval=15s --timeout=5s --start-period=120s --retries=10 \
+  CMD curl -fsS http://127.0.0.1/up || exit 1

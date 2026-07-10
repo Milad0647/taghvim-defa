@@ -1,10 +1,18 @@
 #!/bin/sh
-set -e
+# Runs after webdevops php/nginx provisioning. Must never fail the container boot.
 
-cd /app
+cd /app || exit 0
 
-mkdir -p storage/app/public storage/framework/cache storage/framework/sessions storage/framework/views storage/logs bootstrap/cache
-chown -R application:application storage bootstrap/cache || true
+mkdir -p \
+  storage/app/public \
+  storage/framework/cache \
+  storage/framework/sessions \
+  storage/framework/views \
+  storage/logs \
+  bootstrap/cache
+
+chown -R application:application storage bootstrap/cache 2>/dev/null || true
+chmod -R 775 storage bootstrap/cache 2>/dev/null || true
 
 if [ ! -f .env ]; then
   if [ -f .env.docker ]; then
@@ -14,16 +22,10 @@ if [ ! -f .env ]; then
   fi
 fi
 
-php artisan config:clear || true
-php artisan route:clear || true
+php artisan config:clear 2>/dev/null || true
+php artisan route:clear 2>/dev/null || true
+php artisan migrate --force 2>/dev/null || true
+php artisan db:seed --force 2>/dev/null || true
+php artisan storage:link 2>/dev/null || true
 
-if [ -z "$APP_KEY" ] || [ "$APP_KEY" = "base64:" ]; then
-  php artisan key:generate --force || true
-fi
-
-php artisan migrate --force || true
-php artisan db:seed --force || true
-php artisan storage:link || true
-
-php artisan config:cache || true
-php artisan route:cache || true
+exit 0

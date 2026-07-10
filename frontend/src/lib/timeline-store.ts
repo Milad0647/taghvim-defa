@@ -1,4 +1,9 @@
-import { conflictSeedDays } from "@/data/timeline.mock";
+import {
+  SEED_RANGE_END,
+  SEED_RANGE_START,
+  TIMELINE_SEED_VERSION,
+  conflictSeedDays,
+} from "@/data/timeline.mock";
 import {
   defaultDashboardSettings,
   type DashboardSettings,
@@ -7,11 +12,13 @@ import type { TimelineDay } from "@/types/timeline";
 
 const TIMELINE_KEY = "taghvim_timeline_days";
 const TIMELINE_CLEARED_KEY = "taghvim_timeline_cleared";
+const TIMELINE_VERSION_KEY = "taghvim_timeline_seed_version";
 const SETTINGS_KEY = "taghvim_dashboard_settings";
 
 const DEMO_STORAGE_KEYS = [
   TIMELINE_KEY,
   TIMELINE_CLEARED_KEY,
+  TIMELINE_VERSION_KEY,
   "taghvim_event_draft",
   "taghvim_saved_filters",
 ] as const;
@@ -36,6 +43,26 @@ function writeJson(key: string, value: unknown) {
   localStorage.setItem(key, JSON.stringify(value));
 }
 
+function applySeedRangeToSettings() {
+  const settings = readJson<Partial<DashboardSettings>>(SETTINGS_KEY, {});
+  writeJson(SETTINGS_KEY, {
+    ...defaultDashboardSettings,
+    ...settings,
+    rangeStart: SEED_RANGE_START,
+    rangeEnd: SEED_RANGE_END,
+  } satisfies DashboardSettings);
+}
+
+function writeSeed() {
+  writeJson(TIMELINE_KEY, conflictSeedDays);
+  if (canUseStorage()) {
+    localStorage.setItem(TIMELINE_VERSION_KEY, TIMELINE_SEED_VERSION);
+    localStorage.removeItem(TIMELINE_CLEARED_KEY);
+  }
+  applySeedRangeToSettings();
+  return conflictSeedDays;
+}
+
 export function isTimelineCleared(): boolean {
   if (!canUseStorage()) return false;
   return localStorage.getItem(TIMELINE_CLEARED_KEY) === "1";
@@ -49,13 +76,17 @@ export function loadTimelineDays(): TimelineDay[] {
     return readJson<TimelineDay[]>(TIMELINE_KEY, []);
   }
 
+  const version = localStorage.getItem(TIMELINE_VERSION_KEY);
+  if (version !== TIMELINE_SEED_VERSION) {
+    return writeSeed();
+  }
+
   const existing = readJson<TimelineDay[] | null>(TIMELINE_KEY, null);
   if (existing && Array.isArray(existing) && existing.length > 0) {
     return existing;
   }
 
-  writeJson(TIMELINE_KEY, conflictSeedDays);
-  return conflictSeedDays;
+  return writeSeed();
 }
 
 export function saveTimelineDays(days: TimelineDay[]) {
@@ -66,11 +97,7 @@ export function saveTimelineDays(days: TimelineDay[]) {
 }
 
 export function restoreConflictDemoData(): TimelineDay[] {
-  if (canUseStorage()) {
-    localStorage.removeItem(TIMELINE_CLEARED_KEY);
-  }
-  writeJson(TIMELINE_KEY, conflictSeedDays);
-  return conflictSeedDays;
+  return writeSeed();
 }
 
 /**

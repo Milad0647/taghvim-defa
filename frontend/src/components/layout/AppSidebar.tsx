@@ -19,9 +19,10 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { IranEmblem } from "@/components/brand/IranEmblem";
+import { getSiteBranding } from "@/lib/branding";
 
 const MENU = [
   { href: "/overview", label: "نمای کلی", icon: LayoutDashboard, match: "overview" },
@@ -56,6 +57,11 @@ export function AppSidebar({
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const view = searchParams.get("view") || "timeline";
+  const [branding, setBranding] = useState(() => getSiteBranding());
+
+  useEffect(() => {
+    setBranding(getSiteBranding());
+  }, []);
 
   useEffect(() => {
     onCloseMobile();
@@ -76,8 +82,12 @@ export function AppSidebar({
                 <IranEmblem className="h-6 w-6 text-[var(--logo)]" />
               </div>
               <div>
-                <p className="text-sm font-bold text-[var(--text-primary)]">گزارش زنده</p>
-                <p className="text-[10px] text-[var(--text-secondary)]">رویدادها و اقدامات</p>
+                <p className="text-sm font-bold text-[var(--text-primary)]">
+                  {branding.siteTitle}
+                </p>
+                <p className="text-[10px] leading-4 text-[var(--text-secondary)]">
+                  {branding.siteTagline}
+                </p>
               </div>
             </div>
           </div>

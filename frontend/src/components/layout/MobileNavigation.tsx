@@ -12,13 +12,13 @@ import {
 } from "lucide-react";
 
 const ITEMS: { id: TimelineViewMode; label: string; icon: typeof Map }[] = [
-  { id: "timeline", label: "خط زمانی", icon: CalendarRange },
-  { id: "day", label: "روزانه", icon: Sun },
-  { id: "week", label: "هفتگی", icon: CalendarDays },
-  { id: "month", label: "ماهانه", icon: CalendarDays },
-  { id: "heatmap", label: "نقشه حرارتی", icon: Grid3X3 },
-  { id: "map", label: "نقشه", icon: Map },
+  { id: "timeline", label: "زمانی", icon: CalendarRange },
+  { id: "day", label: "روز", icon: Sun },
+  { id: "week", label: "هفته", icon: CalendarDays },
+  { id: "month", label: "ماه", icon: CalendarDays },
   { id: "analytics", label: "آمار", icon: BarChart3 },
+  { id: "heatmap", label: "حرارتی", icon: Grid3X3 },
+  { id: "map", label: "نقشه", icon: Map },
 ];
 
 type MobileNavigationProps = {
@@ -28,8 +28,8 @@ type MobileNavigationProps = {
 
 export function MobileNavigation({ value, onChange }: MobileNavigationProps) {
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-[var(--border)] bg-[var(--surface-1)]/95 px-2 py-2 backdrop-blur md:hidden">
-      <div className="mx-auto flex max-w-lg items-center justify-between gap-1">
+    <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-[var(--border)] bg-[var(--surface-1)]/95 px-1 py-1.5 backdrop-blur md:hidden safe-bottom">
+      <div className="mx-auto flex max-w-lg items-stretch gap-0.5 overflow-x-auto scrollbar-thin">
         {ITEMS.map((item) => {
           const Icon = item.icon;
           const active = value === item.id;
@@ -39,12 +39,14 @@ export function MobileNavigation({ value, onChange }: MobileNavigationProps) {
               type="button"
               onClick={() => onChange(item.id)}
               className={clsx(
-                "flex min-w-0 flex-1 flex-col items-center gap-1 rounded-xl px-1 py-1.5 text-[10px]",
-                active ? "bg-[var(--purple)]/20 text-indigo-200" : "text-[var(--text-secondary)]",
+                "flex min-w-[3.25rem] flex-1 flex-col items-center gap-0.5 rounded-xl px-1 py-1.5 text-[9px]",
+                active
+                  ? "bg-blue-500/15 text-[var(--primary)]"
+                  : "text-[var(--text-secondary)]",
               )}
               aria-label={item.label}
             >
-              <Icon className="h-4 w-4" />
+              <Icon className="h-4 w-4 shrink-0" />
               <span className="truncate">{item.label}</span>
             </button>
           );

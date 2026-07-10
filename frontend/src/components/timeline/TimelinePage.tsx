@@ -7,6 +7,7 @@ import { ActiveFilterChips } from "@/components/timeline/ActiveFilterChips";
 import { AgencyFilterBar } from "@/components/timeline/AgencyFilterBar";
 import { EventIntensityPanel } from "@/components/timeline/EventIntensityPanel";
 import { EventDetailPanel } from "@/components/timeline/EventDetailPanel";
+import { EventDetailsDrawer } from "@/components/timeline/EventDetailsDrawer";
 import { TimelineDaySection } from "@/components/timeline/TimelineDay";
 import { TimelineFilters } from "@/components/timeline/TimelineFilters";
 import { TimelineHeader } from "@/components/timeline/TimelineHeader";
@@ -115,6 +116,7 @@ export function TimelinePage({
     },
   );
   const [detailOpen, setDetailOpen] = useState(true);
+  const [mobileDetailOpen, setMobileDetailOpen] = useState(false);
   const [dayModalOpen, setDayModalOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const [dashboardSettings, setDashboardSettings] = useState(() =>
@@ -385,13 +387,14 @@ export function TimelinePage({
   const openEvent = (event: TimelineEvent) => {
     setSelectedEvent(event);
     setDetailOpen(true);
+    setMobileDetailOpen(true);
     setSelectedDay(event.date);
     syncUrl({ event: event.id, date: event.date });
   };
 
   const closeDetail = () => {
-    // Keep the left details panel always open; just keep current event.
-    setDetailOpen(true);
+    // Desktop side panel stays available; mobile drawer can close.
+    setMobileDetailOpen(false);
   };
 
   const removeChip = (key: string) => {
@@ -667,6 +670,20 @@ export function TimelinePage({
         onOpenEvent={openEvent}
         onOpenRelated={openEvent}
       />
+
+      <div className="xl:hidden">
+        <EventDetailsDrawer
+          open={
+            mobileDetailOpen &&
+            !!selectedEvent &&
+            (selectedView === "timeline" || selectedView === "day")
+          }
+          event={selectedEvent}
+          relatedResponses={relatedResponses}
+          onClose={closeDetail}
+          onOpenRelated={openEvent}
+        />
+      </div>
 
       <TimelineFilters
         open={filtersOpen}

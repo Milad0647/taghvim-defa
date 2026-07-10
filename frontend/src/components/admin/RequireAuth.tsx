@@ -18,6 +18,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { IranEmblem } from "@/components/brand/IranEmblem";
 import { CreateEventForm } from "@/components/forms/CreateEventForm";
+import { getSiteBranding } from "@/lib/branding";
 
 const NAV = [
   { href: "/admin", label: "داشبورد ادمین", icon: LayoutDashboard, exact: true },
@@ -94,6 +95,11 @@ function AdminShell({
   const router = useRouter();
   const perms = ROLE_PERMISSIONS[user.role];
   const [createOpen, setCreateOpen] = useState(false);
+  const [branding, setBranding] = useState(() => getSiteBranding());
+
+  useEffect(() => {
+    setBranding(getSiteBranding());
+  }, []);
 
   async function onLogout() {
     await logoutRequest();
@@ -112,7 +118,12 @@ function AdminShell({
               <IranEmblem className="h-7 w-7 text-[var(--logo)]" />
               <div>
                 <p className="text-xs text-[var(--text-secondary)]">پنل مدیریت</p>
-                <h1 className="text-lg font-bold text-[var(--text-primary)]">تقویم دفاعی</h1>
+                <h1 className="text-lg font-bold text-[var(--text-primary)]">
+                  {branding.siteTitle}
+                </h1>
+                <p className="mt-0.5 text-[10px] leading-4 text-[var(--text-muted)]">
+                  {branding.siteTagline}
+                </p>
               </div>
             </div>
           </div>

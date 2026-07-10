@@ -112,7 +112,7 @@ export function WeeklyView({
       ) : (
         <>
           <div className="-mx-1 overflow-x-auto px-1 pb-1 xl:mx-0 xl:overflow-visible xl:px-0">
-            <div className="grid min-w-[980px] grid-cols-7 gap-3.5 xl:min-w-0">
+            <div className="grid min-w-[720px] grid-cols-7 gap-2 sm:min-w-[860px] sm:gap-3.5 xl:min-w-0">
               {models.map((model) => (
                 <WeeklyDayCard
                   key={model.day.date}

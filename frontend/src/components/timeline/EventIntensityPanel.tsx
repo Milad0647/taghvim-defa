@@ -348,13 +348,13 @@ export function EventIntensityPanel({
   return (
     <div
       className={clsx(
-        "event-intensity-panel grid h-[148px] grid-cols-[118px_1fr] items-stretch gap-3 overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--panel)] px-4",
+        "event-intensity-panel grid h-auto min-h-[132px] grid-cols-1 items-stretch gap-2 overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--panel)] px-3 py-2 sm:h-[148px] sm:grid-cols-[100px_1fr] sm:gap-3 sm:px-4 sm:py-0 md:grid-cols-[118px_1fr]",
         className,
       )}
       style={{ direction: "rtl" }}
       aria-label="شدت رویدادها"
     >
-      <div className="flex min-w-0 flex-col justify-center gap-2">
+      <div className="flex min-w-0 flex-row items-center justify-between gap-2 sm:flex-col sm:justify-center sm:gap-2">
         <p className="m-0 text-xs font-medium leading-tight text-[var(--text-secondary)]">
           شدت رویدادها
         </p>
@@ -373,7 +373,7 @@ export function EventIntensityPanel({
           <span className="text-[10px] text-[var(--text-muted)]">زیاد</span>
         </div>
 
-        <p className="m-0 text-[9px] leading-snug text-[var(--text-muted)]">
+        <p className="m-0 hidden text-[9px] leading-snug text-[var(--text-muted)] sm:block">
           {rangeLabel}
           <br />
           {Math.min(VISIBLE_DAYS, bars.length).toLocaleString("fa-IR")} روز

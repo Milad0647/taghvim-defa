@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-label="City">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0f172a"/>
+      <stop offset="100%" stop-color="#1e293b"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="480" fill="url(#bg)"/>
+  <rect x="120" y="180" width="90" height="200" fill="#334155"/>
+  <rect x="230" y="120" width="110" height="260" fill="#475569"/>
+  <rect x="360" y="160" width="80" height="220" fill="#334155"/>
+  <rect x="460" y="90" width="130" height="290" fill="#64748b"/>
+  <rect x="610" y="200" width="100" height="180" fill="#475569"/>
+  <g fill="#fbbf24" opacity="0.55">
+    <rect x="250" y="150" width="14" height="14"/><rect x="280" y="150" width="14" height="14"/>
+    <rect x="250" y="190" width="14" height="14"/><rect x="280" y="190" width="14" height="14"/>
+    <rect x="490" y="120" width="14" height="14"/><rect x="520" y="120" width="14" height="14"/>
+    <rect x="490" y="160" width="14" height="14"/><rect x="520" y="160" width="14" height="14"/>
+  </g>
+  <rect x="0" y="380" width="800" height="100" fill="#020617"/>
+</svg>

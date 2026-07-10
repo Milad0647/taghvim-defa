@@ -28,7 +28,7 @@ export function EventCard({ event, selected = false, onSelect }: EventCardProps)
         if (e.key === "Enter" || e.key === " ") onSelect?.(event.id);
       }}
       className={clsx(
-        "relative h-[113px] overflow-hidden rounded-[11px] p-2 outline-none",
+        "relative min-h-[113px] overflow-hidden rounded-[11px] p-2 outline-none",
         selected && isEnemy && "event-card-selected",
       )}
       style={{
@@ -52,11 +52,8 @@ export function EventCard({ event, selected = false, onSelect }: EventCardProps)
             : "none",
       }}
     >
-      <div
-        className="grid h-full items-stretch gap-2"
-        style={{ gridTemplateColumns: "190px 1fr 130px" }}
-      >
-        <div className="relative h-[96px] w-[190px] shrink-0 self-center overflow-hidden rounded-[9px]">
+      <div className="grid h-full grid-cols-1 items-stretch gap-2 sm:grid-cols-[minmax(100px,190px)_minmax(0,1fr)_minmax(0,130px)]">
+        <div className="relative h-[140px] w-full shrink-0 self-center overflow-hidden rounded-[9px] sm:h-[96px] sm:w-[190px]">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={event.image}
@@ -105,7 +102,7 @@ export function EventCard({ event, selected = false, onSelect }: EventCardProps)
         </div>
 
         <div
-          className="flex h-full flex-col items-end justify-between py-1"
+          className="hidden h-full flex-col items-end justify-between py-1 sm:flex"
           style={{ direction: "ltr" }}
         >
           <span

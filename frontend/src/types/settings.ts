@@ -4,6 +4,7 @@ export type DashboardSettings = {
   /** Inclusive end of timeline range (YYYY-MM-DD) */
   rangeEnd: string;
   siteTitle: string;
+  siteTagline: string;
   liveEnabled: boolean;
   defaultView: "timeline" | "week" | "month";
   showEnemySection: boolean;
@@ -15,6 +16,7 @@ export const defaultDashboardSettings: DashboardSettings = {
   rangeStart: "",
   rangeEnd: "",
   siteTitle: "تقویم دفاعی",
+  siteTagline: "گزارش زنده اقدامات دشمن و پاسخ دولت",
   liveEnabled: true,
   defaultView: "timeline",
   showEnemySection: true,

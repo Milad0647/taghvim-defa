@@ -4,6 +4,7 @@ import { loginRequest } from "@/lib/auth";
 import { getSession } from "@/lib/admin-store";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { IranEmblem } from "@/components/brand/IranEmblem";
+import { getSiteBranding } from "@/lib/branding";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -14,8 +15,10 @@ export default function AdminLoginPage() {
   const [password, setPassword] = useState("password");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [branding, setBranding] = useState(() => getSiteBranding());
 
   useEffect(() => {
+    setBranding(getSiteBranding());
     if (getSession()) {
       router.replace("/admin");
     }
@@ -50,8 +53,12 @@ export default function AdminLoginPage() {
             <IranEmblem className="h-7 w-7 text-[var(--logo)]" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-[var(--text-primary)]">ورود به پنل مدیریت</h1>
-            <p className="text-xs text-[var(--text-secondary)]">تقویم دفاعی — گزارش زنده</p>
+            <h1 className="text-xl font-bold text-[var(--text-primary)]">
+              ورود به پنل مدیریت
+            </h1>
+            <p className="text-xs text-[var(--text-secondary)]">
+              {branding.siteTitle} — {branding.siteTagline}
+            </p>
           </div>
         </div>
 

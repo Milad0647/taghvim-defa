@@ -87,11 +87,8 @@ export function EventCard({
           : "none",
       }}
     >
-      <div
-        className="grid h-full items-stretch gap-2.5"
-        style={{ gridTemplateColumns: "190px minmax(0, 1fr)" }}
-      >
-        <div className="relative h-[96px] w-[190px] shrink-0 self-center overflow-hidden rounded-[9px] bg-[var(--panel-2)]">
+      <div className="grid h-full grid-cols-1 items-stretch gap-2.5 sm:grid-cols-[minmax(120px,190px)_minmax(0,1fr)]">
+        <div className="relative h-[140px] w-full shrink-0 self-center overflow-hidden rounded-[9px] bg-[var(--panel-2)] sm:h-[96px] sm:max-w-[190px]">
           {event.imageUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -134,7 +131,7 @@ export function EventCard({
         >
           <div className="mb-[7px] flex items-start justify-between gap-2">
             <h3
-              className="min-w-0 flex-1 text-[15px] font-bold leading-snug text-[var(--event-card-title)]"
+              className="min-w-0 flex-1 text-[14px] font-bold leading-snug text-[var(--event-card-title)] sm:text-[15px]"
               dangerouslySetInnerHTML={{
                 __html: highlightText(event.title, searchQuery),
               }}

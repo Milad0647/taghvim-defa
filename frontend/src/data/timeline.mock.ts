@@ -33,35 +33,22 @@ function eventBase(
   };
 }
 
+/** Local assets — Unsplash/CDN URLs often fail on restricted networks. */
 const IMG = {
-  strike:
-    "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=800&h=480&fit=crop",
-  missile:
-    "https://images.unsplash.com/photo-1517976487492-5750f3195933?w=800&h=480&fit=crop",
-  radar:
-    "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=800&h=480&fit=crop",
-  diplomacy:
-    "https://images.unsplash.com/photo-1529107386315-e1a2ed48a620?w=800&h=480&fit=crop",
-  base: "https://images.unsplash.com/photo-1505118380757-91f5f5632de0?w=800&h=480&fit=crop",
-  city: "https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?w=800&h=480&fit=crop",
-  sea: "https://images.unsplash.com/photo-1505118380757-91f5f5632de0?w=800&h=480&fit=crop",
+  strike: "/images/events/strike.svg",
+  missile: "/images/events/missile.svg",
+  radar: "/images/events/radar.svg",
+  diplomacy: "/images/events/diplomacy.svg",
+  base: "/images/events/base.svg",
+  city: "/images/events/city.svg",
+  sea: "/images/events/sea.svg",
 } as const;
 
 /** Inclusive seed window: 9 Esfand 1404 → today */
 export const SEED_RANGE_START = "2026-02-28";
 export const SEED_RANGE_END = "2026-07-10";
-export const TIMELINE_SEED_VERSION = "conflict-2026-agencies-v3";
+export const TIMELINE_SEED_VERSION = "conflict-2026-local-images-v4";
 
-const VIDEO = {
-  clipA:
-    "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
-  clipB:
-    "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4",
-  clipC:
-    "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4",
-} as const;
-
-const VIDEO_CLIPS = [VIDEO.clipA, VIDEO.clipB, VIDEO.clipC] as const;
 const IMG_POOL = [
   IMG.strike,
   IMG.missile,
@@ -877,13 +864,14 @@ function buildMediaBundle(
   ];
 
   if (withVideo) {
-    const clip = pick(VIDEO_CLIPS, seed);
+    // Extra local still instead of remote sample videos (often blocked).
+    const imgC = pick(IMG_POOL, seed + 7);
     media.push({
-      id: `${id}-vid`,
-      type: "video",
-      url: clip,
-      thumbnailUrl: pick(IMG_POOL, seed + 5),
-      title: "فیلم گزارش میدانی",
+      id: `${id}-img3`,
+      type: "image",
+      url: imgC,
+      thumbnailUrl: imgC,
+      title: "تصویر تکمیلی",
     });
   }
 

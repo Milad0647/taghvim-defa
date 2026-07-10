@@ -23,9 +23,9 @@ export function AppShell({
   mobileNav,
 }: AppShellProps) {
   return (
-    <div className="min-h-screen bg-[var(--background)] text-[var(--text-primary)]">
+    <div className="min-h-screen overflow-x-hidden bg-[var(--background)] text-[var(--text-primary)]">
       <div
-        className="mx-auto flex min-h-screen max-w-[1680px] gap-3 p-3 lg:gap-4 lg:p-4"
+        className="mx-auto flex min-h-screen max-w-[1680px] gap-2 p-2 sm:gap-3 sm:p-3 lg:gap-4 lg:p-4"
         style={{ direction: "rtl" }}
       >
         {/* Right: sidebar */}

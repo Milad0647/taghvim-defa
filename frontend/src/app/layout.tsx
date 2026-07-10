@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Vazirmatn } from "next/font/google";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
+import { SITE_TAGLINE, SITE_TITLE } from "@/lib/branding";
 import { THEME_STORAGE_KEY } from "@/lib/theme";
 import "./globals.css";
 
@@ -11,9 +12,17 @@ const vazir = Vazirmatn({
 });
 
 export const metadata: Metadata = {
-  title: "تقویم دفاعی | خط زمانی رخدادها",
-  description:
-    "داشبورد RTL گزارش زنده اقدامات دشمن و پاسخ‌های دولت",
+  title: {
+    default: `${SITE_TITLE} | ${SITE_TAGLINE}`,
+    template: `%s | ${SITE_TITLE}`,
+  },
+  description: SITE_TAGLINE,
+  applicationName: SITE_TITLE,
+  icons: {
+    icon: [{ url: "/favicon.svg", type: "image/svg+xml" }],
+    shortcut: ["/favicon.svg"],
+    apple: [{ url: "/favicon.svg" }],
+  },
 };
 
 const themeBootScript = `

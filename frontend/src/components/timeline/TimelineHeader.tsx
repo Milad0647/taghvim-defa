@@ -1,6 +1,7 @@
 "use client";
 
 import { MobileMenuButton } from "@/components/layout/AppSidebar";
+import { PersianDatePicker } from "@/components/shared/PersianDatePicker";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { ViewSwitcher } from "@/components/timeline/ViewSwitcher";
 import type { TimelineViewMode } from "@/types/timeline";
@@ -101,21 +102,23 @@ export function TimelineHeader({
             ) : null}
 
             {showDateFilters ? (
-              <div className="flex items-center gap-1.5 rounded-xl border border-[var(--border)] bg-[var(--panel-2)] px-2 py-1.5">
-                <input
-                  type="date"
+              <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+                <PersianDatePicker
+                  compact
                   value={dateFrom}
-                  onChange={(e) => onDateFromChange(e.target.value)}
-                  className="bg-transparent text-[11px] text-[var(--text-secondary)] outline-none"
-                  aria-label="از تاریخ"
+                  onChange={onDateFromChange}
+                  placeholder="از تاریخ"
+                  ariaLabel="از تاریخ"
+                  className="min-w-[140px] flex-1"
                 />
                 <span className="text-[var(--text-muted)]">|</span>
-                <input
-                  type="date"
+                <PersianDatePicker
+                  compact
                   value={dateTo}
-                  onChange={(e) => onDateToChange(e.target.value)}
-                  className="bg-transparent text-[11px] text-[var(--text-secondary)] outline-none"
-                  aria-label="تا تاریخ"
+                  onChange={onDateToChange}
+                  placeholder="تا تاریخ"
+                  ariaLabel="تا تاریخ"
+                  className="min-w-[140px] flex-1"
                 />
               </div>
             ) : null}

@@ -5,46 +5,24 @@ import {
   startOfWeekSaturday,
   toWeeklyDateString,
 } from "@/lib/weekly";
+import {
+  getPersianYmd,
+  monthLabel,
+  shiftPersianMonth,
+} from "@/lib/monthly";
+import {
+  WEEKDAY_LABELS,
+  buildPersianCalendarCells,
+} from "@/lib/persian-date";
 import clsx from "clsx";
 import { CalendarDays, ChevronLeft, ChevronRight, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
-
-const WEEKDAY_LABELS = ["ش", "ی", "د", "س", "چ", "پ", "ج"] as const;
 
 type WeeklyWeekSelectorProps = {
   weeks: WeekOption[];
   activeStartDate: string;
   onSelectWeek: (startDate: string) => void;
 };
-
-function monthTitle(year: number, monthIndex: number): string {
-  const date = new Date(year, monthIndex, 1, 12);
-  return new Intl.DateTimeFormat("fa-IR", {
-    month: "long",
-    year: "numeric",
-  }).format(date);
-}
-
-function buildMonthCells(year: number, monthIndex: number) {
-  const first = new Date(year, monthIndex, 1, 12);
-  // Align grid to Saturday start
-  const jsDay = first.getDay(); // 0 Sun .. 6 Sat
-  const offset = (jsDay + 1) % 7;
-  const start = new Date(first);
-  start.setDate(first.getDate() - offset);
-
-  const cells: { date: Date; inMonth: boolean; key: string }[] = [];
-  for (let i = 0; i < 42; i++) {
-    const d = new Date(start);
-    d.setDate(start.getDate() + i);
-    cells.push({
-      date: d,
-      inMonth: d.getMonth() === monthIndex,
-      key: toWeeklyDateString(d),
-    });
-  }
-  return cells;
-}
 
 export function WeeklyWeekSelector({
   weeks,
@@ -60,17 +38,17 @@ export function WeeklyWeekSelector({
   }, [weeks, activeStartDate]);
 
   const initial = active
-    ? new Date(`${active.startDate}T12:00:00`)
-    : new Date();
+    ? getPersianYmd(active.startDate)
+    : getPersianYmd(new Date());
 
-  const [cursorYear, setCursorYear] = useState(initial.getFullYear());
-  const [cursorMonth, setCursorMonth] = useState(initial.getMonth());
+  const [cursorYear, setCursorYear] = useState(initial.year);
+  const [cursorMonth, setCursorMonth] = useState(initial.month);
 
   useEffect(() => {
     if (!active) return;
-    const d = new Date(`${active.startDate}T12:00:00`);
-    setCursorYear(d.getFullYear());
-    setCursorMonth(d.getMonth());
+    const ymd = getPersianYmd(active.startDate);
+    setCursorYear(ymd.year);
+    setCursorMonth(ymd.month);
   }, [active?.startDate]);
 
   useEffect(() => {
@@ -92,7 +70,7 @@ export function WeeklyWeekSelector({
   }, [calendarOpen]);
 
   const cells = useMemo(
-    () => buildMonthCells(cursorYear, cursorMonth),
+    () => buildPersianCalendarCells(cursorYear, cursorMonth),
     [cursorYear, cursorMonth],
   );
 
@@ -153,25 +131,25 @@ export function WeeklyWeekSelector({
               type="button"
               className="rounded-lg p-1.5 text-[var(--text-secondary)] hover:bg-[var(--hover)]"
               onClick={() => {
-                const d = new Date(cursorYear, cursorMonth - 1, 1);
-                setCursorYear(d.getFullYear());
-                setCursorMonth(d.getMonth());
+                const next = shiftPersianMonth(cursorYear, cursorMonth, -1);
+                setCursorYear(next.year);
+                setCursorMonth(next.month);
               }}
               aria-label="ماه قبل"
             >
               <ChevronRight className="h-4 w-4" />
             </button>
             <p className="text-sm font-semibold text-[var(--text-primary)]">
-              {monthTitle(cursorYear, cursorMonth)}
+              {monthLabel(cursorYear, cursorMonth)}
             </p>
             <div className="flex items-center gap-1">
               <button
                 type="button"
                 className="rounded-lg p-1.5 text-[var(--text-secondary)] hover:bg-[var(--hover)]"
                 onClick={() => {
-                  const d = new Date(cursorYear, cursorMonth + 1, 1);
-                  setCursorYear(d.getFullYear());
-                  setCursorMonth(d.getMonth());
+                  const next = shiftPersianMonth(cursorYear, cursorMonth, 1);
+                  setCursorYear(next.year);
+                  setCursorMonth(next.month);
                 }}
                 aria-label="ماه بعد"
               >
@@ -196,7 +174,11 @@ export function WeeklyWeekSelector({
 
           <div className="grid grid-cols-7 gap-1">
             {cells.map((cell) => {
-              const key = cell.key;
+              if (!cell.inMonth || !cell.date || cell.day == null) {
+                return <span key={cell.key} className="h-9" />;
+              }
+
+              const key = cell.date;
               const weekStart = toWeeklyDateString(startOfWeekSaturday(key));
               const inData = weekStartSet.has(weekStart);
               const inActiveWeek =
@@ -204,9 +186,6 @@ export function WeeklyWeekSelector({
                 key >= activeWeekStart &&
                 key <= activeWeekEnd;
               const isWeekStart = key === weekStart;
-              const dayNum = new Intl.DateTimeFormat("fa-IR", {
-                day: "numeric",
-              }).format(cell.date);
 
               return (
                 <button
@@ -219,7 +198,6 @@ export function WeeklyWeekSelector({
                   }}
                   className={clsx(
                     "h-9 rounded-lg text-[11px] transition",
-                    !cell.inMonth && "opacity-35",
                     inActiveWeek &&
                       "bg-[var(--primary)]/15 text-[var(--primary)]",
                     isWeekStart &&
@@ -236,7 +214,7 @@ export function WeeklyWeekSelector({
                       : "خارج از بازه داده"
                   }
                 >
-                  {dayNum}
+                  {cell.day.toLocaleString("fa-IR")}
                 </button>
               );
             })}

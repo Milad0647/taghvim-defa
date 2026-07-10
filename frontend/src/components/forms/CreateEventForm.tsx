@@ -1,5 +1,6 @@
 "use client";
 
+import { PersianDatePicker } from "@/components/shared/PersianDatePicker";
 import type { EventType, Severity } from "@/types/timeline";
 import { X } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -152,12 +153,16 @@ export function CreateEventForm({ open, onClose }: CreateEventFormProps) {
 
           {step === 1 ? (
             <>
-              <Field
-                label="تاریخ"
-                type="date"
-                value={draft.date}
-                onChange={(v) => setDraft((d) => ({ ...d, date: v }))}
-              />
+              <div className="space-y-1.5">
+                <span className="text-xs text-[var(--text-secondary)]">تاریخ</span>
+                <PersianDatePicker
+                  value={draft.date}
+                  onChange={(date) => setDraft((d) => ({ ...d, date }))}
+                  placeholder="انتخاب تاریخ شمسی"
+                  ariaLabel="تاریخ رویداد"
+                  allowClear={false}
+                />
+              </div>
               <Field
                 label="ساعت"
                 type="time"

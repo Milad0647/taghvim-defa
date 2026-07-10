@@ -6,6 +6,7 @@ import type {
   TimelineFiltersState,
   VerificationStatus,
 } from "@/types/timeline";
+import { formatPersianDateShort } from "@/lib/persian-date";
 
 export function severityColor(severity: Severity): string {
   switch (severity) {
@@ -237,9 +238,15 @@ export function buildFilterChips(
     chips.push({ key: "source", label: `منبع: ${filters.source}` });
   }
   if (filters.dateFrom || filters.dateTo) {
+    const fromLabel = filters.dateFrom
+      ? formatPersianDateShort(filters.dateFrom)
+      : "…";
+    const toLabel = filters.dateTo
+      ? formatPersianDateShort(filters.dateTo)
+      : "…";
     chips.push({
       key: "dateRange",
-      label: `بازه: ${filters.dateFrom || "…"} تا ${filters.dateTo || "…"}`,
+      label: `بازه: ${fromLabel} تا ${toLabel}`,
     });
   }
 

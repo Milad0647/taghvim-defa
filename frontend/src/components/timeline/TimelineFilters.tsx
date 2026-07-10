@@ -71,11 +71,11 @@ export function TimelineFilters({
         className="absolute inset-x-0 bottom-0 max-h-[88vh] overflow-y-auto rounded-t-2xl border border-[var(--border)] bg-[var(--panel)] p-4 md:inset-y-0 md:left-auto md:right-0 md:max-h-none md:w-[400px] md:rounded-none md:border-y-0 md:border-l md:border-r-0"
       >
         <div className="mb-4 flex items-center justify-between">
-          <h3 className="text-base font-bold text-white">فیلترها</h3>
+          <h3 className="text-base font-bold text-[var(--text-primary)]">فیلترها</h3>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg p-2 hover:bg-white/5"
+            className="rounded-lg p-2 text-[var(--text-secondary)] hover:bg-[var(--hover)]"
             aria-label="بستن"
           >
             <X className="h-4 w-4" />
@@ -193,7 +193,7 @@ export function TimelineFilters({
             ]}
           />
 
-          <label className="flex items-center gap-2 text-slate-300">
+          <label className="flex items-center gap-2 text-[var(--text-secondary)]">
             <input
               type="checkbox"
               checked={draft.hasImage}
@@ -203,7 +203,7 @@ export function TimelineFilters({
             />
             دارای تصویر
           </label>
-          <label className="flex items-center gap-2 text-slate-300">
+          <label className="flex items-center gap-2 text-[var(--text-secondary)]">
             <input
               type="checkbox"
               checked={draft.hasVideo}
@@ -229,7 +229,7 @@ export function TimelineFilters({
           <button
             type="button"
             onClick={() => setDraft(defaultFilters)}
-            className="rounded-xl border border-[var(--border)] px-4 py-2 text-sm text-slate-300"
+            className="rounded-xl border border-[var(--border)] px-4 py-2 text-sm text-[var(--text-secondary)] hover:bg-[var(--hover)] hover:text-[var(--text-primary)]"
           >
             پاک کردن همه
           </button>
@@ -240,7 +240,7 @@ export function TimelineFilters({
               onApply(draft);
               onClose();
             }}
-            className="rounded-xl border border-cyan-500/30 bg-cyan-500/10 px-4 py-2 text-sm text-cyan-200"
+            className="rounded-xl border border-[var(--primary)]/30 bg-[var(--primary)]/10 px-4 py-2 text-sm text-[var(--primary)]"
           >
             ذخیره فیلتر
           </button>
@@ -263,14 +263,18 @@ function Select({
 }) {
   return (
     <label className="block space-y-1.5">
-      <span className="text-xs text-slate-400">{label}</span>
+      <span className="text-xs text-[var(--text-secondary)]">{label}</span>
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded-xl border border-[var(--border)] bg-[var(--panel-2)] px-3 py-2 text-sm text-white outline-none focus:ring-2 focus:ring-blue-500"
+        className="w-full rounded-xl border border-[var(--border)] bg-[var(--panel-2)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:ring-2 focus:ring-blue-500"
       >
         {options.map((opt) => (
-          <option key={opt.value} value={opt.value}>
+          <option
+            key={opt.value}
+            value={opt.value}
+            className="bg-[var(--panel)] text-[var(--text-primary)]"
+          >
             {opt.label}
           </option>
         ))}

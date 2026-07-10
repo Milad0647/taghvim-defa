@@ -23,7 +23,7 @@ export function ActiveFilterChips({
           key={chip.key + chip.label}
           type="button"
           onClick={() => onRemove(chip.key)}
-          className="inline-flex items-center gap-1 rounded-full border border-blue-500/30 bg-blue-500/10 px-2.5 py-1 text-xs text-blue-200"
+          className="inline-flex items-center gap-1 rounded-full border border-[var(--primary)]/30 bg-[var(--primary)]/10 px-2.5 py-1 text-xs text-[var(--primary)]"
         >
           {chip.label}
           <X className="h-3 w-3" />
@@ -32,7 +32,7 @@ export function ActiveFilterChips({
       <button
         type="button"
         onClick={onClearAll}
-        className="text-xs text-slate-400 hover:text-white"
+        className="text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)]"
       >
         پاک کردن همه
       </button>

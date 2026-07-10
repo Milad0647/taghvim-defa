@@ -52,7 +52,7 @@ services:
       FILESYSTEM_DISK: public
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:3000}
     volumes:
-      - backend_storage:/var/www/html/storage/app/public
+      - backend_storage:/app/storage/app/public
     depends_on:
       postgres:
         condition: service_healthy

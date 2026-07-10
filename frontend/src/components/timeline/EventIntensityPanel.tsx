@@ -98,13 +98,24 @@ export function EventIntensityPanel({
   const hovered = bars.find((b) => b.day.date === hoveredDate) ?? null;
   const selected = activeDate;
 
-  // Keep active bar visible in the horizontal scroller
+  // Keep active bar visible horizontally without moving the page scroll
   useEffect(() => {
     if (!activeDate || !scrollRef.current) return;
-    const el = scrollRef.current.querySelector<HTMLElement>(
+    const container = scrollRef.current;
+    const el = container.querySelector<HTMLElement>(
       `[data-day="${activeDate}"]`,
     );
-    el?.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+    if (!el) return;
+
+    const containerRect = container.getBoundingClientRect();
+    const elRect = el.getBoundingClientRect();
+    const delta =
+      elRect.left +
+      elRect.width / 2 -
+      (containerRect.left + containerRect.width / 2);
+
+    if (Math.abs(delta) < 2) return;
+    container.scrollBy({ left: delta, behavior: "smooth" });
   }, [activeDate]);
 
   if (bars.length === 0) {

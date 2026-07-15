@@ -23,11 +23,12 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { CreateEventForm } from "@/components/forms/CreateEventForm";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { IranEmblem } from "@/components/brand/IranEmblem";
 import { IranFlag } from "@/components/brand/IranFlag";
+import { getAgenciesByIds } from "@/lib/agency-store";
 import { getSiteBranding } from "@/lib/branding";
 import { getCurrentUser, refreshCurrentUser } from "@/lib/auth";
 import {
@@ -97,6 +98,16 @@ export function AppSidebar({
   useEffect(() => {
     onCloseMobile();
   }, [pathname, view, onCloseMobile]);
+
+  const agencyLabel = useMemo(() => {
+    if (!user) return null;
+    if (user.role === "super_admin" && (user.agencyIds?.length ?? 0) === 0) {
+      return "همه وزارتخانه‌ها";
+    }
+    const agencies = getAgenciesByIds(user.agencyIds ?? []);
+    if (agencies.length === 0) return null;
+    return agencies.map((a) => a.shortName).join(" · ");
+  }, [user]);
 
   const content = (
     <div
@@ -298,7 +309,13 @@ export function AppSidebar({
             collapsed ? "justify-center p-2" : "px-2.5 py-2",
           )}
           aria-label={user ? "رفتن به داشبورد" : "ورود به داشبورد"}
-          title={user ? "داشبورد" : "ورود"}
+          title={
+            user
+              ? [user.name, ROLE_LABELS[user.role], agencyLabel]
+                  .filter(Boolean)
+                  .join(" — ")
+              : "ورود"
+          }
         >
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 text-xs font-bold text-white">
             {user?.name?.trim().charAt(0) || "ک"}
@@ -311,6 +328,11 @@ export function AppSidebar({
               <p className="truncate text-[var(--text-secondary)]">
                 {user ? ROLE_LABELS[user.role] : "داشبورد"}
               </p>
+              {agencyLabel ? (
+                <p className="mt-0.5 truncate text-[10px] text-[var(--text-muted)]">
+                  {agencyLabel}
+                </p>
+              ) : null}
             </div>
           ) : null}
           {!collapsed ? (

@@ -21,6 +21,7 @@ import {
   LayoutDashboard,
   LogOut,
   Pencil,
+  Play,
   Plus,
   Trash2,
   Users,
@@ -72,6 +73,18 @@ function mediaKind(mime?: string | null): "image" | "video" | "audio" | "other" 
   if (value.startsWith("video/")) return "video";
   if (value.startsWith("audio/")) return "audio";
   return "other";
+}
+
+/** Prefer first image, otherwise first video — for card cover. */
+function getCoverMedia(
+  media?: MediaItem[],
+): { item: MediaItem; kind: "image" | "video" } | null {
+  if (!media?.length) return null;
+  const image = media.find((m) => mediaKind(m.mime_type) === "image");
+  if (image) return { item: image, kind: "image" };
+  const video = media.find((m) => mediaKind(m.mime_type) === "video");
+  if (video) return { item: video, kind: "video" };
+  return null;
 }
 
 function statusLabel(status?: string | null): string {
@@ -467,87 +480,125 @@ export default function MyContentPage() {
                   {day.items.map((item) => {
                     const mine = item.created_by === Number(user.id);
                     const isEnemy = item.kind === "enemy";
+                    const cover = getCoverMedia(item.media);
+                    const mediaCount = item.media?.length ?? 0;
                     return (
                       <article
                         key={`${item.kind}-${item.id}`}
-                        className="flex flex-col rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-3"
+                        className="flex flex-col overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--panel)]"
                       >
-                        <div className="mb-2 flex flex-wrap items-center gap-1.5">
-                          <span
-                            className="rounded-md px-2 py-0.5 text-[10px] font-semibold"
-                            style={{
-                              background: isEnemy
-                                ? "rgba(220, 38, 38, 0.15)"
-                                : "rgba(37, 99, 235, 0.15)",
-                              color: isEnemy
-                                ? "var(--enemy)"
-                                : "var(--government)",
-                            }}
-                          >
-                            {isEnemy ? "اقدام دشمن" : "اقدام دولت"}
-                          </span>
-                          <span
-                            className={`rounded-md px-2 py-0.5 text-[10px] ${
-                              mine
-                                ? "bg-emerald-500/15 text-emerald-600"
-                                : "bg-amber-500/15 text-amber-700"
-                            }`}
-                          >
-                            {mine
-                              ? "خودم"
-                              : `زیردست · ${item.creator?.name || "نامشخص"}`}
-                          </span>
-                          {item.status ? (
-                            <span className="rounded-md bg-[var(--panel-2)] px-2 py-0.5 text-[10px] text-[var(--text-muted)]">
-                              {statusLabel(item.status)}
-                            </span>
-                          ) : null}
-                        </div>
-
-                        <h3 className="line-clamp-2 text-sm font-semibold text-[var(--text-primary)]">
-                          {item.title}
-                        </h3>
-                        <p className="mt-1 line-clamp-2 text-xs leading-6 text-[var(--text-secondary)]">
-                          {item.description || "بدون شرح"}
-                        </p>
-
-                        <div className="mt-2 flex flex-wrap gap-2 text-[10px] text-[var(--text-muted)]">
-                          {item.severity ? (
-                            <span>
-                              شدت:{" "}
-                              {severityLabel(item.severity as Severity)}
-                            </span>
-                          ) : null}
-                          {(item.media?.length ?? 0) > 0 ? (
-                            <span>
-                              رسانه:{" "}
-                              {(item.media?.length ?? 0).toLocaleString("fa-IR")}
-                            </span>
-                          ) : null}
-                          {item.location ? <span>{item.location}</span> : null}
-                        </div>
-
-                        <div className="mt-auto flex flex-wrap gap-1.5 pt-3">
-                          <ActionButton
-                            label="مشاهده"
-                            icon={<Eye className="h-3.5 w-3.5" />}
-                            onClick={() => openModal(item, "view")}
-                          />
-                          {canManage ? (
-                            <>
-                              <ActionButton
-                                label="ویرایش"
-                                icon={<Pencil className="h-3.5 w-3.5" />}
-                                onClick={() => openModal(item, "edit")}
+                        {cover ? (
+                          <div className="relative h-40 w-full shrink-0 bg-[var(--panel-2)]">
+                            {cover.kind === "video" ? (
+                              <video
+                                src={cover.item.url}
+                                muted
+                                playsInline
+                                preload="metadata"
+                                className="h-full w-full object-cover"
                               />
-                              <ActionButton
-                                label="حذف"
-                                icon={<Trash2 className="h-3.5 w-3.5" />}
-                                danger
-                                onClick={() => void onDelete(item)}
+                            ) : (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img
+                                src={cover.item.url}
+                                alt={cover.item.alt ?? ""}
+                                loading="lazy"
+                                className="h-full w-full object-cover"
                               />
-                            </>
-                          ) : null}
+                            )}
+                            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/45 via-black/10 to-transparent" />
+                            {cover.kind === "video" ? (
+                              <span className="absolute inset-0 flex items-center justify-center">
+                                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-black/55 text-white shadow-lg backdrop-blur-sm">
+                                  <Play className="h-4 w-4 fill-current ps-0.5" />
+                                </span>
+                              </span>
+                            ) : null}
+                            {mediaCount > 1 ? (
+                              <span className="absolute bottom-2 left-2 rounded-md bg-black/55 px-2 py-0.5 text-[10px] font-medium text-white backdrop-blur-sm">
+                                {mediaCount.toLocaleString("fa-IR")} رسانه
+                              </span>
+                            ) : null}
+                          </div>
+                        ) : null}
+
+                        <div className="flex flex-1 flex-col p-3">
+                          <div className="mb-2 flex flex-wrap items-center gap-1.5">
+                            <span
+                              className="rounded-md px-2 py-0.5 text-[10px] font-semibold"
+                              style={{
+                                background: isEnemy
+                                  ? "rgba(220, 38, 38, 0.15)"
+                                  : "rgba(37, 99, 235, 0.15)",
+                                color: isEnemy
+                                  ? "var(--enemy)"
+                                  : "var(--government)",
+                              }}
+                            >
+                              {isEnemy ? "اقدام دشمن" : "اقدام دولت"}
+                            </span>
+                            <span
+                              className={`rounded-md px-2 py-0.5 text-[10px] ${
+                                mine
+                                  ? "bg-emerald-500/15 text-emerald-600"
+                                  : "bg-amber-500/15 text-amber-700"
+                              }`}
+                            >
+                              {mine
+                                ? "خودم"
+                                : `زیردست · ${item.creator?.name || "نامشخص"}`}
+                            </span>
+                            {item.status ? (
+                              <span className="rounded-md bg-[var(--panel-2)] px-2 py-0.5 text-[10px] text-[var(--text-muted)]">
+                                {statusLabel(item.status)}
+                              </span>
+                            ) : null}
+                          </div>
+
+                          <h3 className="line-clamp-2 text-sm font-semibold text-[var(--text-primary)]">
+                            {item.title}
+                          </h3>
+                          <p className="mt-1 line-clamp-2 text-xs leading-6 text-[var(--text-secondary)]">
+                            {item.description || "بدون شرح"}
+                          </p>
+
+                          <div className="mt-2 flex flex-wrap gap-2 text-[10px] text-[var(--text-muted)]">
+                            {item.severity ? (
+                              <span>
+                                شدت:{" "}
+                                {severityLabel(item.severity as Severity)}
+                              </span>
+                            ) : null}
+                            {mediaCount > 0 && !cover ? (
+                              <span>
+                                رسانه: {mediaCount.toLocaleString("fa-IR")}
+                              </span>
+                            ) : null}
+                            {item.location ? <span>{item.location}</span> : null}
+                          </div>
+
+                          <div className="mt-auto flex flex-wrap gap-1.5 pt-3">
+                            <ActionButton
+                              label="مشاهده"
+                              icon={<Eye className="h-3.5 w-3.5" />}
+                              onClick={() => openModal(item, "view")}
+                            />
+                            {canManage ? (
+                              <>
+                                <ActionButton
+                                  label="ویرایش"
+                                  icon={<Pencil className="h-3.5 w-3.5" />}
+                                  onClick={() => openModal(item, "edit")}
+                                />
+                                <ActionButton
+                                  label="حذف"
+                                  icon={<Trash2 className="h-3.5 w-3.5" />}
+                                  danger
+                                  onClick={() => void onDelete(item)}
+                                />
+                              </>
+                            ) : null}
+                          </div>
                         </div>
                       </article>
                     );

@@ -21,6 +21,8 @@ Route::get('/health', function () {
     $hasUsername = false;
     $userQueryOk = false;
     $cacheOk = false;
+    $tokensTableOk = false;
+    $adminExists = false;
     $error = null;
 
     try {
@@ -29,6 +31,10 @@ Route::get('/health', function () {
         $hasUsername = Schema::hasColumn('users', 'username');
         User::query()->limit(1)->exists();
         $userQueryOk = true;
+        $tokensTableOk = Schema::hasTable('personal_access_tokens');
+        $adminExists = $hasUsername
+            ? User::query()->where('username', 'admin')->exists()
+            : User::query()->where('email', 'admin@taghvim.local')->exists();
     } catch (Throwable $e) {
         $error = $e->getMessage();
     }
@@ -40,7 +46,7 @@ Route::get('/health', function () {
         $error = $error ?? $e->getMessage();
     }
 
-    $ready = $dbOk && $userQueryOk && $hasUsername && $cacheOk;
+    $ready = $dbOk && $userQueryOk && $hasUsername && $cacheOk && $tokensTableOk;
 
     return response()->json([
         'status' => $ready ? 'ok' : 'degraded',
@@ -50,6 +56,8 @@ Route::get('/health', function () {
             'user_query' => $userQueryOk,
             'users_username_column' => $hasUsername,
             'cache' => $cacheOk,
+            'personal_access_tokens' => $tokensTableOk,
+            'admin_user' => $adminExists,
         ],
         'error' => $error,
     ], $ready ? 200 : 503);

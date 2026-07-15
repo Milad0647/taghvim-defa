@@ -23,7 +23,7 @@ class UserFactory extends Factory
             'username' => fake()->unique()->userName(),
             'email' => fake()->unique()->safeEmail(),
             'email_verified_at' => now(),
-            'password' => static::$password ??= Hash::make('password'),
+            'password' => 'password', // hashed cast will hash this once
             'remember_token' => Str::random(10),
             'role' => UserRole::Editor,
             'is_active' => true,

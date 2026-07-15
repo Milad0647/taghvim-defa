@@ -31,9 +31,9 @@ class AuthController extends Controller
             ]);
         }
 
-        $this->ensureIsNotRateLimited($request, $login);
-
         try {
+            $this->ensureIsNotRateLimited($request, $login);
+
             $hasUsername = Schema::hasColumn('users', 'username');
 
             /** @var User|null $user */
@@ -45,77 +45,59 @@ class AuthController extends Controller
                     }
                 })
                 ->first();
-        } catch (Throwable $e) {
-            SecurityLog::warning('auth.login_query_failed', [
-                'error' => $e->getMessage(),
-                'ip' => $request->ip(),
-            ]);
 
-            return response()->json([
-                'message' => 'ورود موقتاً در دسترس نیست. پیکربندی پایگاه‌داده را بررسی کنید.',
-            ], 503);
-        }
+            $passwordHash = is_string($user?->getRawOriginal('password'))
+                ? $user->getRawOriginal('password')
+                : '';
 
-        if (! $user || ! Hash::check($credentials['password'], $user->password)) {
-            SecurityLog::warning('auth.login_failed', [
-                'username' => $login,
-                'ip' => $request->ip(),
-            ]);
+            if (! $user || $passwordHash === '' || ! Hash::check($credentials['password'], $passwordHash)) {
+                SecurityLog::warning('auth.login_failed', [
+                    'username' => $login,
+                    'ip' => $request->ip(),
+                ]);
 
-            throw ValidationException::withMessages([
-                'username' => ['Invalid credentials.'],
-            ]);
-        }
+                throw ValidationException::withMessages([
+                    'username' => ['Invalid credentials.'],
+                ]);
+            }
 
-        if (! $user->is_active) {
-            SecurityLog::warning('auth.login_inactive', [
-                'username' => $login,
-                'ip' => $request->ip(),
-            ]);
+            if (! $user->is_active) {
+                SecurityLog::warning('auth.login_inactive', [
+                    'username' => $login,
+                    'ip' => $request->ip(),
+                ]);
 
-            throw ValidationException::withMessages([
-                'username' => ['This account is inactive.'],
-            ]);
-        }
+                throw ValidationException::withMessages([
+                    'username' => ['This account is inactive.'],
+                ]);
+            }
 
-        try {
             $token = $user->createToken('api')->plainTextToken;
-        } catch (Throwable $e) {
-            SecurityLog::warning('auth.login_token_failed', [
+
+            SecurityLog::info('auth.login_success', [
                 'user_id' => $user->id,
-                'error' => $e->getMessage(),
                 'ip' => $request->ip(),
             ]);
 
             return response()->json([
-                'message' => 'ورود موقتاً در دسترس نیست. جدول توکن‌ها را بررسی کنید.',
-            ], 503);
-        }
-
-        SecurityLog::info('auth.login_success', [
-            'user_id' => $user->id,
-            'ip' => $request->ip(),
-        ]);
-
-        try {
-            $payload = [
                 'token' => $token,
                 'token_type' => 'Bearer',
                 'user' => (new UserResource($user))->resolve(),
-            ];
+            ]);
+        } catch (ValidationException $e) {
+            throw $e;
         } catch (Throwable $e) {
-            SecurityLog::warning('auth.login_serialize_failed', [
-                'user_id' => $user->id,
+            SecurityLog::warning('auth.login_exception', [
                 'error' => $e->getMessage(),
+                'type' => $e::class,
                 'ip' => $request->ip(),
             ]);
 
             return response()->json([
-                'message' => 'ورود موقتاً در دسترس نیست. داده کاربر ناقص است.',
+                'message' => 'ورود موقتاً در دسترس نیست.',
+                'error_type' => class_basename($e),
             ], 503);
         }
-
-        return response()->json($payload);
     }
 
     public function me(Request $request): UserResource
@@ -132,7 +114,7 @@ class AuthController extends Controller
 
     private function ensureIsNotRateLimited(Request $request, string $login): void
     {
-        $key = 'login:'.sha1($request->ip().'|'.mb_strtolower($login));
+        $key = 'login:'.sha1($request->ip().'|'.strtolower($login));
 
         try {
             if (RateLimiter::tooManyAttempts($key, 5)) {
@@ -145,7 +127,6 @@ class AuthController extends Controller
         } catch (ValidationException $e) {
             throw $e;
         } catch (Throwable $e) {
-            // Fail open if cache/redis is down — do not block login with 500.
             SecurityLog::warning('auth.rate_limit_unavailable', [
                 'error' => $e->getMessage(),
                 'ip' => $request->ip(),

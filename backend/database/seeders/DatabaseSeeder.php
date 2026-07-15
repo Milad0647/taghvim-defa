@@ -25,7 +25,7 @@ class DatabaseSeeder extends Seeder
             [
                 'name' => 'مدیر سیستم',
                 'email' => 'admin@taghvim.local',
-                'password' => 'password',
+                'password' => 'Admin@12345',
                 'role' => UserRole::SuperAdmin,
                 'is_active' => true,
                 'parent_id' => null,
@@ -38,7 +38,7 @@ class DatabaseSeeder extends Seeder
             [
                 'name' => 'کارشناس رصد',
                 'email' => 'editor@taghvim.local',
-                'password' => 'password',
+                'password' => 'Admin@12345',
                 'role' => UserRole::Editor,
                 'is_active' => true,
                 'parent_id' => $admin->id,

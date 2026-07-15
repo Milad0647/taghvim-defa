@@ -203,24 +203,6 @@ class User extends Authenticatable
         return in_array((int) $createdBy, $visible, true);
     }
 
-    /**
-     * Walk parent chain upward.
-     *
-     * @return list<int>
-     */
-    public function ancestorIds(): array
-    {
-        $ids = [];
-        $current = $this->parent;
-
-        while ($current) {
-            $ids[] = (int) $current->id;
-            $current = $current->parent;
-        }
-
-        return $ids;
-    }
-
     public function deactivateDescendants(): void
     {
         $ids = $this->descendantIds();

@@ -313,6 +313,7 @@ export function summarizeMonth(cells: MonthlyDayCell[]) {
   let enemy = 0;
   let government = 0;
   let activeDays = 0;
+  const responseMinutes: number[] = [];
 
   for (const cell of inMonth) {
     const day = cell.day!;
@@ -320,7 +321,34 @@ export function summarizeMonth(cells: MonthlyDayCell[]) {
     enemy += day.enemyActionsCount;
     government += day.governmentActionsCount;
     if (day.totalEvents > 0) activeDays += 1;
+    for (const event of day.events) {
+      if (typeof event.responseTimeMinutes === "number") {
+        responseMinutes.push(event.responseTimeMinutes);
+      }
+    }
   }
 
-  return { totalEvents, enemy, government, activeDays, dayCount: inMonth.length };
+  const avgResponseMinutes =
+    responseMinutes.length === 0
+      ? 0
+      : Math.round(
+          responseMinutes.reduce((sum, n) => sum + n, 0) / responseMinutes.length,
+        );
+
+  const responseRatio =
+    enemy === 0
+      ? government > 0
+        ? 100
+        : 0
+      : Math.min(100, Math.round((government / enemy) * 100));
+
+  return {
+    totalEvents,
+    enemy,
+    government,
+    activeDays,
+    dayCount: inMonth.length,
+    responseRatio,
+    avgResponseMinutes,
+  };
 }

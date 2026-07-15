@@ -110,13 +110,30 @@ class User extends Authenticatable
     }
 
     /**
-     * Self + all descendants. Null means no filter (admin sees all).
+     * Creator ids visible on the public calendar/timeline.
+     * Null = no filter (admin sees everything).
+     * Everyone else only sees content they personally created.
      *
      * @return list<int>|null
      */
     public function visibleCreatorIds(): ?array
     {
-        if ($this->isAdmin() || $this->hasPermission(Permission::ViewAdminViews)) {
+        if ($this->isAdmin()) {
+            return null;
+        }
+
+        return [(int) $this->id];
+    }
+
+    /**
+     * Creator ids for "my content" pages: self + subordinates.
+     * Null = no filter (admin sees everything).
+     *
+     * @return list<int>|null
+     */
+    public function manageableCreatorIds(): ?array
+    {
+        if ($this->isAdmin() || $this->hasPermission(Permission::ManageUsers)) {
             return null;
         }
 

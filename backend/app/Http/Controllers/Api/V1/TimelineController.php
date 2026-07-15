@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Api\V1;
 
-use App\Enums\Permission;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\CalendarDayResource;
 use App\Http\Resources\EnemyActionResource;
@@ -20,10 +19,6 @@ class TimelineController extends Controller
     public function index(Request $request): JsonResponse
     {
         $user = $request->user();
-
-        if (! $user->isAdmin() && ! $user->hasPermission(Permission::ViewAdminViews)) {
-            abort(403, 'Admin views access required.');
-        }
 
         $data = $this->calendarService->timeline(
             $request->query('from'),
@@ -44,10 +39,6 @@ class TimelineController extends Controller
     {
         $user = $request->user();
 
-        if (! $user->isAdmin() && ! $user->hasPermission(Permission::ViewAdminViews)) {
-            abort(403, 'Admin views access required.');
-        }
-
         $day = $this->calendarService->findByDate($date, $user);
 
         if (! $day) {
@@ -62,10 +53,6 @@ class TimelineController extends Controller
     public function stats(Request $request): JsonResponse
     {
         $user = $request->user();
-
-        if (! $user->isAdmin() && ! $user->hasPermission(Permission::ViewAdminViews)) {
-            abort(403, 'Admin views access required.');
-        }
 
         return response()->json([
             'data' => $this->calendarService->dashboardStats($user),

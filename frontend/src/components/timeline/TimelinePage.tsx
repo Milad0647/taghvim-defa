@@ -29,9 +29,9 @@ import {
 import { listAgencies } from "@/lib/agency-store";
 import { getDashboardSettings } from "@/lib/admin-store";
 import { fetchTimeline } from "@/lib/api";
+import { getCurrentUser } from "@/lib/auth";
 import {
   mapTimelineResponseToDays,
-  mergeTimelineDays,
 } from "@/lib/map-calendar-to-timeline";
 import { loadTimelineDays } from "@/lib/timeline-store";
 import { buildFilterChips, filterTimelineDays } from "@/lib/timeline";
@@ -75,6 +75,29 @@ function parseViewParam(value: string | null): TimelineViewMode {
     return value as TimelineViewMode;
   }
   return "timeline";
+}
+
+/** Offline/local fallback: non-admins only keep events they created. */
+function scopeDaysToCurrentUser(days: TimelineDay[]): TimelineDay[] {
+  const user = getCurrentUser();
+  if (!user || user.role === "super_admin") return days;
+
+  return days
+    .map((day) => {
+      const events = day.events.filter(
+        (event) => event.createdByUserId === user.id,
+      );
+      if (events.length === 0) return null;
+      return {
+        ...day,
+        events,
+        totalEvents: events.length,
+        enemyActionsCount: events.filter((e) => e.eventType === "enemy").length,
+        governmentActionsCount: events.filter((e) => e.eventType === "government")
+          .length,
+      };
+    })
+    .filter((day): day is TimelineDay => day != null);
 }
 
 export function TimelinePage({
@@ -131,36 +154,49 @@ export function TimelinePage({
   );
 
   useEffect(() => {
-    const loaded = initialDays ?? loadTimelineDays();
-    setDays(loaded);
-    setSelectedDay(
-      (prev) => prev ?? searchParams.get("date") ?? loaded[0]?.date ?? null,
-    );
-    setSelectedEvent((prev) => {
-      if (prev) return prev;
-      const id = searchParams.get("event");
-      if (id) return findEventById(id, loaded) || null;
-      const firstDay = loaded[0];
-      if (!firstDay || firstDay.events.length === 0) return null;
-      return firstDay.events[0] ?? null;
-    });
+    let cancelled = false;
 
     void (async () => {
       try {
         const response = await fetchTimeline();
+        if (cancelled) return;
         const apiDays = mapTimelineResponseToDays(response);
-        if (apiDays.length === 0) return;
-        setDays((prev) => {
-          const merged = mergeTimelineDays(prev, apiDays);
-          setSelectedDay(
-            (current) => current ?? searchParams.get("date") ?? merged[0]?.date ?? null,
-          );
-          return merged;
+        // API is the source of truth and already scoped per user on the backend
+        setDays(apiDays);
+        setSelectedDay(
+          (prev) =>
+            prev ?? searchParams.get("date") ?? apiDays[0]?.date ?? null,
+        );
+        setSelectedEvent((prev) => {
+          if (prev) return prev;
+          const id = searchParams.get("event");
+          if (id) return findEventById(id, apiDays) || null;
+          const firstDay = apiDays[0];
+          if (!firstDay || firstDay.events.length === 0) return null;
+          return firstDay.events[0] ?? null;
         });
       } catch {
-        // Keep local/seed timeline when API is unavailable
+        if (cancelled) return;
+        // Offline fallback: local store, still scoped to current user
+        const loaded = scopeDaysToCurrentUser(initialDays ?? loadTimelineDays());
+        setDays(loaded);
+        setSelectedDay(
+          (prev) => prev ?? searchParams.get("date") ?? loaded[0]?.date ?? null,
+        );
+        setSelectedEvent((prev) => {
+          if (prev) return prev;
+          const id = searchParams.get("event");
+          if (id) return findEventById(id, loaded) || null;
+          const firstDay = loaded[0];
+          if (!firstDay || firstDay.events.length === 0) return null;
+          return firstDay.events[0] ?? null;
+        });
       }
     })();
+
+    return () => {
+      cancelled = true;
+    };
     // Intentionally run on mount / when server-provided days change
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialDays]);

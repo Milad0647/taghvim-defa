@@ -31,7 +31,7 @@ class SecurityAccessTest extends TestCase
         $this->getJson('/api/v1/timeline')->assertOk();
     }
 
-    public function test_regular_user_cannot_access_admin_views(): void
+    public function test_regular_user_can_access_own_timeline(): void
     {
         $user = User::factory()->create([
             'role' => UserRole::Editor,
@@ -41,7 +41,7 @@ class SecurityAccessTest extends TestCase
 
         Sanctum::actingAs($user);
 
-        $this->getJson('/api/v1/timeline')->assertForbidden();
+        $this->getJson('/api/v1/timeline')->assertOk();
         $this->getJson('/api/v1/my-content')->assertOk();
     }
 

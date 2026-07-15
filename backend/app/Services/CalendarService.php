@@ -105,25 +105,26 @@ class CalendarService
 
     public function myContent(User $viewer): array
     {
-        $ids = $viewer->visibleCreatorIds() ?? $viewer->descendantIdsIncludingSelf();
+        $ids = $viewer->manageableCreatorIds();
 
-        $enemy = EnemyAction::query()
+        $enemyQuery = EnemyAction::query()
             ->with(['media', 'category', 'calendarDay', 'creator:id,name'])
-            ->whereIn('created_by', $ids)
             ->orderByDesc('occurred_at')
-            ->orderByDesc('id')
-            ->get();
+            ->orderByDesc('id');
 
-        $government = GovernmentAction::query()
+        $governmentQuery = GovernmentAction::query()
             ->with(['media', 'category', 'calendarDay', 'responseTo', 'creator:id,name'])
-            ->whereIn('created_by', $ids)
             ->orderByDesc('completed_at')
-            ->orderByDesc('id')
-            ->get();
+            ->orderByDesc('id');
+
+        if ($ids !== null) {
+            $enemyQuery->whereIn('created_by', $ids);
+            $governmentQuery->whereIn('created_by', $ids);
+        }
 
         return [
-            'enemy_actions' => $enemy,
-            'government_actions' => $government,
+            'enemy_actions' => $enemyQuery->get(),
+            'government_actions' => $governmentQuery->get(),
         ];
     }
 

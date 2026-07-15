@@ -17,7 +17,7 @@ class FormSchemaController extends Controller
         $definition = FormDefinition::query()
             ->where('key', 'event_create')
             ->where('is_active', true)
-            ->with(['fields' => fn ($q) => $q->where('is_active', true)])
+            ->with(['fields' => fn ($q) => $q->orderBy('sort_order')])
             ->first();
 
         if (! $definition) {

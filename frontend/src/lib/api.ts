@@ -1,31 +1,38 @@
 import type { TimelineResponse } from "@/types/calendar";
 
 /**
- * Resolve API base at call-time so a production build accidentally
- * pointed at localhost still talks to a same-origin / configured API.
+ * Prefer same-origin `/api/v1` (Next rewrite → Laravel).
+ * Absolute NEXT_PUBLIC_API_URL is only used when explicitly set to a non-local URL.
  */
 export function getApiBase(): string {
   const fromEnv = (process.env.NEXT_PUBLIC_API_URL || "").replace(/\/$/, "");
+
+  // Relative path — always same origin (works with Next rewrites)
+  if (!fromEnv || fromEnv.startsWith("/")) {
+    const path = fromEnv || "/api/v1";
+    if (typeof window !== "undefined") {
+      return `${window.location.origin}${path}`;
+    }
+    return path;
+  }
 
   if (typeof window !== "undefined") {
     const host = window.location.hostname;
     const pageIsLocal = host === "localhost" || host === "127.0.0.1";
     const envIsLocal =
-      !fromEnv ||
-      fromEnv.includes("localhost") ||
-      fromEnv.includes("127.0.0.1");
+      fromEnv.includes("localhost") || fromEnv.includes("127.0.0.1");
 
-    // Production site must never call the visitor's localhost
+    // Never call the visitor's localhost from a public site
     if (!pageIsLocal && envIsLocal) {
       return `${window.location.origin}/api/v1`;
     }
   }
 
-  return fromEnv || "http://localhost:8000/api/v1";
+  return fromEnv;
 }
 
-/** @deprecated Prefer getApiBase() — kept for older imports */
-export const API_BASE = getApiBase();
+/** @deprecated Prefer getApiBase() */
+export const API_BASE = typeof window === "undefined" ? "/api/v1" : getApiBase();
 
 function authHeaders(): HeadersInit {
   if (typeof window === "undefined") return {};

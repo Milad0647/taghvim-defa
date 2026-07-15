@@ -11,8 +11,8 @@ import { useEffect, useState } from "react";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState("admin@taghvim.local");
-  const [password, setPassword] = useState("password");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   // Stable SSR/CSR defaults — avoid localStorage during first paint (hydration #418)
@@ -111,12 +111,6 @@ export default function LoginPage() {
             {loading ? "در حال ورود..." : "ورود"}
           </button>
         </form>
-
-        <div className="mt-5 rounded-xl border border-[var(--border)] bg-[var(--panel-2)] p-3 text-xs text-[var(--text-secondary)]">
-          <p className="mb-1 font-medium text-[var(--text-secondary)]">حساب‌های نمونه:</p>
-          <p>admin@taghvim.local / password</p>
-          <p>editor@taghvim.local / password</p>
-        </div>
       </div>
     </main>
   );

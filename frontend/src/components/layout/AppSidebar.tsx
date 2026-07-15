@@ -11,6 +11,7 @@ import {
   LayoutDashboard,
   Map,
   Menu,
+  Plus,
   Shield,
   Sun,
   Swords,
@@ -22,6 +23,7 @@ import {
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import { CreateEventForm } from "@/components/forms/CreateEventForm";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { IranEmblem } from "@/components/brand/IranEmblem";
 import { IranFlag } from "@/components/brand/IranFlag";
@@ -70,6 +72,8 @@ export function AppSidebar({
   const [branding, setBranding] = useState(() => getSiteBranding());
   const [showAdminViews, setShowAdminViews] = useState(false);
   const [showAdminPanel, setShowAdminPanel] = useState(false);
+  const [canCreateEvent, setCanCreateEvent] = useState(false);
+  const [createOpen, setCreateOpen] = useState(false);
   const [user, setUser] = useState<AdminUser | null>(null);
 
   useEffect(() => {
@@ -81,6 +85,7 @@ export function AppSidebar({
       userHasPermission(current, "manage_users") ||
         current?.role === "super_admin",
     );
+    setCanCreateEvent(userHasPermission(current, "manage_content"));
   }, []);
 
   useEffect(() => {
@@ -215,7 +220,23 @@ export function AppSidebar({
         ) : null}
       </nav>
 
-      <div className="mt-auto space-y-3 border-t border-[var(--border)] p-3">
+      <div className="mt-auto shrink-0 space-y-3 border-t border-[var(--border)] p-3">
+        {canCreateEvent ? (
+          <button
+            type="button"
+            onClick={() => setCreateOpen(true)}
+            className={clsx(
+              "flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 font-semibold text-white shadow-sm transition hover:bg-blue-500",
+              collapsed ? "h-11 px-0" : "px-3 py-2.5 text-sm",
+            )}
+            aria-label="ثبت رویداد"
+            title="ثبت رویداد"
+          >
+            <Plus className="h-4 w-4 shrink-0" />
+            {!collapsed ? <span>ثبت رویداد</span> : null}
+          </button>
+        ) : null}
+
         <ThemeToggle className="w-full justify-center" compact={collapsed} />
 
         {!collapsed ? (
@@ -279,7 +300,7 @@ export function AppSidebar({
 
   return (
     <>
-      <aside className="sticky top-3 hidden self-start lg:block">{content}</aside>
+      <aside className="hidden h-full lg:block">{content}</aside>
 
       {mobileOpen ? (
         <div className="fixed inset-0 z-50 lg:hidden">
@@ -291,6 +312,13 @@ export function AppSidebar({
           />
           <div className="absolute inset-y-3 right-3 shadow-2xl">{content}</div>
         </div>
+      ) : null}
+
+      {canCreateEvent ? (
+        <CreateEventForm
+          open={createOpen}
+          onClose={() => setCreateOpen(false)}
+        />
       ) : null}
     </>
   );

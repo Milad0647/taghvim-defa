@@ -23,6 +23,7 @@ fi
 
 php artisan migrate --force
 php artisan db:seed --force || true
+php artisan app:ensure-admin --username=admin --password='Admin@12345' || true
 php artisan storage:link || true
 
 php artisan config:cache || true

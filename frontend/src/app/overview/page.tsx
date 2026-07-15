@@ -3,9 +3,35 @@
 import { AppSidebar, MobileMenuButton } from "@/components/layout/AppSidebar";
 import { OverviewDashboard } from "@/components/overview/OverviewDashboard";
 import { computeSummary } from "@/data/timeline.mock";
+import { fetchTimeline } from "@/lib/api";
+import { getCurrentUser } from "@/lib/auth";
+import { mapTimelineResponseToDays } from "@/lib/map-calendar-to-timeline";
 import { loadTimelineDays } from "@/lib/timeline-store";
 import type { TimelineDay } from "@/types/timeline";
 import { Suspense, useEffect, useMemo, useState } from "react";
+
+function scopeDaysToCurrentUser(days: TimelineDay[]): TimelineDay[] {
+  const user = getCurrentUser();
+  if (!user || user.role === "super_admin") return days;
+
+  return days
+    .map((day) => {
+      const events = day.events.filter(
+        (event) => event.createdByUserId === user.id,
+      );
+      if (events.length === 0) return null;
+      return {
+        ...day,
+        events,
+        totalEvents: events.length,
+        enemyActionsCount: events.filter((e) => e.eventType === "enemy").length,
+        governmentActionsCount: events.filter(
+          (e) => e.eventType === "government",
+        ).length,
+      };
+    })
+    .filter((day): day is TimelineDay => day != null);
+}
 
 function OverviewContent() {
   const [collapsed, setCollapsed] = useState(false);
@@ -14,7 +40,20 @@ function OverviewContent() {
   const summary = useMemo(() => computeSummary(days), [days]);
 
   useEffect(() => {
-    setDays(loadTimelineDays());
+    let cancelled = false;
+    void (async () => {
+      try {
+        const response = await fetchTimeline();
+        if (cancelled) return;
+        setDays(mapTimelineResponseToDays(response));
+      } catch {
+        if (cancelled) return;
+        setDays(scopeDaysToCurrentUser(loadTimelineDays()));
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   return (

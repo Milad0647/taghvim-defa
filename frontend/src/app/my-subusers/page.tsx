@@ -1,12 +1,11 @@
 "use client";
 
-import { IranEmblem } from "@/components/brand/IranEmblem";
 import { SiteMottoBanner } from "@/components/brand/SiteMottoBanner";
 import { PasswordField } from "@/components/forms/PasswordField";
+import { AppShell } from "@/components/layout/AppShell";
+import { AppSidebar, MobileMenuButton } from "@/components/layout/AppSidebar";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
-import { ThemeToggle } from "@/components/theme/ThemeToggle";
-import { apiFetch, getCurrentUser, logoutRequest, refreshCurrentUser } from "@/lib/auth";
-import { getSiteBranding } from "@/lib/branding";
+import { apiFetch, getCurrentUser, refreshCurrentUser } from "@/lib/auth";
 import { evaluatePasswordStrength } from "@/lib/password-strength";
 import {
   ALL_PERMISSIONS,
@@ -23,7 +22,6 @@ import {
   ChevronDown,
   ChevronLeft,
   FileText,
-  LogOut,
   Plus,
   Shield,
   Trash2,
@@ -33,7 +31,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 
 type TreeNode = {
   user: AdminUser;
@@ -41,6 +39,20 @@ type TreeNode = {
 };
 
 export default function MySubusersPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center text-[var(--text-secondary)]">
+          در حال بارگذاری...
+        </div>
+      }
+    >
+      <MySubusersInner />
+    </Suspense>
+  );
+}
+
+function MySubusersInner() {
   const router = useRouter();
   const [me, setMe] = useState<AdminUser | null>(null);
   const [users, setUsers] = useState<AdminUser[]>([]);
@@ -53,8 +65,9 @@ export default function MySubusersPage() {
   const [mobile, setMobile] = useState("");
   const [password, setPassword] = useState("");
   const [selectedPerms, setSelectedPerms] = useState<Permission[]>([]);
-  const [branding, setBranding] = useState(() => getSiteBranding());
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const grantable = useMemo(() => {
     if (!me) return [] as Permission[];
@@ -117,7 +130,6 @@ export default function MySubusersPage() {
   );
 
   useEffect(() => {
-    setBranding(getSiteBranding());
     void (async () => {
       const current = (await refreshCurrentUser()) ?? getCurrentUser();
       if (!current) {
@@ -233,11 +245,6 @@ export default function MySubusersPage() {
     await loadUsers();
   }
 
-  async function onLogout() {
-    await logoutRequest();
-    router.replace("/login");
-  }
-
   if (!me) {
     return (
       <div className="flex min-h-screen items-center justify-center text-[var(--text-secondary)]">
@@ -247,37 +254,56 @@ export default function MySubusersPage() {
   }
 
   return (
-    <div
-      className="min-h-screen bg-[var(--background)] text-[var(--text-primary)]"
-      style={{ direction: "rtl" }}
-    >
-      <header className="border-b border-[var(--border)] bg-[var(--panel)]">
-        <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-4">
-          <div className="flex items-center gap-3">
-            <IranEmblem className="h-8 w-8 text-[var(--logo)]" />
-            <div>
-              <h1 className="text-lg font-bold">{branding.siteTitle}</h1>
-              <p className="text-xs text-[var(--text-secondary)]">
-                مدیریت زیردستان · {me.name}
-              </p>
+    <AppShell
+      sidebar={
+        <AppSidebar
+          collapsed={sidebarCollapsed}
+          mobileOpen={mobileMenuOpen}
+          onToggleCollapse={() => setSidebarCollapsed((v) => !v)}
+          onCloseMobile={() => setMobileMenuOpen(false)}
+          stats={{
+            totalEvents: myTeam.length,
+            enemy: 0,
+            government: 0,
+            activeUsers: activeCount,
+          }}
+        />
+      }
+      main={
+        <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--background)]">
+          <div className="flex shrink-0 items-center justify-between gap-2 border-b border-[var(--border)] px-3 py-2.5">
+            <div className="flex min-w-0 items-center gap-2">
+              <MobileMenuButton onClick={() => setMobileMenuOpen(true)} />
+              <div className="min-w-0">
+                <p className="m-0 truncate text-sm font-semibold text-[var(--text-primary)]">
+                  زیردستان من
+                </p>
+                <p className="m-0 truncate text-[11px] text-[var(--text-secondary)]">
+                  مدیریت تیم · {me.name}
+                </p>
+              </div>
+            </div>
+            <div className="flex shrink-0 items-center gap-2">
+              <NotificationBell />
+              <button
+                type="button"
+                onClick={() => {
+                  setFormOpen((v) => !v);
+                  setError(null);
+                  setSuccess(null);
+                }}
+                className="inline-flex items-center gap-1 rounded-xl bg-blue-600 px-3 py-2 text-xs font-semibold text-white"
+              >
+                <UserPlus className="h-3.5 w-3.5" />
+                {formOpen ? "بستن فرم" : "افزودن"}
+              </button>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <ThemeToggle />
-            <NotificationBell />
-            <button
-              type="button"
-              onClick={() => void onLogout()}
-              className="inline-flex items-center gap-1 rounded-xl border border-[var(--border)] px-3 py-2 text-xs"
-            >
-              <LogOut className="h-3.5 w-3.5" />
-              خروج
-            </button>
-          </div>
-        </div>
-      </header>
 
-      <main className="mx-auto max-w-5xl space-y-4 p-4">
+          <div
+            className="min-h-0 flex-1 space-y-4 overflow-y-auto p-3 sm:p-4 scrollbar-thin"
+            style={{ direction: "rtl" }}
+          >
         <SiteMottoBanner compact />
 
         <div className="flex flex-wrap items-center justify-between gap-3">
@@ -551,8 +577,11 @@ export default function MySubusersPage() {
             )}
           </div>
         </section>
-      </main>
-    </div>
+      
+          </div>
+        </div>
+      }
+    />
   );
 }
 

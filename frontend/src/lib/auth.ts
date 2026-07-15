@@ -107,6 +107,27 @@ export function getAuthToken(): string | null {
   return getSession()?.token ?? null;
 }
 
+/** Refresh permissions/profile from API into the local session. */
+export async function refreshCurrentUser(): Promise<AdminUser | null> {
+  const token = getAuthToken();
+  if (!token) return null;
+
+  try {
+    const response = await apiFetch("/auth/me");
+    if (!response.ok) return getCurrentUser();
+    const payload = await response.json();
+    const rawUser = (payload.data ?? payload.user ?? payload) as Record<
+      string,
+      unknown
+    >;
+    const user = normalizeUser(rawUser);
+    setSession(token, user);
+    return user;
+  } catch {
+    return getCurrentUser();
+  }
+}
+
 export async function apiFetch(
   path: string,
   init: RequestInit = {},

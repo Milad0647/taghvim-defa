@@ -5,7 +5,7 @@ import { SiteMottoBanner } from "@/components/brand/SiteMottoBanner";
 import { PasswordField } from "@/components/forms/PasswordField";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
-import { apiFetch, getCurrentUser, logoutRequest } from "@/lib/auth";
+import { apiFetch, getCurrentUser, logoutRequest, refreshCurrentUser } from "@/lib/auth";
 import { getSiteBranding } from "@/lib/branding";
 import { evaluatePasswordStrength } from "@/lib/password-strength";
 import {
@@ -117,20 +117,22 @@ export default function MySubusersPage() {
 
   useEffect(() => {
     setBranding(getSiteBranding());
-    const current = getCurrentUser();
-    if (!current) {
-      router.replace("/login");
-      return;
-    }
-    if (!userHasPermission(current, "manage_subusers")) {
-      router.replace("/my-content");
-      return;
-    }
-    setMe(current);
-    setSelectedPerms(
-      (current.permissions ?? []).filter((p) => p !== "manage_users"),
-    );
-    void loadUsers();
+    void (async () => {
+      const current = (await refreshCurrentUser()) ?? getCurrentUser();
+      if (!current) {
+        router.replace("/login");
+        return;
+      }
+      if (!userHasPermission(current, "manage_subusers")) {
+        router.replace("/my-content");
+        return;
+      }
+      setMe(current);
+      setSelectedPerms(
+        (current.permissions ?? []).filter((p) => p !== "manage_users"),
+      );
+      await loadUsers();
+    })();
   }, [router]);
 
   async function loadUsers() {
@@ -192,6 +194,7 @@ export default function MySubusersPage() {
         password,
         role: "editor",
         permissions: selectedPerms.filter((p) => grantable.includes(p)),
+        agency_ids: me?.agencyIds ?? [],
       }),
     });
     if (!res.ok) {

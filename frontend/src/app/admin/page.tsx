@@ -1,7 +1,7 @@
 "use client";
 
 import { RequireAuth } from "@/components/admin/RequireAuth";
-import { getCurrentUser } from "@/lib/auth";
+import { getCurrentUser, refreshCurrentUser } from "@/lib/auth";
 import {
   clearAllDemoData,
   getDemoDataStats,
@@ -24,6 +24,7 @@ function AdminHomeContent() {
   const [name, setName] = useState("");
   const [roleLabel, setRoleLabel] = useState("");
   const [canUsers, setCanUsers] = useState(false);
+  const [canSubusers, setCanSubusers] = useState(false);
   const [canSettings, setCanSettings] = useState(false);
   const [canContent, setCanContent] = useState(false);
   const [canArchive, setCanArchive] = useState(false);
@@ -34,17 +35,20 @@ function AdminHomeContent() {
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    const user = getCurrentUser();
-    if (!user) return;
-    setName(user.name);
-    setRoleLabel(ROLE_LABELS[user.role]);
-    setCanUsers(userHasPermission(user, "manage_users"));
-    setCanSettings(userHasPermission(user, "manage_settings"));
-    setCanContent(userHasPermission(user, "manage_content"));
-    setCanArchive(userHasPermission(user, "view_archive"));
-    setCanBackup(userHasPermission(user, "run_backup"));
-    setCanForm(userHasPermission(user, "manage_form_schema"));
-    setStats(getDemoDataStats());
+    void (async () => {
+      const user = (await refreshCurrentUser()) ?? getCurrentUser();
+      if (!user) return;
+      setName(user.name);
+      setRoleLabel(ROLE_LABELS[user.role]);
+      setCanUsers(userHasPermission(user, "manage_users"));
+      setCanSubusers(userHasPermission(user, "manage_subusers"));
+      setCanSettings(userHasPermission(user, "manage_settings"));
+      setCanContent(userHasPermission(user, "manage_content"));
+      setCanArchive(userHasPermission(user, "view_archive"));
+      setCanBackup(userHasPermission(user, "run_backup"));
+      setCanForm(userHasPermission(user, "manage_form_schema"));
+      setStats(getDemoDataStats());
+    })();
   }, []);
 
   function refreshStats() {
@@ -109,6 +113,18 @@ function AdminHomeContent() {
             <h3 className="font-semibold text-[var(--text-primary)]">کاربران و دسترسی‌ها</h3>
             <p className="mt-2 text-sm text-[var(--text-secondary)]">
               سلسله‌مراتب کاربران و تفویض مجوزها
+            </p>
+          </Link>
+        ) : null}
+
+        {canSubusers ? (
+          <Link
+            href="/my-subusers"
+            className="rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-5 transition hover:border-blue-500/30"
+          >
+            <h3 className="font-semibold text-[var(--text-primary)]">مدیریت زیردستان</h3>
+            <p className="mt-2 text-sm text-[var(--text-secondary)]">
+              افزودن و مدیریت کاربرانی که زیر نظر شما هستند
             </p>
           </Link>
         ) : null}

@@ -17,6 +17,7 @@ import {
   Swords,
   UserCheck,
   UserRound,
+  Users,
   X,
   Activity,
 } from "lucide-react";
@@ -28,7 +29,7 @@ import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { IranEmblem } from "@/components/brand/IranEmblem";
 import { IranFlag } from "@/components/brand/IranFlag";
 import { getSiteBranding } from "@/lib/branding";
-import { getCurrentUser } from "@/lib/auth";
+import { getCurrentUser, refreshCurrentUser } from "@/lib/auth";
 import {
   canViewAdminViews,
   ROLE_LABELS,
@@ -72,20 +73,25 @@ export function AppSidebar({
   const [branding, setBranding] = useState(() => getSiteBranding());
   const [showAdminViews, setShowAdminViews] = useState(false);
   const [showAdminPanel, setShowAdminPanel] = useState(false);
+  const [canManageSubusers, setCanManageSubusers] = useState(false);
   const [canCreateEvent, setCanCreateEvent] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
   const [user, setUser] = useState<AdminUser | null>(null);
 
   useEffect(() => {
     setBranding(getSiteBranding());
-    const current = getCurrentUser();
-    setUser(current);
-    setShowAdminViews(canViewAdminViews(current));
-    setShowAdminPanel(
-      userHasPermission(current, "manage_users") ||
-        current?.role === "super_admin",
-    );
-    setCanCreateEvent(userHasPermission(current, "manage_content"));
+    void (async () => {
+      const current = (await refreshCurrentUser()) ?? getCurrentUser();
+      setUser(current);
+      setShowAdminViews(canViewAdminViews(current));
+      setShowAdminPanel(
+        userHasPermission(current, "manage_users") ||
+          userHasPermission(current, "manage_subusers") ||
+          current?.role === "super_admin",
+      );
+      setCanManageSubusers(userHasPermission(current, "manage_subusers"));
+      setCanCreateEvent(userHasPermission(current, "manage_content"));
+    })();
   }, []);
 
   useEffect(() => {
@@ -205,6 +211,23 @@ export function AppSidebar({
           <FileText className="h-4 w-4 shrink-0" />
           {!collapsed ? <span>محتوای من</span> : null}
         </Link>
+
+        {canManageSubusers ? (
+          <Link
+            href="/my-subusers"
+            className={clsx(
+              "relative flex h-11 items-center gap-3 rounded-xl px-3 text-[13px] transition",
+              pathname.startsWith("/my-subusers")
+                ? "bg-blue-500/15 font-medium text-[var(--primary)]"
+                : "text-[var(--text-secondary)] hover:bg-[var(--hover)]",
+              collapsed && "justify-center px-2",
+            )}
+            title="زیردستان من"
+          >
+            <Users className="h-4 w-4 shrink-0" />
+            {!collapsed ? <span>زیردستان من</span> : null}
+          </Link>
+        ) : null}
 
         {showAdminPanel ? (
           <Link

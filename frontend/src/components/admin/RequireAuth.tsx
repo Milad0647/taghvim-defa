@@ -1,6 +1,6 @@
 "use client";
 
-import { getCurrentUser, logoutRequest } from "@/lib/auth";
+import { getCurrentUser, logoutRequest, refreshCurrentUser } from "@/lib/auth";
 import {
   ROLE_LABELS,
   canViewAdminViews,
@@ -20,6 +20,7 @@ import {
   Shield,
   Building2,
   Users,
+  UserPlus,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -42,6 +43,7 @@ const NAV: NavItem[] = [
   { href: "/admin", label: "داشبورد ادمین", icon: LayoutDashboard, exact: true },
   { href: "/admin/agencies", label: "وزارتخانه‌ها", icon: Building2, permission: "manage_agencies" },
   { href: "/admin/users", label: "کاربران و دسترسی‌ها", icon: Users, permission: "manage_users" },
+  { href: "/my-subusers", label: "زیردستان من", icon: UserPlus, permission: "manage_subusers" },
   { href: "/admin/form-builder", label: "فرم‌ساز", icon: FormInput, permission: "manage_form_schema" },
   { href: "/admin/archive", label: "آرشیو", icon: Archive, permission: "view_archive" },
   { href: "/admin/backup", label: "بکاپ", icon: HardDrive, permission: "run_backup" },
@@ -67,31 +69,38 @@ export function RequireAuth({
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    const current = getCurrentUser();
-    if (!current) {
-      router.replace("/login");
-      return;
-    }
+    let cancelled = false;
+    void (async () => {
+      const current = (await refreshCurrentUser()) ?? getCurrentUser();
+      if (cancelled) return;
+      if (!current) {
+        router.replace("/login");
+        return;
+      }
 
-    if (requireManageUsers && !userHasPermission(current, "manage_users")) {
-      router.replace("/admin");
-      return;
-    }
-    if (requireManageSettings && !userHasPermission(current, "manage_settings")) {
-      router.replace("/admin");
-      return;
-    }
-    if (requireManageAgencies && !userHasPermission(current, "manage_agencies")) {
-      router.replace("/admin");
-      return;
-    }
-    if (requirePermission && !userHasPermission(current, requirePermission)) {
-      router.replace(canViewAdminViews(current) ? "/admin" : "/my-content");
-      return;
-    }
+      if (requireManageUsers && !userHasPermission(current, "manage_users")) {
+        router.replace("/admin");
+        return;
+      }
+      if (requireManageSettings && !userHasPermission(current, "manage_settings")) {
+        router.replace("/admin");
+        return;
+      }
+      if (requireManageAgencies && !userHasPermission(current, "manage_agencies")) {
+        router.replace("/admin");
+        return;
+      }
+      if (requirePermission && !userHasPermission(current, requirePermission)) {
+        router.replace(canViewAdminViews(current) ? "/admin" : "/my-content");
+        return;
+      }
 
-    setUser(current);
-    setReady(true);
+      setUser(current);
+      setReady(true);
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [
     router,
     requireManageUsers,

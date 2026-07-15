@@ -3,6 +3,7 @@
 import { MobileMenuButton } from "@/components/layout/AppSidebar";
 import { PersianDatePicker } from "@/components/shared/PersianDatePicker";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
+import { SiteMottoBanner } from "@/components/brand/SiteMottoBanner";
 import { ViewSwitcher } from "@/components/timeline/ViewSwitcher";
 import type { TimelineViewMode } from "@/types/timeline";
 import { Bell, Filter, Search, UserRound } from "lucide-react";
@@ -78,6 +79,8 @@ export function TimelineHeader({
       ref={headerRef}
       className="z-30 space-y-2 bg-[var(--background)] pb-1"
     >
+      <SiteMottoBanner />
+
       <div className="flex items-center gap-2 sm:gap-3">
         <MobileMenuButton onClick={onOpenMobileMenu} />
 

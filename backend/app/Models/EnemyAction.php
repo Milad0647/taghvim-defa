@@ -28,6 +28,7 @@ class EnemyAction extends Model
         'status',
         'custom_fields',
         'created_by',
+        'agency_id',
     ];
 
     protected function casts(): array

@@ -2,6 +2,7 @@
 
 import { CreateEventForm } from "@/components/forms/CreateEventForm";
 import { IranEmblem } from "@/components/brand/IranEmblem";
+import { SiteMottoBanner } from "@/components/brand/SiteMottoBanner";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { apiFetch, getCurrentUser, logoutRequest } from "@/lib/auth";
 import { getSiteBranding } from "@/lib/branding";
@@ -114,6 +115,8 @@ export default function MyContentPage() {
       </header>
 
       <main className="mx-auto max-w-5xl space-y-4 p-4">
+        <SiteMottoBanner compact />
+
         <div className="flex flex-wrap gap-2">
           {canSubusers ? (
             <Link

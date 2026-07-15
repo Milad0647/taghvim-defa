@@ -132,20 +132,51 @@ class CalendarService
         ]);
     }
 
-    public function createEnemyAction(CalendarDay $day, array $data, ?int $userId = null): EnemyAction
+    public function createEnemyAction(CalendarDay $day, array $data, ?User $actor = null): EnemyAction
     {
+        $data = $this->withResolvedAgencyId($data, $actor);
+
         return $day->enemyActions()->create([
             ...$data,
-            'created_by' => $userId,
+            'created_by' => $actor?->id,
         ]);
     }
 
-    public function createGovernmentAction(CalendarDay $day, array $data, ?int $userId = null): GovernmentAction
+    public function createGovernmentAction(CalendarDay $day, array $data, ?User $actor = null): GovernmentAction
     {
+        $data = $this->withResolvedAgencyId($data, $actor);
+
         return $day->governmentActions()->create([
             ...$data,
-            'created_by' => $userId,
+            'created_by' => $actor?->id,
         ]);
+    }
+
+    /**
+     * Bind content to a ministry: prefer requested agency_id when allowed,
+     * otherwise fall back to the first agency assigned to the user.
+     */
+    public function withResolvedAgencyId(array $data, ?User $actor): array
+    {
+        $requested = isset($data['agency_id']) ? (string) $data['agency_id'] : '';
+        $requested = $requested !== '' ? $requested : null;
+        $allowed = array_values(array_map('strval', $actor?->agency_ids ?? []));
+
+        if ($actor === null || $actor->isAdmin() || $allowed === []) {
+            $data['agency_id'] = $requested;
+
+            return $data;
+        }
+
+        if ($requested !== null && in_array($requested, $allowed, true)) {
+            $data['agency_id'] = $requested;
+
+            return $data;
+        }
+
+        $data['agency_id'] = $allowed[0];
+
+        return $data;
     }
 
     public function attachMedia(Model $model, UploadedFile $file, ?string $alt = null): Media

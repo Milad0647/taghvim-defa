@@ -79,7 +79,7 @@ class CalendarDayController extends Controller
         $action = $this->calendarService->createEnemyAction(
             $calendarDay,
             $request->validated(),
-            $request->user()?->id,
+            $request->user(),
         );
         $action->load(['media', 'category']);
 
@@ -95,7 +95,7 @@ class CalendarDayController extends Controller
         $action = $this->calendarService->createGovernmentAction(
             $calendarDay,
             $request->validated(),
-            $request->user()?->id,
+            $request->user(),
         );
         $action->load(['media', 'category', 'responseTo']);
 

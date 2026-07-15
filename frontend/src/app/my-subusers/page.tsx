@@ -1,6 +1,8 @@
 "use client";
 
+import { PasswordField } from "@/components/forms/PasswordField";
 import { apiFetch, getCurrentUser, logoutRequest } from "@/lib/auth";
+import { evaluatePasswordStrength } from "@/lib/password-strength";
 import {
   ALL_PERMISSIONS,
   PERMISSION_LABELS,
@@ -58,7 +60,7 @@ export default function MySubusersPage() {
     const list = (payload.data ?? []).map((u: Record<string, unknown>) => ({
       id: String(u.id),
       name: String(u.name),
-      email: String(u.email),
+      email: u.email != null ? String(u.email) : "",
       role: (u.role as UserRole) ?? "editor",
       is_active: Boolean(u.is_active),
       created_at: String(u.created_at ?? ""),
@@ -72,11 +74,15 @@ export default function MySubusersPage() {
   async function onCreate(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    if (!evaluatePasswordStrength(password).isStrong) {
+      setError("رمز عبور باید قوی باشد (۱۰+ کاراکتر، حروف بزرگ/کوچک، عدد و نماد)");
+      return;
+    }
     const res = await apiFetch("/users", {
       method: "POST",
       body: JSON.stringify({
         name,
-        email,
+        email: email.trim() || null,
         password,
         role: "editor",
         permissions: selectedPerms.filter((p) => grantable.includes(p)),
@@ -84,7 +90,11 @@ export default function MySubusersPage() {
     });
     if (!res.ok) {
       const payload = await res.json().catch(() => ({}));
-      setError(payload.message ?? "ایجاد کاربر ناموفق بود");
+      const firstError =
+        payload.errors && typeof payload.errors === "object"
+          ? String(Object.values(payload.errors as Record<string, string[]>)[0]?.[0] ?? "")
+          : "";
+      setError(firstError || payload.message || "ایجاد کاربر ناموفق بود");
       return;
     }
     setName("");
@@ -121,7 +131,7 @@ export default function MySubusersPage() {
         </div>
 
         <form onSubmit={onCreate} className="space-y-3 rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-4">
-          <div className="grid gap-3 sm:grid-cols-3">
+          <div className="grid gap-3 sm:grid-cols-2">
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -132,19 +142,18 @@ export default function MySubusersPage() {
             <input
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="ایمیل"
+              placeholder="ایمیل (اختیاری)"
               type="email"
-              required
               className="rounded-xl border border-[var(--border)] bg-[var(--panel-2)] px-3 py-2 text-sm"
             />
-            <input
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="رمز عبور"
-              type="password"
-              required
-              className="rounded-xl border border-[var(--border)] bg-[var(--panel-2)] px-3 py-2 text-sm"
-            />
+            <div className="sm:col-span-2">
+              <PasswordField
+                value={password}
+                onChange={setPassword}
+                placeholder="رمز عبور"
+                required
+              />
+            </div>
           </div>
           <div className="flex flex-wrap gap-2">
             {grantable.map((perm) => (
@@ -192,7 +201,7 @@ export default function MySubusersPage() {
               {users.map((u) => (
                 <tr key={u.id} className="border-b border-[var(--border)]">
                   <td className="px-3 py-2">{u.name}</td>
-                  <td className="px-3 py-2 text-[var(--text-secondary)]">{u.email}</td>
+                  <td className="px-3 py-2 text-[var(--text-secondary)]">{u.email || "—"}</td>
                   <td className="px-3 py-2">{ROLE_LABELS[u.role]}</td>
                   <td className="px-3 py-2 text-xs text-[var(--text-secondary)]">
                     {(u.permissions ?? []).map((p) => PERMISSION_LABELS[p]).join(" · ") || "—"}

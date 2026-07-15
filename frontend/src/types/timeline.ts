@@ -55,6 +55,10 @@ export type TimelineEvent = {
   /** Owning / responsible government agency (ministry) */
   agencyId?: string;
   agencyName?: string;
+  /** Creator user id (for ministry-scoped filtering) */
+  createdByUserId?: string;
+  /** Ministries assigned to the creator at publish time */
+  createdByAgencyIds?: string[];
   source?: string;
   imageUrl?: string;
   media?: TimelineMedia[];

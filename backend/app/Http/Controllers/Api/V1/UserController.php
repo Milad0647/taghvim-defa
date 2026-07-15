@@ -43,7 +43,8 @@ class UserController extends Controller
         $data = $request->validated();
 
         $permissions = $data['permissions'] ?? [];
-        unset($data['permissions']);
+        $agencyIds = array_values(array_map('strval', $data['agency_ids'] ?? []));
+        unset($data['permissions'], $data['agency_ids']);
 
         if (! $actor->canGrantPermissions($permissions)) {
             return response()->json(['message' => 'Cannot grant permissions you do not have.'], 422);
@@ -56,6 +57,11 @@ class UserController extends Controller
             $parentId = $actor->id;
             $role = UserRole::Editor->value;
             unset($data['role'], $data['parent_id']);
+            // Sub-users can only receive agencies the parent has
+            $parentAgencies = array_map('strval', $actor->agency_ids ?? []);
+            if ($parentAgencies !== []) {
+                $agencyIds = array_values(array_intersect($agencyIds, $parentAgencies));
+            }
         }
 
         if ($parentId !== null) {
@@ -70,6 +76,7 @@ class UserController extends Controller
             'role' => $role,
             'parent_id' => $parentId,
             'permissions' => $permissions,
+            'agency_ids' => $agencyIds,
             'is_active' => $data['is_active'] ?? true,
         ]);
 
@@ -106,6 +113,17 @@ class UserController extends Controller
 
         if (empty($data['password'])) {
             unset($data['password']);
+        }
+
+        if (array_key_exists('agency_ids', $data)) {
+            $agencyIds = array_values(array_map('strval', $data['agency_ids'] ?? []));
+            if (! $actor->isAdmin() && ! $actor->hasPermission(Permission::ManageUsers)) {
+                $parentAgencies = array_map('strval', $actor->agency_ids ?? []);
+                if ($parentAgencies !== []) {
+                    $agencyIds = array_values(array_intersect($agencyIds, $parentAgencies));
+                }
+            }
+            $data['agency_ids'] = $agencyIds;
         }
 
         if (! $actor->isAdmin() && ! $actor->hasPermission(Permission::ManageUsers)) {

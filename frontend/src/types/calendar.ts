@@ -23,6 +23,8 @@ export type EnemyAction = {
   location: string | null;
   occurred_at: string | null;
   status: string;
+  agency_id?: string | null;
+  created_by?: number | null;
   category?: Category | null;
   media?: MediaItem[];
 };
@@ -35,6 +37,9 @@ export type GovernmentAction = {
   completed_at: string | null;
   status: string;
   response_to_id: number | null;
+  tags?: string[];
+  agency_id?: string | null;
+  created_by?: number | null;
   category?: Category | null;
   media?: MediaItem[];
 };

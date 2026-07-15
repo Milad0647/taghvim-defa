@@ -23,6 +23,7 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { IranEmblem } from "@/components/brand/IranEmblem";
+import { IranFlag } from "@/components/brand/IranFlag";
 import { getSiteBranding } from "@/lib/branding";
 import { getCurrentUser } from "@/lib/auth";
 import { canViewAdminViews, userHasPermission } from "@/types/auth";
@@ -101,9 +102,15 @@ export function AppSidebar({
                 </p>
               </div>
             </div>
+            <div className="mt-2 flex items-center gap-2 rounded-lg bg-[var(--panel-2)] px-2 py-1.5">
+              <IranFlag className="h-4 w-6 shrink-0" />
+              <p className="text-[11px] font-semibold text-[var(--text-primary)]">
+                {branding.siteSlogan || "دولت پای کار مردم"}
+              </p>
+            </div>
           </div>
         ) : (
-          <IranEmblem className="mx-auto h-6 w-6 text-[var(--logo)]" />
+          <IranFlag className="mx-auto h-5 w-8" />
         )}
         <button
           type="button"

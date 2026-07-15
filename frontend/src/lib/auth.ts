@@ -24,7 +24,7 @@ function normalizeUser(raw: Record<string, unknown>): AdminUser {
   return {
     id: String(raw.id),
     name: String(raw.name ?? ""),
-    email: String(raw.email ?? ""),
+    email: raw.email != null ? String(raw.email) : "",
     role: (raw.role as AdminUser["role"]) ?? "viewer",
     is_active: Boolean(raw.is_active ?? true),
     created_at:
@@ -108,8 +108,14 @@ export async function apiFetch(
     headers.set("Content-Type", "application/json");
   }
 
-  return fetch(`${API_BASE}${path.startsWith("/") ? path : `/${path}`}`, {
-    ...init,
-    headers,
-  });
+  try {
+    return await fetch(`${API_BASE}${path.startsWith("/") ? path : `/${path}`}`, {
+      ...init,
+      headers,
+    });
+  } catch {
+    throw new Error(
+      "اتصال به سرور برقرار نشد. لطفاً API را اجرا کنید (php artisan serve) و دوباره تلاش کنید.",
+    );
+  }
 }

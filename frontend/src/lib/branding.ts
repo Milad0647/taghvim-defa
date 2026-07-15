@@ -9,12 +9,13 @@ export const SITE_TAGLINE = defaultDashboardSettings.siteTagline;
 
 export function getSiteBranding(): Pick<
   DashboardSettings,
-  "siteTitle" | "siteTagline"
+  "siteTitle" | "siteTagline" | "siteSlogan"
 > {
   if (typeof window === "undefined") {
     return {
       siteTitle: SITE_TITLE,
       siteTagline: SITE_TAGLINE,
+      siteSlogan: defaultDashboardSettings.siteSlogan,
     };
   }
 
@@ -22,5 +23,7 @@ export function getSiteBranding(): Pick<
   return {
     siteTitle: settings.siteTitle?.trim() || SITE_TITLE,
     siteTagline: settings.siteTagline?.trim() || SITE_TAGLINE,
+    siteSlogan:
+      settings.siteSlogan?.trim() || defaultDashboardSettings.siteSlogan,
   };
 }

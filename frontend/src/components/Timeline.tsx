@@ -199,9 +199,16 @@ function DayCard({
                       key={action.id}
                       className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-3"
                     >
-                      <p className="text-sm font-medium text-white">
-                        {action.title}
-                      </p>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="text-sm font-medium text-white">
+                          {action.title}
+                        </p>
+                        {(action.tags ?? []).includes("قهرمان ملی") ? (
+                          <span className="rounded-full border border-amber-500/50 bg-amber-500/15 px-2 py-0.5 text-[10px] font-medium text-amber-300">
+                            قهرمان ملی
+                          </span>
+                        ) : null}
+                      </div>
                       {action.agency ? (
                         <p className="mt-1 text-[11px] text-emerald-200/80">
                           {action.agency}

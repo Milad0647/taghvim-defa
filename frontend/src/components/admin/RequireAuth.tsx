@@ -26,6 +26,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { IranEmblem } from "@/components/brand/IranEmblem";
+import { SiteMottoBanner } from "@/components/brand/SiteMottoBanner";
 import { CreateEventForm } from "@/components/forms/CreateEventForm";
 import { getSiteBranding } from "@/lib/branding";
 
@@ -217,6 +218,8 @@ function AdminShell({
         </aside>
 
         <main className="min-w-0 flex-1 space-y-4">
+          <SiteMottoBanner compact />
+
           <div className="flex items-center justify-between gap-3 rounded-2xl border border-[var(--border)] bg-[var(--panel)] px-4 py-3 lg:hidden">
             <div>
               <p className="text-sm font-semibold text-[var(--text-primary)]">{user.name}</p>

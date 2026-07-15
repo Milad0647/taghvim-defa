@@ -1,7 +1,11 @@
 "use client";
 
 import { RequireAuth } from "@/components/admin/RequireAuth";
+import { PasswordField } from "@/components/forms/PasswordField";
+import { listAgencies } from "@/lib/agency-store";
 import { apiFetch, getCurrentUser } from "@/lib/auth";
+import { evaluatePasswordStrength } from "@/lib/password-strength";
+import type { GovernmentAgency } from "@/types/agency";
 import {
   ALL_PERMISSIONS,
   PERMISSION_LABELS,
@@ -25,6 +29,7 @@ export default function AdminUsersPage() {
 
 function UsersManager() {
   const [users, setUsers] = useState<AdminUser[]>([]);
+  const [agencies] = useState<GovernmentAgency[]>(() => listAgencies({ activeOnly: true }));
   const [me, setMe] = useState<AdminUser | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [editing, setEditing] = useState<AdminUser | null>(null);
@@ -37,24 +42,33 @@ function UsersManager() {
   }, [me]);
 
   async function refresh() {
-    const res = await apiFetch("/users");
-    if (!res.ok) {
-      setError("بارگذاری کاربران ناموفق بود");
-      return;
+    try {
+      const res = await apiFetch("/users");
+      if (!res.ok) {
+        setError("بارگذاری کاربران ناموفق بود — سرور را روشن کنید");
+        return;
+      }
+      const payload = await res.json();
+      const rows = (payload.data ?? []).map((u: Record<string, unknown>) => ({
+        id: String(u.id),
+        name: String(u.name ?? ""),
+        email: String(u.email ?? ""),
+        role: (u.role as UserRole) ?? "viewer",
+        is_active: Boolean(u.is_active),
+        created_at: String(u.created_at ?? ""),
+        parent_id: u.parent_id ?? null,
+        permissions: Array.isArray(u.permissions) ? u.permissions : [],
+        agencyIds: Array.isArray(u.agency_ids)
+          ? u.agency_ids.map(String)
+          : Array.isArray(u.agencyIds)
+            ? u.agencyIds.map(String)
+            : [],
+      })) as AdminUser[];
+      setUsers(rows);
+      setError(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "خطا در بارگذاری کاربران");
     }
-    const payload = await res.json();
-    const rows = (payload.data ?? []).map((u: Record<string, unknown>) => ({
-      id: String(u.id),
-      name: String(u.name ?? ""),
-      email: String(u.email ?? ""),
-      role: (u.role as UserRole) ?? "viewer",
-      is_active: Boolean(u.is_active),
-      created_at: String(u.created_at ?? ""),
-      parent_id: u.parent_id ?? null,
-      permissions: Array.isArray(u.permissions) ? u.permissions : [],
-      agencyIds: [],
-    })) as AdminUser[];
-    setUsers(rows);
   }
 
   useEffect(() => {
@@ -124,6 +138,7 @@ function UsersManager() {
       {(creating || editing) && me ? (
         <UserForm
           grantable={grantable}
+          agencies={agencies}
           users={users}
           initial={editing}
           onClose={() => {
@@ -181,6 +196,9 @@ function UserTreeNode({
           <p className="text-xs text-[var(--text-secondary)]">
             {node.user.email} · {ROLE_LABELS[node.user.role]} ·{" "}
             {(node.user.permissions ?? []).length} مجوز
+            {node.user.agencyIds?.length
+              ? ` · ${node.user.agencyIds.length} وزارتخانه`
+              : ""}
           </p>
         </div>
         <div className="flex gap-2">
@@ -215,6 +233,7 @@ function UserTreeNode({
 
 function UserForm({
   grantable,
+  agencies,
   users,
   initial,
   onClose,
@@ -222,6 +241,7 @@ function UserForm({
   onError,
 }: {
   grantable: Permission[];
+  agencies: GovernmentAgency[];
   users: AdminUser[];
   initial: AdminUser | null;
   onClose: () => void;
@@ -236,16 +256,18 @@ function UserForm({
     initial?.parent_id != null ? String(initial.parent_id) : "",
   );
   const [perms, setPerms] = useState<Permission[]>(initial?.permissions ?? []);
+  const [agencyIds, setAgencyIds] = useState<string[]>(initial?.agencyIds ?? []);
   const [isActive, setIsActive] = useState(initial?.is_active ?? true);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     const body: Record<string, unknown> = {
       name,
-      email,
+      email: email.trim() || null,
       role,
       is_active: isActive,
       permissions: perms,
+      agency_ids: agencyIds,
       parent_id: parentId ? Number(parentId) : null,
     };
     if (password) body.password = password;
@@ -253,17 +275,29 @@ function UserForm({
       onError("رمز عبور الزامی است");
       return;
     }
-
-    const res = await apiFetch(initial ? `/users/${initial.id}` : "/users", {
-      method: initial ? "PUT" : "POST",
-      body: JSON.stringify(body),
-    });
-    if (!res.ok) {
-      const payload = await res.json().catch(() => ({}));
-      onError(payload.message ?? "ذخیره ناموفق بود");
+    if (password && !evaluatePasswordStrength(password).isStrong) {
+      onError("رمز عبور باید قوی باشد (۱۰+ کاراکتر، حروف بزرگ/کوچک، عدد و نماد)");
       return;
     }
-    await onSaved();
+
+    try {
+      const res = await apiFetch(initial ? `/users/${initial.id}` : "/users", {
+        method: initial ? "PUT" : "POST",
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) {
+        const payload = await res.json().catch(() => ({}));
+        const firstError =
+          payload.errors && typeof payload.errors === "object"
+            ? String(Object.values(payload.errors as Record<string, string[]>)[0]?.[0] ?? "")
+            : "";
+        onError(firstError || payload.message || "ذخیره ناموفق بود");
+        return;
+      }
+      await onSaved();
+    } catch (err) {
+      onError(err instanceof Error ? err.message : "ذخیره ناموفق بود");
+    }
   }
 
   return (
@@ -284,19 +318,19 @@ function UserForm({
         />
         <input
           className="rounded-xl border border-[var(--border)] bg-[var(--panel-2)] px-3 py-2 text-sm"
-          placeholder="ایمیل"
+          placeholder="ایمیل (اختیاری)"
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          required
         />
-        <input
-          className="rounded-xl border border-[var(--border)] bg-[var(--panel-2)] px-3 py-2 text-sm"
-          placeholder={initial ? "رمز جدید (اختیاری)" : "رمز عبور"}
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
+        <div className="sm:col-span-2">
+          <PasswordField
+            value={password}
+            onChange={setPassword}
+            placeholder={initial ? "رمز جدید (اختیاری)" : "رمز عبور"}
+            required={!initial}
+          />
+        </div>
         <select
           className="rounded-xl border border-[var(--border)] bg-[var(--panel-2)] px-3 py-2 text-sm"
           value={role}
@@ -330,6 +364,30 @@ function UserForm({
           />
           فعال
         </label>
+      </div>
+
+      <div>
+        <p className="mb-2 text-xs text-[var(--text-secondary)]">
+          وزارتخانه‌ها (دامنه محتوا و فیلتر)
+        </p>
+        <div className="grid gap-2 sm:grid-cols-2">
+          {agencies.map((agency) => (
+            <label key={agency.id} className="inline-flex items-center gap-2 text-xs">
+              <input
+                type="checkbox"
+                checked={agencyIds.includes(agency.id)}
+                onChange={(e) => {
+                  setAgencyIds((prev) =>
+                    e.target.checked
+                      ? [...prev, agency.id]
+                      : prev.filter((id) => id !== agency.id),
+                  );
+                }}
+              />
+              {agency.shortName}
+            </label>
+          ))}
+        </div>
       </div>
 
       <div>

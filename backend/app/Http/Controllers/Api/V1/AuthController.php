@@ -4,10 +4,11 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\UserResource;
+use App\Models\User;
 use App\Services\SecurityLog;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
@@ -15,13 +16,22 @@ class AuthController extends Controller
     public function login(Request $request): JsonResponse
     {
         $credentials = $request->validate([
-            'email' => ['required', 'email'],
+            'email' => ['required', 'string', 'max:255'],
             'password' => ['required', 'string'],
         ]);
 
-        if (! Auth::attempt($credentials)) {
+        $login = trim($credentials['email']);
+
+        /** @var User|null $user */
+        $user = User::query()
+            ->where(function ($q) use ($login) {
+                $q->where('email', $login)->orWhere('name', $login);
+            })
+            ->first();
+
+        if (! $user || ! Hash::check($credentials['password'], $user->password)) {
             SecurityLog::warning('auth.login_failed', [
-                'email' => $credentials['email'],
+                'email' => $login,
                 'ip' => $request->ip(),
             ]);
 
@@ -30,14 +40,9 @@ class AuthController extends Controller
             ]);
         }
 
-        /** @var \App\Models\User $user */
-        $user = Auth::user();
-
         if (! $user->is_active) {
-            Auth::logout();
-
             SecurityLog::warning('auth.login_inactive', [
-                'email' => $credentials['email'],
+                'email' => $login,
                 'ip' => $request->ip(),
             ]);
 

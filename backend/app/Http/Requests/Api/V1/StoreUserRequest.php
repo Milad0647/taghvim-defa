@@ -16,17 +16,37 @@ class StoreUserRequest extends FormRequest
         return $this->user()?->can('create', User::class) ?? false;
     }
 
+    protected function prepareForValidation(): void
+    {
+        if ($this->has('email') && trim((string) $this->input('email')) === '') {
+            $this->merge(['email' => null]);
+        }
+    }
+
     public function rules(): array
     {
         return [
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255', 'unique:users,email'],
+            'email' => ['nullable', 'email', 'max:255', 'unique:users,email'],
             'password' => ['required', 'string', Password::defaults()],
             'role' => ['sometimes', Rule::enum(UserRole::class)],
             'is_active' => ['boolean'],
             'parent_id' => ['nullable', 'exists:users,id'],
             'permissions' => ['nullable', 'array'],
             'permissions.*' => ['string', Rule::in(Permission::values())],
+            'agency_ids' => ['nullable', 'array'],
+            'agency_ids.*' => ['string', 'max:64'],
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'password.min' => 'رمز عبور باید حداقل ۱۰ کاراکتر باشد.',
+            'password.mixed' => 'رمز عبور باید شامل حروف بزرگ و کوچک باشد.',
+            'password.letters' => 'رمز عبور باید شامل حروف باشد.',
+            'password.numbers' => 'رمز عبور باید شامل عدد باشد.',
+            'password.symbols' => 'رمز عبور باید شامل نماد (!@#$…) باشد.',
         ];
     }
 }

@@ -41,6 +41,7 @@ class DatabaseSeeder extends Seeder
                 'is_active' => true,
                 'parent_id' => $admin->id,
                 'permissions' => Permission::editorDefaults(),
+                'agency_ids' => ['agency-defense', 'agency-mfa'],
             ],
         );
 

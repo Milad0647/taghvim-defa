@@ -1,6 +1,7 @@
 "use client";
 
 import { highlightText, severityLabel } from "@/lib/timeline";
+import { hasNationalHeroTag, NATIONAL_HERO_TAG } from "@/lib/tags";
 import type { TimelineEvent } from "@/types/timeline";
 import clsx from "clsx";
 import { FileImage } from "lucide-react";
@@ -55,7 +56,8 @@ export function EventCard({
 }: EventCardProps) {
   const isEnemy = event.eventType === "enemy";
   const status = statusStyle(event);
-  const tags = (event.tags ?? []).slice(0, 2);
+  const isNationalHero = !isEnemy && hasNationalHeroTag(event.tags);
+  const tags = (event.tags ?? []).slice(0, isNationalHero ? 3 : 2);
 
   return (
     <article
@@ -106,14 +108,16 @@ export function EventCard({
           <span
             className="absolute top-1.5 left-1.5 rounded-lg px-2.5 py-1 text-[10px] font-medium text-white"
             style={{
-              background: STATUS_STYLES[status.color],
+              background: isNationalHero
+                ? "linear-gradient(180deg, #C9A227, #8B6914)"
+                : STATUS_STYLES[status.color],
               boxShadow:
                 status.color === "red"
                   ? "0 2px 10px rgba(215, 40, 56, 0.32)"
                   : "none",
             }}
           >
-            {status.label}
+            {isNationalHero ? NATIONAL_HERO_TAG : status.label}
           </span>
           <div
             className="pointer-events-none absolute inset-0 rounded-[9px]"
@@ -151,21 +155,32 @@ export function EventCard({
           />
           {tags.length > 0 ? (
             <div className="mt-1.5 flex flex-wrap gap-1.5">
-              {tags.map((tag) => (
-                <span
-                  key={tag}
-                  className="rounded-full px-3 py-1 text-[10px]"
-                  style={{
-                    background: "transparent",
-                    border: isEnemy
-                      ? "1px solid var(--enemy-border)"
-                      : "1px solid var(--government-border)",
-                    color: isEnemy ? "var(--enemy)" : "var(--government)",
-                  }}
-                >
-                  {tag}
-                </span>
-              ))}
+              {tags.map((tag) => {
+                const hero = tag === NATIONAL_HERO_TAG;
+                return (
+                  <span
+                    key={tag}
+                    className="rounded-full px-3 py-1 text-[10px] font-medium"
+                    style={{
+                      background: hero
+                        ? "rgba(201, 162, 39, 0.18)"
+                        : "transparent",
+                      border: hero
+                        ? "1px solid rgba(201, 162, 39, 0.7)"
+                        : isEnemy
+                          ? "1px solid var(--enemy-border)"
+                          : "1px solid var(--government-border)",
+                      color: hero
+                        ? "#C9A227"
+                        : isEnemy
+                          ? "var(--enemy)"
+                          : "var(--government)",
+                    }}
+                  >
+                    {tag}
+                  </span>
+                );
+              })}
             </div>
           ) : null}
         </div>

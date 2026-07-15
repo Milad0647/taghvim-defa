@@ -18,6 +18,7 @@ class UserResource extends JsonResource
             'is_active' => $this->is_active,
             'parent_id' => $this->parent_id,
             'permissions' => $this->permissionList(),
+            'agency_ids' => array_values(array_map('strval', $this->agency_ids ?? [])),
             'created_at' => $this->created_at?->toIso8601String(),
         ];
     }

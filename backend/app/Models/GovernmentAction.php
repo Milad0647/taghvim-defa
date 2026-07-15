@@ -22,7 +22,9 @@ class GovernmentAction extends Model
         'completed_at',
         'status',
         'custom_fields',
+        'tags',
         'created_by',
+        'agency_id',
     ];
 
     protected function casts(): array
@@ -31,6 +33,7 @@ class GovernmentAction extends Model
             'status' => PublishStatus::class,
             'completed_at' => 'datetime',
             'custom_fields' => 'array',
+            'tags' => 'array',
         ];
     }
 

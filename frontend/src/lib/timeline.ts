@@ -7,6 +7,7 @@ import type {
   VerificationStatus,
 } from "@/types/timeline";
 import { formatPersianDateShort } from "@/lib/persian-date";
+import { getAgencyById } from "@/lib/agency-store";
 
 export function severityColor(severity: Severity): string {
   switch (severity) {
@@ -145,10 +146,21 @@ function matchesEvent(
     return false;
   }
   if (filters.agencyId !== "all") {
-    const matchesAgency =
+    const agency = getAgencyById(filters.agencyId);
+    const creatorAgencies = event.createdByAgencyIds ?? [];
+    // Content stamped with this ministry, or created by a user assigned to it
+    const matchesCreatorAgency = creatorAgencies.includes(filters.agencyId);
+    const matchesEventAgency =
       event.agencyId === filters.agencyId ||
-      event.organization === filters.agencyId;
-    if (!matchesAgency) return false;
+      event.organization === filters.agencyId ||
+      event.agencyName === filters.agencyId ||
+      (agency != null &&
+        (event.agencyId === agency.id ||
+          event.organization === agency.shortName ||
+          event.organization === agency.name ||
+          event.agencyName === agency.name ||
+          event.agencyName === agency.shortName));
+    if (!matchesCreatorAgency && !matchesEventAgency) return false;
   }
   if (
     filters.verificationStatus !== "all" &&

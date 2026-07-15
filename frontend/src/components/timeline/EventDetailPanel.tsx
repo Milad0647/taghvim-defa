@@ -253,21 +253,34 @@ export function EventDetailPanel({
 
           {(event.tags ?? []).length > 0 ? (
             <div className="flex flex-wrap gap-2">
-              {event.tags!.map((tag) => (
-                <span
-                  key={tag}
-                  className="rounded-full px-[15px] py-[5px] text-[11px]"
-                  style={{
-                    background: isEnemy ? "var(--enemy-soft)" : "var(--government-soft)",
-                    border: isEnemy
-                      ? "1px solid var(--enemy-border)"
-                      : "1px solid var(--government-border)",
-                    color: isEnemy ? "var(--enemy)" : "var(--government)",
-                  }}
-                >
-                  {tag}
-                </span>
-              ))}
+              {event.tags!.map((tag) => {
+                const hero = tag === "قهرمان ملی";
+                return (
+                  <span
+                    key={tag}
+                    className="rounded-full px-[15px] py-[5px] text-[11px] font-medium"
+                    style={{
+                      background: hero
+                        ? "rgba(201, 162, 39, 0.18)"
+                        : isEnemy
+                          ? "var(--enemy-soft)"
+                          : "var(--government-soft)",
+                      border: hero
+                        ? "1px solid rgba(201, 162, 39, 0.7)"
+                        : isEnemy
+                          ? "1px solid var(--enemy-border)"
+                          : "1px solid var(--government-border)",
+                      color: hero
+                        ? "#C9A227"
+                        : isEnemy
+                          ? "var(--enemy)"
+                          : "var(--government)",
+                    }}
+                  >
+                    {tag}
+                  </span>
+                );
+              })}
             </div>
           ) : null}
 

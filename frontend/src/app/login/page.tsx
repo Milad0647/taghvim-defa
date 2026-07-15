@@ -70,11 +70,11 @@ export default function LoginPage() {
 
         <form onSubmit={onSubmit} className="space-y-4">
           <label className="block space-y-1.5 text-sm">
-            <span className="text-[var(--text-secondary)]">ایمیل</span>
+            <span className="text-[var(--text-secondary)]">ایمیل یا نام</span>
             <input
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              type="email"
+              type="text"
               autoComplete="username"
               className="w-full rounded-xl border border-[var(--border)] bg-[var(--panel-2)] px-3 py-2.5 text-[var(--text-primary)] outline-none focus:ring-2 focus:ring-blue-500"
               required

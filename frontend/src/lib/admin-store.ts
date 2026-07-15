@@ -131,7 +131,7 @@ export function getUsersWithSecrets(): AdminUser[] {
 
 export function createUser(input: {
   name: string;
-  email: string;
+  email?: string;
   role: AdminUser["role"];
   password: string;
   is_active?: boolean;
@@ -140,14 +140,18 @@ export function createUser(input: {
   parent_id?: string | number | null;
 }): AdminUser {
   const users = ensureSeedUsers();
-  if (users.some((u) => u.email.toLowerCase() === input.email.toLowerCase())) {
+  const email = (input.email ?? "").trim();
+  if (
+    email &&
+    users.some((u) => u.email && u.email.toLowerCase() === email.toLowerCase())
+  ) {
     throw new Error("این ایمیل قبلاً ثبت شده است.");
   }
 
   const user: AdminUser = {
     id: `u-${Date.now()}`,
     name: input.name,
-    email: input.email,
+    email,
     role: input.role,
     is_active: input.is_active ?? true,
     created_at: new Date().toISOString(),
@@ -180,7 +184,10 @@ export function updateUser(
   if (
     patch.email &&
     users.some(
-      (u) => u.id !== id && u.email.toLowerCase() === patch.email!.toLowerCase(),
+      (u) =>
+        u.id !== id &&
+        u.email &&
+        u.email.toLowerCase() === patch.email!.toLowerCase(),
     )
   ) {
     throw new Error("این ایمیل قبلاً ثبت شده است.");
@@ -203,12 +210,15 @@ export function authenticateLocal(
   password: string,
 ): AdminUser {
   const users = ensureSeedUsers();
+  const login = email.trim().toLowerCase();
   const user = users.find(
-    (u) => u.email.toLowerCase() === email.toLowerCase(),
+    (u) =>
+      (u.email && u.email.toLowerCase() === login) ||
+      u.name.toLowerCase() === login,
   );
 
   if (!user || user.password !== password) {
-    throw new Error("ایمیل یا رمز عبور نادرست است.");
+    throw new Error("ایمیل/نام یا رمز عبور نادرست است.");
   }
   if (!user.is_active) {
     throw new Error("این حساب غیرفعال است.");

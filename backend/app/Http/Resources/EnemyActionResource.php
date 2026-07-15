@@ -23,6 +23,7 @@ class EnemyActionResource extends JsonResource
             'status' => $this->status?->value,
             'custom_fields' => $this->custom_fields ?? [],
             'created_by' => $this->created_by,
+            'agency_id' => $this->agency_id,
             'category' => new CategoryResource($this->whenLoaded('category')),
             'media' => MediaResource::collection($this->whenLoaded('media')),
             'responses_count' => $this->whenCounted('responses'),

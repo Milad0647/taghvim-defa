@@ -4,6 +4,7 @@ import { PersianDatePicker } from "@/components/shared/PersianDatePicker";
 import { getAgencyById, listAgencies } from "@/lib/agency-store";
 import { apiFetch, getCurrentUser } from "@/lib/auth";
 import { upsertTimelineEvent } from "@/lib/timeline-store";
+import { NATIONAL_HERO_TAG, withNationalHeroTag } from "@/lib/tags";
 import type { GovernmentAgency } from "@/types/agency";
 import { userHasPermission } from "@/types/auth";
 import type { EventType, Severity, TimelineEvent } from "@/types/timeline";
@@ -58,6 +59,7 @@ export function CreateEventForm({
     source: "",
     location: "",
   });
+  const [nationalHero, setNationalHero] = useState(false);
 
   const agencyOptions = useMemo(() => allowedAgencies, [allowedAgencies]);
   const activeFields = useMemo(
@@ -137,6 +139,10 @@ export function CreateEventForm({
 
     const agency = getAgencyById(values.agencyId);
     const eventType = (values.eventType as EventType) || "enemy";
+    const tags =
+      eventType === "government"
+        ? withNationalHeroTag([], nationalHero)
+        : [];
     const now = new Date().toISOString();
     const event: TimelineEvent = {
       id: `evt-${Date.now()}`,
@@ -156,8 +162,15 @@ export function CreateEventForm({
       organization: agency?.shortName,
       agencyId: values.agencyId,
       agencyName: agency?.name,
+      createdByUserId: user.id,
+      createdByAgencyIds:
+        user.agencyIds?.length > 0
+          ? user.agencyIds
+          : values.agencyId
+            ? [values.agencyId]
+            : [],
       source: values.source?.trim() || undefined,
-      tags: [],
+      tags,
       relatedEventIds: [],
       relatedResponseIds: [],
       commentsCount: 0,
@@ -209,6 +222,7 @@ export function CreateEventForm({
                 occurred_at: `${values.date}T${values.time || "12:00"}:00`,
                 status: "published",
                 custom_fields: customFields,
+                agency_id: values.agencyId || null,
               }
             : {
                 title: values.title.trim(),
@@ -217,6 +231,8 @@ export function CreateEventForm({
                 completed_at: `${values.date}T${values.time || "12:00"}:00`,
                 status: "published",
                 custom_fields: customFields,
+                tags,
+                agency_id: values.agencyId || null,
               };
         await apiFetch(endpoint, {
           method: "POST",
@@ -332,6 +348,25 @@ export function CreateEventForm({
             value={values.time || "12:00"}
             onChange={(v) => setValue("time", v)}
           />
+
+          {(values.eventType || "enemy") === "government" ? (
+            <label className="flex items-start gap-3 rounded-xl border border-[var(--government-border)] bg-[var(--event-gov-bg)] px-3 py-3 text-sm">
+              <input
+                type="checkbox"
+                checked={nationalHero}
+                onChange={(e) => setNationalHero(e.target.checked)}
+                className="mt-1"
+              />
+              <span>
+                <span className="block font-semibold text-[var(--text-primary)]">
+                  تگ {NATIONAL_HERO_TAG}
+                </span>
+                <span className="mt-0.5 block text-xs text-[var(--text-secondary)]">
+                  این اقدام دولت با برچسب قهرمان ملی منتشر می‌شود.
+                </span>
+              </span>
+            </label>
+          ) : null}
 
           {error ? (
             <p className="rounded-xl bg-red-500/15 px-3 py-2 text-sm text-red-200">

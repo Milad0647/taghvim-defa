@@ -28,6 +28,7 @@ class StoreEnemyActionRequest extends FormRequest
             'category_id' => ['nullable', 'exists:categories,id'],
             'status' => ['nullable', Rule::enum(PublishStatus::class)],
             'custom_fields' => ['nullable', 'array'],
+            'agency_id' => ['nullable', 'string', 'max:64'],
         ];
     }
 }

@@ -2,6 +2,7 @@
 
 import { RequireAuth } from "@/components/admin/RequireAuth";
 import { apiFetch } from "@/lib/auth";
+import { FALLBACK_FORM_SCHEMA } from "@/lib/form-schema";
 import { Plus, Save, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 
@@ -41,13 +42,23 @@ function FormBuilder() {
 
   async function load() {
     setError(null);
-    const res = await apiFetch("/form-schema");
-    if (!res.ok) {
-      setError("بارگذاری فرم ناموفق بود");
-      return;
+    try {
+      const res = await apiFetch("/form-schema");
+      if (!res.ok) {
+        setSchema(FALLBACK_FORM_SCHEMA as unknown as FormSchema);
+        setError("API در دسترس نبود؛ فرم پیش‌فرض نمایش داده شد. برای ذخیره، سرور را روشن کنید.");
+        return;
+      }
+      const payload = await res.json();
+      setSchema(payload.data ?? (FALLBACK_FORM_SCHEMA as unknown as FormSchema));
+    } catch (err) {
+      setSchema(FALLBACK_FORM_SCHEMA as unknown as FormSchema);
+      setError(
+        err instanceof Error
+          ? err.message
+          : "API در دسترس نبود؛ فرم پیش‌فرض نمایش داده شد.",
+      );
     }
-    const payload = await res.json();
-    setSchema(payload.data);
   }
 
   useEffect(() => {
@@ -102,21 +113,25 @@ function FormBuilder() {
     if (!schema) return;
     setError(null);
     setSaved(false);
-    const res = await apiFetch("/form-schema", {
-      method: "PUT",
-      body: JSON.stringify({
-        name: schema.name,
-        fields: schema.fields.map((f, i) => ({ ...f, sort_order: i })),
-      }),
-    });
-    if (!res.ok) {
-      const payload = await res.json().catch(() => ({}));
-      setError(payload.message ?? "ذخیره ناموفق بود");
-      return;
+    try {
+      const res = await apiFetch("/form-schema", {
+        method: "PUT",
+        body: JSON.stringify({
+          name: schema.name,
+          fields: schema.fields.map((f, i) => ({ ...f, sort_order: i })),
+        }),
+      });
+      if (!res.ok) {
+        const payload = await res.json().catch(() => ({}));
+        setError(payload.message ?? "ذخیره ناموفق بود");
+        return;
+      }
+      const payload = await res.json();
+      setSchema(payload.data);
+      setSaved(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "ذخیره ناموفق بود");
     }
-    const payload = await res.json();
-    setSchema(payload.data);
-    setSaved(true);
   }
 
   if (!schema) {

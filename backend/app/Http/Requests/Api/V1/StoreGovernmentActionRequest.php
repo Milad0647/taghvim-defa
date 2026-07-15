@@ -24,6 +24,9 @@ class StoreGovernmentActionRequest extends FormRequest
             'response_to_id' => ['nullable', 'exists:enemy_actions,id'],
             'status' => ['nullable', Rule::enum(PublishStatus::class)],
             'custom_fields' => ['nullable', 'array'],
+            'tags' => ['nullable', 'array'],
+            'tags.*' => ['string', 'max:64'],
+            'agency_id' => ['nullable', 'string', 'max:64'],
         ];
     }
 }

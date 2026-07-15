@@ -38,7 +38,12 @@ function ArchiveManager() {
       const payload = await res.json();
       setItems(payload.data ?? []);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "خطا");
+      setError(
+        err instanceof Error
+          ? err.message
+          : "اتصال به سرور برقرار نشد",
+      );
+      setItems([]);
     } finally {
       setLoading(false);
     }

@@ -57,6 +57,8 @@ export type TimelineEvent = {
   agencyName?: string;
   /** Creator user id (for ministry-scoped filtering) */
   createdByUserId?: string;
+  /** Display name of the creator (from API) */
+  createdByName?: string;
   /** Ministries assigned to the creator at publish time */
   createdByAgencyIds?: string[];
   source?: string;
@@ -70,6 +72,18 @@ export type TimelineEvent = {
   editHistory?: { at: string; by: string; note: string }[];
   createdAt: string;
   updatedAt: string;
+  /**
+   * Admin-only: other reports of the same enemy action (same day / similar title).
+   * Present only on the representative event of a duplicate cluster.
+   */
+  duplicateReports?: Array<{
+    id: string;
+    title: string;
+    createdByUserId?: string;
+    createdByName?: string;
+    createdAt: string;
+    agencyName?: string;
+  }>;
 };
 
 export type TimelineDay = {

@@ -92,6 +92,7 @@ export function TimelineDaySection({
               events={enemyEvents}
               searchQuery={searchQuery}
               selectedEventId={selectedEventId}
+              groupSimilarEnemy
               relatedLookup={relatedLookup}
               onOpen={onOpenEvent}
             />

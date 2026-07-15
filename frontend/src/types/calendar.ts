@@ -25,6 +25,8 @@ export type EnemyAction = {
   status: string;
   agency_id?: string | null;
   created_by?: number | null;
+  date?: string | null;
+  creator?: { id: number; name: string } | null;
   category?: Category | null;
   media?: MediaItem[];
 };
@@ -40,6 +42,8 @@ export type GovernmentAction = {
   tags?: string[];
   agency_id?: string | null;
   created_by?: number | null;
+  date?: string | null;
+  creator?: { id: number; name: string } | null;
   category?: Category | null;
   media?: MediaItem[];
 };

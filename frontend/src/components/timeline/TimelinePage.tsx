@@ -28,6 +28,11 @@ import {
 } from "@/data/timeline.mock";
 import { listAgencies } from "@/lib/agency-store";
 import { getDashboardSettings } from "@/lib/admin-store";
+import { fetchTimeline } from "@/lib/api";
+import {
+  mapTimelineResponseToDays,
+  mergeTimelineDays,
+} from "@/lib/map-calendar-to-timeline";
 import { loadTimelineDays } from "@/lib/timeline-store";
 import { buildFilterChips, filterTimelineDays } from "@/lib/timeline";
 import { defaultDashboardSettings } from "@/types/settings";
@@ -139,6 +144,23 @@ export function TimelinePage({
       if (!firstDay || firstDay.events.length === 0) return null;
       return firstDay.events[0] ?? null;
     });
+
+    void (async () => {
+      try {
+        const response = await fetchTimeline();
+        const apiDays = mapTimelineResponseToDays(response);
+        if (apiDays.length === 0) return;
+        setDays((prev) => {
+          const merged = mergeTimelineDays(prev, apiDays);
+          setSelectedDay(
+            (current) => current ?? searchParams.get("date") ?? merged[0]?.date ?? null,
+          );
+          return merged;
+        });
+      } catch {
+        // Keep local/seed timeline when API is unavailable
+      }
+    })();
     // Intentionally run on mount / when server-provided days change
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialDays]);

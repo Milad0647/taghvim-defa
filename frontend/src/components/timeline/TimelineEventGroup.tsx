@@ -5,7 +5,9 @@ import {
   TimelineNode,
   TIMELINE_RAIL_RIGHT,
 } from "@/components/timeline/TimelineNode";
+import { groupSimilarEnemyEventsForAdmin } from "@/lib/enemy-similarity";
 import type { TimelineEvent } from "@/types/timeline";
+import { Users } from "lucide-react";
 
 type TimelineEventGroupProps = {
   title: string;
@@ -13,6 +15,8 @@ type TimelineEventGroupProps = {
   events: TimelineEvent[];
   searchQuery: string;
   selectedEventId?: string | null;
+  /** When true, similar enemy actions collapse into one admin box */
+  groupSimilarEnemy?: boolean;
   relatedLookup: (event: TimelineEvent) => {
     hasResponse: boolean;
     responseTimeMinutes?: number;
@@ -26,16 +30,22 @@ export function TimelineEventGroup({
   events,
   searchQuery,
   selectedEventId,
+  groupSimilarEnemy = false,
   relatedLookup,
   onOpen,
 }: TimelineEventGroupProps) {
   const isEnemy = tone === "enemy";
   const railPad = TIMELINE_RAIL_RIGHT * 2;
+  const displayEvents =
+    isEnemy && groupSimilarEnemy
+      ? groupSimilarEnemyEventsForAdmin(events)
+      : events;
+  const hiddenDuplicates = Math.max(0, events.length - displayEvents.length);
 
   return (
     <section>
       <div
-        className="mb-2 flex items-center gap-2"
+        className="mb-2 flex flex-wrap items-center gap-2"
         style={{ direction: "rtl", paddingRight: railPad }}
       >
         <span
@@ -53,12 +63,21 @@ export function TimelineEventGroup({
           {title}
         </h4>
         <span className="rounded-md bg-[var(--hover)] px-1.5 py-0.5 text-[11px] text-[var(--text-secondary)]">
-          {events.length.toLocaleString("fa-IR")}
+          {displayEvents.length.toLocaleString("fa-IR")}
+          {hiddenDuplicates > 0
+            ? ` نمایش · ${events.length.toLocaleString("fa-IR")} گزارش`
+            : ""}
         </span>
+        {isEnemy && groupSimilarEnemy && hiddenDuplicates > 0 ? (
+          <span className="inline-flex items-center gap-1 rounded-md bg-amber-500/15 px-1.5 py-0.5 text-[10px] text-amber-700">
+            <Users className="h-3 w-3" />
+            گزارش‌های مشابه ادغام شدند
+          </span>
+        ) : null}
       </div>
 
       <div className="flex flex-col gap-2">
-        {events.map((event) => {
+        {displayEvents.map((event) => {
           const related = relatedLookup(event);
           const size =
             event.severity === "critical" || event.severity === "high"
@@ -67,6 +86,7 @@ export function TimelineEventGroup({
                 ? "md"
                 : "sm";
           const selected = selectedEventId === event.id;
+          const reportCount = (event.duplicateReports?.length ?? 0) + 1;
 
           return (
             <div
@@ -75,18 +95,26 @@ export function TimelineEventGroup({
               style={{ paddingRight: railPad }}
             >
               <TimelineNode tone={tone} size={size} active={selected} />
-              <EventCard
-                event={event}
-                searchQuery={searchQuery}
-                selected={selected}
-                hasResponse={related.hasResponse}
-                responseTimeMinutes={related.responseTimeMinutes}
-                onOpen={onOpen}
-              />
+              <div className="space-y-1.5">
+                <EventCard
+                  event={event}
+                  searchQuery={searchQuery}
+                  selected={selected}
+                  hasResponse={related.hasResponse}
+                  responseTimeMinutes={related.responseTimeMinutes}
+                  onOpen={onOpen}
+                />
+                {reportCount > 1 ? (
+                  <DuplicateReportsBox
+                    event={event}
+                    reportCount={reportCount}
+                  />
+                ) : null}
+              </div>
             </div>
           );
         })}
-        {events.length === 0 ? (
+        {displayEvents.length === 0 ? (
           <p
             className="text-xs text-[var(--text-muted)]"
             style={{ paddingRight: railPad }}
@@ -96,5 +124,43 @@ export function TimelineEventGroup({
         ) : null}
       </div>
     </section>
+  );
+}
+
+function DuplicateReportsBox({
+  event,
+  reportCount,
+}: {
+  event: TimelineEvent;
+  reportCount: number;
+}) {
+  const reporters = [
+    event.createdByName || "ثبت‌کننده اصلی",
+    ...(event.duplicateReports ?? []).map(
+      (r) => r.createdByName || "کاربر دیگر",
+    ),
+  ];
+  const uniqueNames = Array.from(new Set(reporters));
+
+  return (
+    <div className="rounded-xl border border-amber-500/25 bg-amber-500/10 px-3 py-2 text-[11px] text-[var(--text-secondary)]">
+      <p className="font-semibold text-amber-700 dark:text-amber-300">
+        {reportCount.toLocaleString("fa-IR")} گزارش مشابه از کاربران مختلف
+      </p>
+      <p className="mt-1 leading-5">
+        سیستم تشخیص داد این اقدام‌ها یکی هستند و فقط در نمای ادمین در یک باکس
+        نشان داده می‌شوند. هر کاربر در «محتوای من» گزارش خودش را جدا می‌بیند.
+      </p>
+      <div className="mt-2 flex flex-wrap gap-1.5">
+        {uniqueNames.map((name) => (
+          <span
+            key={name}
+            className="rounded-md bg-[var(--panel)] px-2 py-0.5 text-[10px] text-[var(--text-primary)]"
+          >
+            {name}
+          </span>
+        ))}
+      </div>
+    </div>
   );
 }

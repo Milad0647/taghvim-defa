@@ -153,6 +153,16 @@ export function EventCard({
               __html: highlightText(event.summary, searchQuery),
             }}
           />
+          {(event.duplicateReports?.length ?? 0) > 0 ? (
+            <div className="mt-1.5">
+              <span className="rounded-full border border-amber-500/40 bg-amber-500/15 px-2.5 py-0.5 text-[10px] font-semibold text-amber-700">
+                {((event.duplicateReports?.length ?? 0) + 1).toLocaleString(
+                  "fa-IR",
+                )}{" "}
+                گزارش مشابه
+              </span>
+            </div>
+          ) : null}
           {tags.length > 0 ? (
             <div className="mt-1.5 flex flex-wrap gap-1.5">
               {tags.map((tag) => {

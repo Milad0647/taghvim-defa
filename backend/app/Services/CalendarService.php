@@ -24,11 +24,11 @@ class CalendarService
             ->with([
                 'media',
                 'enemyActions' => function ($q) use ($viewer) {
-                    $q->where('status', PublishStatus::Published)->with(['media', 'category']);
+                    $q->where('status', PublishStatus::Published)->with(['media', 'category', 'creator:id,name']);
                     $this->scopeCreatedBy($q, $viewer);
                 },
                 'governmentActions' => function ($q) use ($viewer) {
-                    $q->where('status', PublishStatus::Published)->with(['media', 'category']);
+                    $q->where('status', PublishStatus::Published)->with(['media', 'category', 'creator:id,name']);
                     $this->scopeCreatedBy($q, $viewer);
                 },
             ])

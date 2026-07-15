@@ -324,6 +324,7 @@ export function CreateEventForm({
       agencyId: values.agencyId,
       agencyName: agency?.name,
       createdByUserId: user.id,
+      createdByName: user.name,
       createdByAgencyIds:
         user.agencyIds?.length > 0
           ? user.agencyIds

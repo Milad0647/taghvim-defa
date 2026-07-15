@@ -116,6 +116,15 @@ export function EventDetailPanel({
             <h3 className="text-[16px] font-bold leading-7 text-[var(--text-primary)]">
               {event.title}
             </h3>
+            {(event.duplicateReports?.length ?? 0) > 0 ? (
+              <p className="mt-2 rounded-lg bg-amber-500/10 px-2.5 py-1.5 text-[11px] leading-5 text-amber-700">
+                این باکس{" "}
+                {((event.duplicateReports?.length ?? 0) + 1).toLocaleString(
+                  "fa-IR",
+                )}{" "}
+                گزارش مشابه را برای ادمین ادغام کرده است.
+              </p>
+            ) : null}
           </div>
           <button
             type="button"
@@ -154,7 +163,29 @@ export function EventDetailPanel({
               label="وزارتخانه"
               value={event.agencyName || event.organization || "—"}
             />
+            {event.createdByName ? (
+              <Meta label="ثبت‌کننده" value={event.createdByName} />
+            ) : null}
           </div>
+
+          {(event.duplicateReports?.length ?? 0) > 0 ? (
+            <section className="rounded-xl border border-amber-500/25 bg-amber-500/10 p-3">
+              <h4 className="mb-2 text-[13px] font-bold text-amber-700">
+                گزارش‌های مشابه (ادغام‌شده برای ادمین)
+              </h4>
+              <ul className="space-y-1.5 text-[12px] text-[var(--text-secondary)]">
+                <li>
+                  · {event.createdByName || "ثبت‌کننده اصلی"} — نسخهٔ اصلی این باکس
+                </li>
+                {event.duplicateReports!.map((report) => (
+                  <li key={report.id}>
+                    · {report.createdByName || "کاربر دیگر"}
+                    {report.agencyName ? ` · ${report.agencyName}` : ""}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
 
           <section>
             <h4 className="mb-1.5 flex items-center gap-2 text-[13px] font-bold text-[var(--text-primary)]">

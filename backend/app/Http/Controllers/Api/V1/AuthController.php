@@ -9,6 +9,7 @@ use App\Services\SecurityLog;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
@@ -28,12 +29,15 @@ class AuthController extends Controller
             ]);
         }
 
+        $hasUsername = Schema::hasColumn('users', 'username');
+
         /** @var User|null $user */
         $user = User::query()
-            ->where(function ($q) use ($login) {
-                $q->where('username', $login)
-                    ->orWhere('email', $login)
-                    ->orWhere('name', $login);
+            ->where(function ($q) use ($login, $hasUsername) {
+                $q->where('email', $login)->orWhere('name', $login);
+                if ($hasUsername) {
+                    $q->orWhere('username', $login);
+                }
             })
             ->first();
 

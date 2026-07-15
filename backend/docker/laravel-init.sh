@@ -26,8 +26,16 @@ fi
 
 php artisan config:clear 2>/dev/null || true
 php artisan route:clear 2>/dev/null || true
-php artisan migrate --force 2>/dev/null || true
-php artisan db:seed --force 2>/dev/null || true
+
+echo "[laravel-init] Running migrations..."
+if php artisan migrate --force; then
+  echo "[laravel-init] Migrations OK"
+else
+  echo "[laravel-init] ERROR: migrate failed (exit $?)" >&2
+fi
+
+echo "[laravel-init] Seeding (optional)..."
+php artisan db:seed --force || echo "[laravel-init] WARNING: seed failed (exit $?)" >&2
 php artisan storage:link 2>/dev/null || true
 
 true

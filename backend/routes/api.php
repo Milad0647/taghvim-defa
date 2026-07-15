@@ -12,10 +12,40 @@ use App\Http\Controllers\Api\V1\TimelineController;
 use App\Http\Controllers\Api\V1\UserController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/health', fn () => response()->json([
-    'status' => 'ok',
-    'service' => 'taghvim-defa-api',
-]));
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Schema;
+
+Route::get('/health', function () {
+    $dbOk = false;
+    $hasUsername = false;
+    $userBootOk = false;
+    $error = null;
+
+    try {
+        DB::connection()->getPdo();
+        $dbOk = true;
+        $hasUsername = Schema::hasColumn('users', 'username');
+        // Touch User class load — catches fatal redeclarations early
+        class_exists(\App\Models\User::class);
+        $userBootOk = true;
+    } catch (Throwable $e) {
+        $error = $e->getMessage();
+    }
+
+    $ready = $dbOk && $userBootOk && $hasUsername;
+
+    return response()->json([
+        'status' => $ready ? 'ok' : 'degraded',
+        'service' => 'taghvim-defa-api',
+        'checks' => [
+            'database' => $dbOk,
+            'user_model' => $userBootOk,
+            'users_username_column' => $hasUsername,
+        ],
+        'error' => $error,
+    ], $ready ? 200 : 503);
+});
 
 Route::prefix('auth')->group(function () {
     Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1');

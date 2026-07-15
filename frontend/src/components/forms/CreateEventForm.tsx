@@ -17,8 +17,8 @@ import { NATIONAL_HERO_TAG, withNationalHeroTag } from "@/lib/tags";
 import type { GovernmentAgency } from "@/types/agency";
 import { userHasPermission } from "@/types/auth";
 import type { EventType, Severity, TimelineEvent, TimelineMedia } from "@/types/timeline";
-import { ImagePlus, Mic, Trash2, Video, X } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { ImagePlus, Mic, Trash2, Upload, Video, X } from "lucide-react";
+import { useEffect, useMemo, useRef, useState, type DragEvent } from "react";
 
 type SchemaField = {
   key: string;
@@ -80,7 +80,9 @@ export function CreateEventForm({
   const [dateMax, setDateMax] = useState(SEED_RANGE_END);
   const [mediaFiles, setMediaFiles] = useState<File[]>([]);
   const [submitting, setSubmitting] = useState(false);
+  const [isDraggingMedia, setIsDraggingMedia] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const dragDepthRef = useRef(0);
 
   const mediaPreviews = useMemo(
     () =>
@@ -110,6 +112,8 @@ export function CreateEventForm({
     if (!open) return;
     setMediaFiles([]);
     setError(null);
+    setIsDraggingMedia(false);
+    dragDepthRef.current = 0;
     setResponseMode("independent");
     setResponseToId("");
     setNationalHero(false);
@@ -204,6 +208,40 @@ export function CreateEventForm({
       setMediaFiles((prev) => [...prev, ...next].slice(0, 12));
       setError(null);
     }
+  }
+
+  function onMediaDragEnter(e: DragEvent<HTMLElement>) {
+    e.preventDefault();
+    e.stopPropagation();
+    dragDepthRef.current += 1;
+    if (Array.from(e.dataTransfer.types).includes("Files")) {
+      setIsDraggingMedia(true);
+    }
+  }
+
+  function onMediaDragLeave(e: DragEvent<HTMLElement>) {
+    e.preventDefault();
+    e.stopPropagation();
+    dragDepthRef.current = Math.max(0, dragDepthRef.current - 1);
+    if (dragDepthRef.current === 0) {
+      setIsDraggingMedia(false);
+    }
+  }
+
+  function onMediaDragOver(e: DragEvent<HTMLElement>) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (Array.from(e.dataTransfer.types).includes("Files")) {
+      e.dataTransfer.dropEffect = "copy";
+    }
+  }
+
+  function onMediaDrop(e: DragEvent<HTMLElement>) {
+    e.preventDefault();
+    e.stopPropagation();
+    dragDepthRef.current = 0;
+    setIsDraggingMedia(false);
+    onPickMedia(e.dataTransfer.files);
   }
 
   function removeMedia(index: number) {
@@ -645,21 +683,46 @@ export function CreateEventForm({
                 e.target.value = "";
               }}
             />
-            <div className="flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                className="inline-flex items-center gap-1.5 rounded-xl border border-dashed border-[var(--border)] px-3 py-2 text-xs text-[var(--text-primary)] hover:bg-[var(--hover)]"
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              onDragEnter={onMediaDragEnter}
+              onDragLeave={onMediaDragLeave}
+              onDragOver={onMediaDragOver}
+              onDrop={onMediaDrop}
+              className={`flex w-full flex-col items-center justify-center gap-2 rounded-2xl border border-dashed px-4 py-6 text-center transition ${
+                isDraggingMedia
+                  ? "border-blue-500 bg-blue-500/10 text-blue-600"
+                  : "border-[var(--border)] bg-[var(--surface-3)] text-[var(--text-secondary)] hover:border-[var(--text-muted)] hover:bg-[var(--hover)]"
+              }`}
+            >
+              <span
+                className={`flex h-10 w-10 items-center justify-center rounded-full ${
+                  isDraggingMedia
+                    ? "bg-blue-500/15 text-blue-600"
+                    : "bg-[var(--panel-2)] text-[var(--text-primary)]"
+                }`}
               >
-                <ImagePlus className="h-3.5 w-3.5" />
-                افزودن رسانه
-              </button>
-              <span className="inline-flex items-center gap-1 text-[10px] text-[var(--text-muted)]">
+                {isDraggingMedia ? (
+                  <Upload className="h-5 w-5" />
+                ) : (
+                  <ImagePlus className="h-5 w-5" />
+                )}
+              </span>
+              <span className="text-sm font-medium text-[var(--text-primary)]">
+                {isDraggingMedia
+                  ? "فایل را رها کنید"
+                  : "کشیدن و رها کردن فایل‌ها اینجا"}
+              </span>
+              <span className="text-[11px] text-[var(--text-muted)]">
+                یا کلیک کنید تا از دستگاه انتخاب شود
+              </span>
+              <span className="mt-1 inline-flex items-center gap-1 text-[10px] text-[var(--text-muted)]">
                 <ImagePlus className="h-3 w-3" /> تصویر
                 <Video className="ms-2 h-3 w-3" /> فیلم
                 <Mic className="ms-2 h-3 w-3" /> صوت
               </span>
-            </div>
+            </button>
             {mediaPreviews.length > 0 ? (
               <ul className="space-y-2">
                 {mediaPreviews.map((item, index) => (

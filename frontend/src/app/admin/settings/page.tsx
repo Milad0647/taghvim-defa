@@ -52,7 +52,7 @@ function SettingsForm() {
               onChange={(e) =>
                 setSettings((s) => ({ ...s, siteTitle: e.target.value }))
               }
-              className="w-full rounded-xl border border-[var(--border)] bg-[var(--panel-2)] px-3 py-2.5 outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full rounded-xl border border-[var(--border)] bg-[var(--panel-2)] px-3 py-2.5 text-[var(--text-primary)] outline-none focus:ring-2 focus:ring-blue-500"
             />
           </label>
 
@@ -63,7 +63,7 @@ function SettingsForm() {
               onChange={(e) =>
                 setSettings((s) => ({ ...s, siteTagline: e.target.value }))
               }
-              className="w-full rounded-xl border border-[var(--border)] bg-[var(--panel-2)] px-3 py-2.5 outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full rounded-xl border border-[var(--border)] bg-[var(--panel-2)] px-3 py-2.5 text-[var(--text-primary)] outline-none focus:ring-2 focus:ring-blue-500"
             />
           </label>
 
@@ -74,7 +74,7 @@ function SettingsForm() {
               onChange={(e) =>
                 setSettings((s) => ({ ...s, siteSlogan: e.target.value }))
               }
-              className="w-full rounded-xl border border-[var(--border)] bg-[var(--panel-2)] px-3 py-2.5 outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full rounded-xl border border-[var(--border)] bg-[var(--panel-2)] px-3 py-2.5 text-[var(--text-primary)] outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="دولت پای کار مردم"
             />
           </label>
@@ -89,7 +89,7 @@ function SettingsForm() {
                   defaultView: e.target.value as DashboardSettings["defaultView"],
                 }))
               }
-              className="w-full rounded-xl border border-[var(--border)] bg-[var(--panel-2)] px-3 py-2.5 outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full rounded-xl border border-[var(--border)] bg-[var(--panel-2)] px-3 py-2.5 text-[var(--text-primary)] outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="timeline">خط زمانی</option>
               <option value="week">هفتگی</option>
@@ -126,7 +126,7 @@ function SettingsForm() {
               onChange={(e) =>
                 setSettings((s) => ({ ...s, timezoneLabel: e.target.value }))
               }
-              className="w-full rounded-xl border border-[var(--border)] bg-[var(--panel-2)] px-3 py-2.5 outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full rounded-xl border border-[var(--border)] bg-[var(--panel-2)] px-3 py-2.5 text-[var(--text-primary)] outline-none focus:ring-2 focus:ring-blue-500"
             />
           </label>
         </div>
@@ -170,9 +170,17 @@ function SettingsForm() {
           </label>
         </div>
 
-        <div className="rounded-xl border border-[var(--primary)]/25 bg-[var(--primary)]/8 px-3 py-2.5 text-xs leading-6 text-[var(--text-secondary)]">
-          <p className="font-medium text-[var(--text-primary)]">راهنمای بازه تاریخ</p>
-          <p className="mt-1">
+        <div
+          className="rounded-xl border border-[var(--border)] px-3 py-2.5 text-xs leading-6"
+          style={{
+            background: "color-mix(in srgb, var(--primary) 12%, var(--panel-2))",
+            color: "var(--text-primary)",
+          }}
+        >
+          <p className="font-semibold" style={{ color: "var(--text-primary)" }}>
+            راهنمای بازه تاریخ
+          </p>
+          <p className="mt-1" style={{ color: "var(--text-secondary)" }}>
             اگر روز اول/آخر خالی باشد، همه روزهای موجود در Timeline نمایش داده
             می‌شود. با تنظیم بازه، نمودار شدت و لیست روزها محدود می‌شوند.
           </p>
@@ -187,7 +195,10 @@ function SettingsForm() {
             ذخیره تنظیمات
           </button>
           {saved ? (
-            <span className="text-sm font-medium text-emerald-600 dark:text-emerald-400">
+            <span
+              className="text-sm font-medium"
+              style={{ color: "var(--success, #059669)" }}
+            >
               ذخیره شد.
             </span>
           ) : null}

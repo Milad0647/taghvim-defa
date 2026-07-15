@@ -1,5 +1,6 @@
 "use client";
 
+import { AppShell } from "@/components/layout/AppShell";
 import { AppSidebar, MobileMenuButton } from "@/components/layout/AppSidebar";
 import { OverviewDashboard } from "@/components/overview/OverviewDashboard";
 import { computeSummary } from "@/data/timeline.mock";
@@ -57,37 +58,43 @@ function OverviewContent() {
   }, []);
 
   return (
-    <div className="flex min-h-screen gap-4 bg-[var(--background)] p-3 lg:p-4">
-      <AppSidebar
-        collapsed={collapsed}
-        mobileOpen={mobileOpen}
-        onToggleCollapse={() => setCollapsed((v) => !v)}
-        onCloseMobile={() => setMobileOpen(false)}
-        stats={{
-          totalEvents: summary.totalEvents,
-          enemy: summary.enemy,
-          government: summary.government,
-          activeUsers: summary.activeUsers,
-        }}
-      />
-      <main className="mx-auto w-full max-w-6xl flex-1 space-y-4">
-        <div className="flex items-center gap-2 lg:hidden">
-          <MobileMenuButton onClick={() => setMobileOpen(true)} />
-          <p className="m-0 text-sm font-semibold text-[var(--text-primary)]">
-            نمای کلی
-          </p>
-        </div>
-
-        {days.length === 0 ? (
-          <div className="rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-8 text-center text-sm text-[var(--text-secondary)]">
-            داده‌ای برای نمایش وجود ندارد. از پنل ادمین می‌توانید داده نمونه را
-            بازیابی کنید یا رویداد واقعی ثبت کنید.
+    <AppShell
+      sidebar={
+        <AppSidebar
+          collapsed={collapsed}
+          mobileOpen={mobileOpen}
+          onToggleCollapse={() => setCollapsed((v) => !v)}
+          onCloseMobile={() => setMobileOpen(false)}
+          stats={{
+            totalEvents: summary.totalEvents,
+            enemy: summary.enemy,
+            government: summary.government,
+            activeUsers: summary.activeUsers,
+          }}
+        />
+      }
+      main={
+        <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--background)]">
+          <div className="flex shrink-0 items-center gap-2 border-b border-[var(--border)] px-3 py-2.5 lg:hidden">
+            <MobileMenuButton onClick={() => setMobileOpen(true)} />
+            <p className="m-0 text-sm font-semibold text-[var(--text-primary)]">
+              نمای کلی
+            </p>
           </div>
-        ) : (
-          <OverviewDashboard days={days} />
-        )}
-      </main>
-    </div>
+
+          <div className="min-h-0 flex-1 overflow-y-auto p-3 sm:p-4 scrollbar-thin">
+            {days.length === 0 ? (
+              <div className="rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-8 text-center text-sm text-[var(--text-secondary)]">
+                داده‌ای برای نمایش وجود ندارد. از پنل ادمین می‌توانید داده نمونه را
+                بازیابی کنید یا رویداد واقعی ثبت کنید.
+              </div>
+            ) : (
+              <OverviewDashboard days={days} />
+            )}
+          </div>
+        </div>
+      }
+    />
   );
 }
 

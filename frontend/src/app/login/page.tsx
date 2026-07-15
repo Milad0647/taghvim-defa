@@ -2,10 +2,10 @@
 
 import { loginRequest } from "@/lib/auth";
 import { getSession } from "@/lib/admin-store";
-import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { IranEmblem } from "@/components/brand/IranEmblem";
 import { getSiteBranding, SITE_TAGLINE, SITE_TITLE } from "@/lib/branding";
 import { canViewAdminViews } from "@/lib/auth";
+import { applyTheme, getStoredTheme } from "@/lib/theme";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -20,6 +20,13 @@ export default function LoginPage() {
     siteTitle: SITE_TITLE,
     siteTagline: SITE_TAGLINE,
   });
+
+  useEffect(() => {
+    applyTheme("dark");
+    return () => {
+      applyTheme(getStoredTheme());
+    };
+  }, []);
 
   useEffect(() => {
     const b = getSiteBranding();
@@ -51,13 +58,17 @@ export default function LoginPage() {
 
   return (
     <main
-      className="relative flex min-h-screen items-center justify-center bg-[var(--background)] px-4"
-      style={{ direction: "rtl" }}
+      className="relative flex min-h-screen items-center justify-center px-4"
+      style={{
+        direction: "rtl",
+        backgroundImage:
+          "linear-gradient(rgba(8, 12, 20, 0.72), rgba(8, 12, 20, 0.82)), url(/login-bg.webp)",
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
+      }}
     >
-      <div className="absolute top-4 left-4 z-10">
-        <ThemeToggle />
-      </div>
-      <div className="w-full max-w-md rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-6 shadow-2xl">
+      <div className="w-full max-w-md rounded-2xl border border-[var(--border)] bg-[var(--panel)]/95 p-6 shadow-2xl backdrop-blur-sm">
         <div className="mb-6 flex items-center gap-3">
           <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[var(--hover)]">
             <IranEmblem className="h-7 w-7 text-[var(--logo)]" />

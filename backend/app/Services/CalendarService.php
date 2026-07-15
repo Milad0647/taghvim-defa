@@ -105,14 +105,14 @@ class CalendarService
         $ids = $viewer->visibleCreatorIds() ?? $viewer->descendantIdsIncludingSelf();
 
         $enemy = EnemyAction::query()
-            ->with(['media', 'category', 'calendarDay'])
+            ->with(['media', 'category', 'calendarDay', 'creator:id,name'])
             ->whereIn('created_by', $ids)
             ->orderByDesc('occurred_at')
             ->orderByDesc('id')
             ->get();
 
         $government = GovernmentAction::query()
-            ->with(['media', 'category', 'calendarDay', 'responseTo'])
+            ->with(['media', 'category', 'calendarDay', 'responseTo', 'creator:id,name'])
             ->whereIn('created_by', $ids)
             ->orderByDesc('completed_at')
             ->orderByDesc('id')

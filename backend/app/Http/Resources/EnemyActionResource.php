@@ -24,6 +24,16 @@ class EnemyActionResource extends JsonResource
             'custom_fields' => $this->custom_fields ?? [],
             'created_by' => $this->created_by,
             'agency_id' => $this->agency_id,
+            'date' => $this->occurred_at?->toDateString()
+                ?? $this->calendarDay?->date?->toDateString(),
+            'creator' => $this->whenLoaded('creator', fn () => $this->creator ? [
+                'id' => $this->creator->id,
+                'name' => $this->creator->name,
+            ] : null),
+            'calendar_day' => $this->whenLoaded('calendarDay', fn () => $this->calendarDay ? [
+                'id' => $this->calendarDay->id,
+                'date' => $this->calendarDay->date?->toDateString(),
+            ] : null),
             'category' => new CategoryResource($this->whenLoaded('category')),
             'media' => MediaResource::collection($this->whenLoaded('media')),
             'responses_count' => $this->whenCounted('responses'),

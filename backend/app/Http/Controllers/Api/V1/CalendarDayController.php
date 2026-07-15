@@ -7,6 +7,8 @@ use App\Http\Requests\Api\V1\StoreCalendarDayRequest;
 use App\Http\Requests\Api\V1\StoreEnemyActionRequest;
 use App\Http\Requests\Api\V1\StoreGovernmentActionRequest;
 use App\Http\Requests\Api\V1\UpdateCalendarDayRequest;
+use App\Http\Requests\Api\V1\UpdateEnemyActionRequest;
+use App\Http\Requests\Api\V1\UpdateGovernmentActionRequest;
 use App\Http\Requests\Api\V1\UploadMediaRequest;
 use App\Http\Resources\CalendarDayResource;
 use App\Http\Resources\EnemyActionResource;
@@ -148,6 +150,34 @@ class CalendarDayController extends Controller
         return response()->json([
             'data' => new MediaResource($media),
         ], 201);
+    }
+
+    public function updateEnemyAction(UpdateEnemyActionRequest $request, EnemyAction $enemyAction): JsonResponse
+    {
+        $data = $request->validated();
+        if (array_key_exists('agency_id', $data)) {
+            $data = $this->calendarService->withResolvedAgencyId($data, $request->user());
+        }
+        $enemyAction->update($data);
+        $enemyAction->load(['media', 'category', 'calendarDay', 'creator:id,name']);
+
+        return response()->json([
+            'data' => new EnemyActionResource($enemyAction),
+        ]);
+    }
+
+    public function updateGovernmentAction(UpdateGovernmentActionRequest $request, GovernmentAction $governmentAction): JsonResponse
+    {
+        $data = $request->validated();
+        if (array_key_exists('agency_id', $data)) {
+            $data = $this->calendarService->withResolvedAgencyId($data, $request->user());
+        }
+        $governmentAction->update($data);
+        $governmentAction->load(['media', 'category', 'calendarDay', 'responseTo', 'creator:id,name']);
+
+        return response()->json([
+            'data' => new GovernmentActionResource($governmentAction),
+        ]);
     }
 
     public function destroyEnemyAction(Request $request, EnemyAction $enemyAction): JsonResponse

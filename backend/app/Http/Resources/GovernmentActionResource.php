@@ -21,6 +21,16 @@ class GovernmentActionResource extends JsonResource
             'tags' => $this->tags ?? [],
             'created_by' => $this->created_by,
             'agency_id' => $this->agency_id,
+            'date' => $this->completed_at?->toDateString()
+                ?? $this->calendarDay?->date?->toDateString(),
+            'creator' => $this->whenLoaded('creator', fn () => $this->creator ? [
+                'id' => $this->creator->id,
+                'name' => $this->creator->name,
+            ] : null),
+            'calendar_day' => $this->whenLoaded('calendarDay', fn () => $this->calendarDay ? [
+                'id' => $this->calendarDay->id,
+                'date' => $this->calendarDay->date?->toDateString(),
+            ] : null),
             'response_to_id' => $this->response_to_id,
             'category' => new CategoryResource($this->whenLoaded('category')),
             'media' => MediaResource::collection($this->whenLoaded('media')),

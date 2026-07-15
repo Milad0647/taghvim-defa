@@ -41,6 +41,8 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
 
     Route::post('/days/{calendarDay}/enemy-actions', [CalendarDayController::class, 'storeEnemyAction']);
     Route::post('/days/{calendarDay}/government-actions', [CalendarDayController::class, 'storeGovernmentAction']);
+    Route::put('/enemy-actions/{enemyAction}', [CalendarDayController::class, 'updateEnemyAction']);
+    Route::put('/government-actions/{governmentAction}', [CalendarDayController::class, 'updateGovernmentAction']);
     Route::delete('/enemy-actions/{enemyAction}', [CalendarDayController::class, 'destroyEnemyAction']);
     Route::delete('/government-actions/{governmentAction}', [CalendarDayController::class, 'destroyGovernmentAction']);
     Route::post('/days/{calendarDay}/media', [CalendarDayController::class, 'uploadMedia']);

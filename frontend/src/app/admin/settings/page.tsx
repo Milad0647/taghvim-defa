@@ -170,9 +170,12 @@ function SettingsForm() {
           </label>
         </div>
 
-        <div className="rounded-xl border border-blue-500/20 bg-blue-500/5 px-3 py-2 text-xs text-blue-200">
-          اگر روز اول/آخر خالی باشد، همه روزهای موجود در Timeline نمایش داده
-          می‌شود. با تنظیم بازه، نمودار شدت و لیست روزها محدود می‌شوند.
+        <div className="rounded-xl border border-[var(--primary)]/25 bg-[var(--primary)]/8 px-3 py-2.5 text-xs leading-6 text-[var(--text-secondary)]">
+          <p className="font-medium text-[var(--text-primary)]">راهنمای بازه تاریخ</p>
+          <p className="mt-1">
+            اگر روز اول/آخر خالی باشد، همه روزهای موجود در Timeline نمایش داده
+            می‌شود. با تنظیم بازه، نمودار شدت و لیست روزها محدود می‌شوند.
+          </p>
         </div>
 
         <div className="flex items-center gap-3">
@@ -184,7 +187,9 @@ function SettingsForm() {
             ذخیره تنظیمات
           </button>
           {saved ? (
-            <span className="text-sm text-emerald-300">ذخیره شد.</span>
+            <span className="text-sm font-medium text-emerald-600 dark:text-emerald-400">
+              ذخیره شد.
+            </span>
           ) : null}
         </div>
       </form>

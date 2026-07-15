@@ -718,27 +718,30 @@ function ContentModal({
       <div
         role="dialog"
         aria-modal="true"
-        className="absolute inset-x-0 bottom-0 max-h-[92vh] overflow-y-auto rounded-t-2xl border border-[var(--border)] bg-[var(--surface-2)] p-4 md:inset-y-8 md:left-1/2 md:right-auto md:w-[560px] md:-translate-x-1/2 md:rounded-2xl"
+        className="absolute inset-x-0 bottom-0 flex max-h-[92vh] flex-col overflow-hidden rounded-t-2xl border border-[var(--border)] bg-[var(--surface-2)] md:inset-y-8 md:left-1/2 md:right-auto md:w-[560px] md:-translate-x-1/2 md:rounded-2xl"
       >
-        <div className="mb-4 flex items-start justify-between gap-3">
-          <div>
-            <p className="text-xs text-[var(--text-secondary)]">
-              {mode === "edit" ? "ویرایش محتوا" : "مشاهده محتوا"}
-            </p>
-            <h3 className="mt-1 text-base font-bold text-[var(--text-primary)]">
-              {item.title}
-            </h3>
+        <div className="shrink-0 border-b border-[var(--border)] px-4 pb-3 pt-4">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="text-xs text-[var(--text-secondary)]">
+                {mode === "edit" ? "ویرایش محتوا" : "مشاهده محتوا"}
+              </p>
+              <h3 className="mt-1 text-base font-bold text-[var(--text-primary)]">
+                {item.title}
+              </h3>
+            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-lg p-2 hover:bg-[var(--hover)]"
+              aria-label="بستن"
+            >
+              <X className="h-4 w-4" />
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-lg p-2 hover:bg-[var(--hover)]"
-            aria-label="بستن"
-          >
-            <X className="h-4 w-4" />
-          </button>
         </div>
 
+        <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
         {mode === "view" ? (
           <div className="space-y-3 text-sm">
             <MetaRow
@@ -903,43 +906,46 @@ function ContentModal({
             />
           </div>
         )}
+        </div>
 
-        <div className="mt-5 flex flex-wrap gap-2">
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-xl border border-[var(--border)] px-4 py-2 text-sm"
-          >
-            بستن
-          </button>
-          {mode === "view" && canManage ? (
-            <>
-              <button
-                type="button"
-                onClick={onEdit}
-                className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white"
-              >
-                ویرایش
-              </button>
-              <button
-                type="button"
-                onClick={onDelete}
-                className="rounded-xl border border-red-500/40 px-4 py-2 text-sm text-red-500"
-              >
-                حذف
-              </button>
-            </>
-          ) : null}
-          {mode === "edit" ? (
+        <div className="shrink-0 border-t border-[var(--border)] bg-[var(--surface-2)] px-4 py-3">
+          <div className="flex flex-wrap gap-2">
             <button
               type="button"
-              disabled={saving || !draft.title.trim()}
-              onClick={() => onSave(draft)}
-              className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+              onClick={onClose}
+              className="rounded-xl border border-[var(--border)] px-4 py-2 text-sm"
             >
-              {saving ? "در حال ذخیره…" : "ذخیره تغییرات"}
+              بستن
             </button>
-          ) : null}
+            {mode === "view" && canManage ? (
+              <>
+                <button
+                  type="button"
+                  onClick={onEdit}
+                  className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white"
+                >
+                  ویرایش
+                </button>
+                <button
+                  type="button"
+                  onClick={onDelete}
+                  className="rounded-xl border border-red-500/40 px-4 py-2 text-sm text-red-500"
+                >
+                  حذف
+                </button>
+              </>
+            ) : null}
+            {mode === "edit" ? (
+              <button
+                type="button"
+                disabled={saving || !draft.title.trim()}
+                onClick={() => onSave(draft)}
+                className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+              >
+                {saving ? "در حال ذخیره…" : "ذخیره تغییرات"}
+              </button>
+            ) : null}
+          </div>
         </div>
       </div>
     </div>

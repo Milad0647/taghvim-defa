@@ -522,28 +522,30 @@ export function CreateEventForm({
       <div
         role="dialog"
         aria-modal="true"
-        className="absolute inset-x-0 bottom-0 max-h-[92vh] overflow-y-auto rounded-t-2xl border border-[var(--border)] bg-[var(--surface-2)] p-4 md:inset-y-6 md:left-1/2 md:right-auto md:w-[560px] md:-translate-x-1/2 md:rounded-2xl"
+        className="absolute inset-x-0 bottom-0 flex max-h-[92vh] flex-col overflow-hidden rounded-t-2xl border border-[var(--border)] bg-[var(--surface-2)] md:inset-y-6 md:left-1/2 md:right-auto md:w-[560px] md:-translate-x-1/2 md:rounded-2xl"
       >
-        <div className="mb-4 flex items-center justify-between">
-          <div>
-            <h3 className="text-lg font-bold text-[var(--text-primary)]">
-              ثبت رویداد جدید
-            </h3>
-            <p className="text-xs text-[var(--text-secondary)]">
-              فرم بر اساس تنظیمات ادمین ساخته می‌شود
-            </p>
+        <div className="shrink-0 border-b border-[var(--border)] px-4 pb-3 pt-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-bold text-[var(--text-primary)]">
+                ثبت رویداد جدید
+              </h3>
+              <p className="text-xs text-[var(--text-secondary)]">
+                فرم بر اساس تنظیمات ادمین ساخته می‌شود
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-lg p-2 hover:bg-[var(--hover)]"
+              aria-label="بستن"
+            >
+              <X className="h-4 w-4" />
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-lg p-2 hover:bg-[var(--hover)]"
-            aria-label="بستن"
-          >
-            <X className="h-4 w-4" />
-          </button>
         </div>
 
-        <div className="space-y-3 text-sm">
+        <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-4 text-sm">
           {activeFields.length === 0 ? (
             <>
               <Select
@@ -849,23 +851,25 @@ export function CreateEventForm({
           ) : null}
         </div>
 
-        <div className="mt-5 flex flex-wrap gap-2">
-          <button
-            type="button"
-            onClick={onClose}
-            disabled={submitting}
-            className="rounded-xl border border-[var(--border)] px-4 py-2 text-sm disabled:opacity-50"
-          >
-            انصراف
-          </button>
-          <button
-            type="button"
-            onClick={() => void publish()}
-            disabled={submitting}
-            className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
-          >
-            {submitting ? "در حال ثبت…" : "انتشار / ثبت"}
-          </button>
+        <div className="shrink-0 border-t border-[var(--border)] bg-[var(--surface-2)] px-4 py-3">
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={submitting}
+              className="rounded-xl border border-[var(--border)] px-4 py-2 text-sm disabled:opacity-50"
+            >
+              انصراف
+            </button>
+            <button
+              type="button"
+              onClick={() => void publish()}
+              disabled={submitting}
+              className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+            >
+              {submitting ? "در حال ثبت…" : "انتشار / ثبت"}
+            </button>
+          </div>
         </div>
       </div>
     </div>

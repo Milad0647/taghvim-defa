@@ -94,14 +94,21 @@ export function AppSidebar({
         collapsed ? "w-[72px]" : "w-[240px]",
       )}
     >
-      <div className="flex items-center justify-between gap-2 border-b border-[var(--border)] px-3 py-4">
+      <div
+        className={clsx(
+          "border-b border-[var(--border)] px-3 py-4",
+          collapsed
+            ? "flex flex-col items-center gap-2"
+            : "flex items-start justify-between gap-2",
+        )}
+      >
         {!collapsed ? (
-          <div>
+          <div className="min-w-0 flex-1">
             <div className="mb-0.5 flex items-center gap-2">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[var(--hover)]">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[var(--hover)]">
                 <IranEmblem className="h-6 w-6 text-[var(--logo)]" />
               </div>
-              <div>
+              <div className="min-w-0">
                 <p className="text-sm font-bold text-[var(--text-primary)]">
                   {branding.siteTitle}
                 </p>
@@ -118,7 +125,9 @@ export function AppSidebar({
             </div>
           </div>
         ) : (
-          <IranFlag className="mx-auto h-5 w-8" />
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--hover)]">
+            <IranEmblem className="h-7 w-7 text-[var(--logo)]" />
+          </div>
         )}
         <button
           type="button"
@@ -126,7 +135,11 @@ export function AppSidebar({
           className="hidden rounded-lg p-1.5 text-[var(--text-secondary)] hover:bg-[var(--hover)] lg:inline-flex"
           aria-label={collapsed ? "باز کردن منو" : "جمع کردن منو"}
         >
-          {collapsed ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+          {collapsed ? (
+            <ChevronLeft className="h-4 w-4" />
+          ) : (
+            <ChevronRight className="h-4 w-4" />
+          )}
         </button>
         <button
           type="button"

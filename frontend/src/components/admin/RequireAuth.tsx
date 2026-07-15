@@ -203,7 +203,9 @@ function AdminShell({
             <ThemeToggle className="w-full justify-center" />
             <div className="rounded-xl bg-[var(--panel-2)] p-3 text-xs">
               <p className="font-semibold text-[var(--text-primary)]">{user.name}</p>
-              <p className="mt-1 text-[var(--text-secondary)]">{user.email}</p>
+              <p className="mt-1 text-[var(--text-secondary)]">
+                {user.username || user.email || "—"}
+              </p>
               <p className="mt-1 text-[var(--primary)]">{ROLE_LABELS[user.role]}</p>
             </div>
             <button

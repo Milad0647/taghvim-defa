@@ -69,6 +69,13 @@ export function CreateEventForm({
     location: "",
   });
   const [nationalHero, setNationalHero] = useState(false);
+  const [responseMode, setResponseMode] = useState<"independent" | "linked">(
+    "independent",
+  );
+  const [responseToId, setResponseToId] = useState("");
+  const [enemyOptions, setEnemyOptions] = useState<
+    Array<{ id: number; title: string; date?: string | null }>
+  >([]);
   const [dateMin, setDateMin] = useState(SEED_RANGE_START);
   const [dateMax, setDateMax] = useState(SEED_RANGE_END);
   const [mediaFiles, setMediaFiles] = useState<File[]>([]);
@@ -103,6 +110,9 @@ export function CreateEventForm({
     if (!open) return;
     setMediaFiles([]);
     setError(null);
+    setResponseMode("independent");
+    setResponseToId("");
+    setNationalHero(false);
     const settings = getDashboardSettings();
     const min = settings.rangeStart || SEED_RANGE_START;
     const max = settings.rangeEnd || SEED_RANGE_END;
@@ -136,6 +146,29 @@ export function CreateEventForm({
         setFields(payload.data?.fields ?? []);
       } catch {
         // keep defaults
+      }
+    })();
+
+    void (async () => {
+      try {
+        const res = await apiFetch("/my-content");
+        if (!res.ok) return;
+        const payload = await res.json();
+        const rows = (payload.data?.enemy_actions ?? []) as Array<{
+          id: number;
+          title: string;
+          date?: string | null;
+          occurred_at?: string | null;
+        }>;
+        setEnemyOptions(
+          rows.map((row) => ({
+            id: row.id,
+            title: row.title,
+            date: row.date ?? row.occurred_at?.slice(0, 10) ?? null,
+          })),
+        );
+      } catch {
+        setEnemyOptions([]);
       }
     })();
   }, [open]);
@@ -241,6 +274,14 @@ export function CreateEventForm({
       setError("وزارتخانه / بخش دولت را انتخاب کنید.");
       return;
     }
+    if (
+      ((values.eventType as EventType) || "enemy") === "government" &&
+      responseMode === "linked" &&
+      !responseToId
+    ) {
+      setError("اقدام دشمن مرتبط را انتخاب کنید، یا حالت مستقل را بزنید.");
+      return;
+    }
 
     const customFields: Record<string, string> = {};
     for (const field of activeFields) {
@@ -293,7 +334,12 @@ export function CreateEventForm({
       imageUrl: localMedia.find((m) => m.type === "image")?.url,
       media: localMedia,
       tags,
-      relatedEventIds: [],
+      relatedEventIds:
+        eventType === "government" &&
+        responseMode === "linked" &&
+        responseToId
+          ? [`enemy-${responseToId}`]
+          : [],
       relatedResponseIds: [],
       commentsCount: 0,
       createdAt: now,
@@ -355,6 +401,10 @@ export function CreateEventForm({
                 custom_fields: customFields,
                 tags,
                 agency_id: values.agencyId || null,
+                response_to_id:
+                  responseMode === "linked" && responseToId
+                    ? Number(responseToId)
+                    : null,
               };
         const actionRes = await apiFetch(endpoint, {
           method: "POST",
@@ -494,6 +544,66 @@ export function CreateEventForm({
             value={values.time || "12:00"}
             onChange={(v) => setValue("time", v)}
           />
+
+          {(values.eventType || "enemy") === "government" ? (
+            <div className="space-y-2 rounded-xl border border-[var(--government-border)] bg-[var(--event-gov-bg)] px-3 py-3">
+              <p className="text-xs font-semibold text-[var(--text-primary)]">
+                نوع اقدام دولت
+              </p>
+              <div className="flex flex-wrap gap-3 text-sm">
+                <label className="inline-flex items-center gap-2">
+                  <input
+                    type="radio"
+                    name="gov-response-mode"
+                    checked={responseMode === "independent"}
+                    onChange={() => {
+                      setResponseMode("independent");
+                      setResponseToId("");
+                    }}
+                  />
+                  مستقل
+                </label>
+                <label className="inline-flex items-center gap-2">
+                  <input
+                    type="radio"
+                    name="gov-response-mode"
+                    checked={responseMode === "linked"}
+                    onChange={() => setResponseMode("linked")}
+                  />
+                  پاسخ به اقدام دشمن
+                </label>
+              </div>
+              {responseMode === "linked" ? (
+                <label className="block space-y-1.5">
+                  <span className="text-xs text-[var(--text-secondary)]">
+                    اقدام دشمن مرتبط
+                  </span>
+                  <select
+                    value={responseToId}
+                    onChange={(e) => setResponseToId(e.target.value)}
+                    className="w-full rounded-xl border border-[var(--border)] bg-[var(--surface-3)] px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">انتخاب کنید…</option>
+                    {enemyOptions.map((opt) => (
+                      <option key={opt.id} value={String(opt.id)}>
+                        {opt.title}
+                        {opt.date ? ` — ${opt.date}` : ""}
+                      </option>
+                    ))}
+                  </select>
+                  {enemyOptions.length === 0 ? (
+                    <span className="block text-[11px] text-[var(--text-muted)]">
+                      هنوز اقدام دشمنی برای اتصال ثبت نشده است.
+                    </span>
+                  ) : null}
+                </label>
+              ) : (
+                <p className="text-[11px] text-[var(--text-secondary)]">
+                  این رویداد به‌صورت مستقل ثبت می‌شود و به اقدام دشمن وصل نیست.
+                </p>
+              )}
+            </div>
+          ) : null}
 
           {(values.eventType || "enemy") === "government" ? (
             <label className="flex items-start gap-3 rounded-xl border border-[var(--government-border)] bg-[var(--event-gov-bg)] px-3 py-3 text-sm">

@@ -24,6 +24,12 @@ function normalizeUser(raw: Record<string, unknown>): AdminUser {
   return {
     id: String(raw.id),
     name: String(raw.name ?? ""),
+    username:
+      raw.username != null && String(raw.username).trim() !== ""
+        ? String(raw.username)
+        : raw.email != null
+          ? String(raw.email)
+          : "",
     email: raw.email != null ? String(raw.email) : "",
     role: (raw.role as AdminUser["role"]) ?? "editor",
     is_active: Boolean(raw.is_active ?? true),
@@ -42,7 +48,7 @@ function normalizeUser(raw: Record<string, unknown>): AdminUser {
 }
 
 export async function loginRequest(
-  email: string,
+  username: string,
   password: string,
 ): Promise<AuthSession> {
   let response: Response;
@@ -53,7 +59,7 @@ export async function loginRequest(
         "Content-Type": "application/json",
         Accept: "application/json",
       },
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ username, password }),
     });
   } catch {
     throw new Error(
@@ -63,7 +69,7 @@ export async function loginRequest(
 
   if (!response.ok) {
     if (response.status === 401 || response.status === 422) {
-      throw new Error("ایمیل یا رمز عبور نادرست است.");
+      throw new Error("نام کاربری یا رمز عبور نادرست است.");
     }
     throw new Error("ورود ناموفق بود.");
   }

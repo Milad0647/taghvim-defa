@@ -23,7 +23,7 @@ export default function MySubusersPage() {
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [selectedPerms, setSelectedPerms] = useState<Permission[]>([]);
 
@@ -60,6 +60,7 @@ export default function MySubusersPage() {
     const list = (payload.data ?? []).map((u: Record<string, unknown>) => ({
       id: String(u.id),
       name: String(u.name),
+      username: String(u.username ?? u.email ?? ""),
       email: u.email != null ? String(u.email) : "",
       role: (u.role as UserRole) ?? "editor",
       is_active: Boolean(u.is_active),
@@ -74,6 +75,10 @@ export default function MySubusersPage() {
   async function onCreate(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    if (!username.trim()) {
+      setError("نام کاربری الزامی است");
+      return;
+    }
     if (!evaluatePasswordStrength(password).isStrong) {
       setError("رمز عبور باید قوی باشد (۱۰+ کاراکتر، حروف بزرگ/کوچک، عدد و نماد)");
       return;
@@ -82,7 +87,7 @@ export default function MySubusersPage() {
       method: "POST",
       body: JSON.stringify({
         name,
-        email: email.trim() || null,
+        username: username.trim().toLowerCase(),
         password,
         role: "editor",
         permissions: selectedPerms.filter((p) => grantable.includes(p)),
@@ -98,7 +103,7 @@ export default function MySubusersPage() {
       return;
     }
     setName("");
-    setEmail("");
+    setUsername("");
     setPassword("");
     await loadUsers();
   }
@@ -140,10 +145,11 @@ export default function MySubusersPage() {
               className="rounded-xl border border-[var(--border)] bg-[var(--panel-2)] px-3 py-2 text-sm"
             />
             <input
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="ایمیل (اختیاری)"
-              type="email"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="نام کاربری (برای ورود)"
+              required
+              autoComplete="username"
               className="rounded-xl border border-[var(--border)] bg-[var(--panel-2)] px-3 py-2 text-sm"
             />
             <div className="sm:col-span-2">
@@ -191,7 +197,7 @@ export default function MySubusersPage() {
             <thead className="border-b border-[var(--border)] text-[var(--text-secondary)]">
               <tr>
                 <th className="px-3 py-2 text-right">نام</th>
-                <th className="px-3 py-2 text-right">ایمیل</th>
+                <th className="px-3 py-2 text-right">نام کاربری</th>
                 <th className="px-3 py-2 text-right">نقش</th>
                 <th className="px-3 py-2 text-right">مجوزها</th>
                 <th className="px-3 py-2 text-right">عملیات</th>
@@ -201,7 +207,9 @@ export default function MySubusersPage() {
               {users.map((u) => (
                 <tr key={u.id} className="border-b border-[var(--border)]">
                   <td className="px-3 py-2">{u.name}</td>
-                  <td className="px-3 py-2 text-[var(--text-secondary)]">{u.email || "—"}</td>
+                  <td className="px-3 py-2 text-[var(--text-secondary)]">
+                    {u.username || "—"}
+                  </td>
                   <td className="px-3 py-2">{ROLE_LABELS[u.role]}</td>
                   <td className="px-3 py-2 text-xs text-[var(--text-secondary)]">
                     {(u.permissions ?? []).map((p) => PERMISSION_LABELS[p]).join(" · ") || "—"}

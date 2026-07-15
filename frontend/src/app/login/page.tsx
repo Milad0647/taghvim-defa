@@ -11,7 +11,7 @@ import { useEffect, useState } from "react";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -38,7 +38,7 @@ export default function LoginPage() {
     setError(null);
 
     try {
-      const session = await loginRequest(email, password);
+      const session = await loginRequest(username, password);
       router.replace(
         canViewAdminViews(session.user) ? "/timeline" : "/my-content",
       );
@@ -74,10 +74,10 @@ export default function LoginPage() {
 
         <form onSubmit={onSubmit} className="space-y-4">
           <label className="block space-y-1.5 text-sm">
-            <span className="text-[var(--text-secondary)]">ایمیل یا نام</span>
+            <span className="text-[var(--text-secondary)]">نام کاربری</span>
             <input
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
               type="text"
               autoComplete="username"
               className="w-full rounded-xl border border-[var(--border)] bg-[var(--panel-2)] px-3 py-2.5 text-[var(--text-primary)] outline-none focus:ring-2 focus:ring-blue-500"

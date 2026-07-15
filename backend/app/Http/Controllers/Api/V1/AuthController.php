@@ -16,38 +16,46 @@ class AuthController extends Controller
     public function login(Request $request): JsonResponse
     {
         $credentials = $request->validate([
-            'email' => ['required', 'string', 'max:255'],
+            'username' => ['nullable', 'string', 'max:255'],
+            'email' => ['nullable', 'string', 'max:255'],
             'password' => ['required', 'string'],
         ]);
 
-        $login = trim($credentials['email']);
+        $login = trim((string) ($credentials['username'] ?? $credentials['email'] ?? ''));
+        if ($login === '') {
+            throw ValidationException::withMessages([
+                'username' => ['نام کاربری الزامی است.'],
+            ]);
+        }
 
         /** @var User|null $user */
         $user = User::query()
             ->where(function ($q) use ($login) {
-                $q->where('email', $login)->orWhere('name', $login);
+                $q->where('username', $login)
+                    ->orWhere('email', $login)
+                    ->orWhere('name', $login);
             })
             ->first();
 
         if (! $user || ! Hash::check($credentials['password'], $user->password)) {
             SecurityLog::warning('auth.login_failed', [
-                'email' => $login,
+                'username' => $login,
                 'ip' => $request->ip(),
             ]);
 
             throw ValidationException::withMessages([
-                'email' => ['Invalid credentials.'],
+                'username' => ['Invalid credentials.'],
             ]);
         }
 
         if (! $user->is_active) {
             SecurityLog::warning('auth.login_inactive', [
-                'email' => $login,
+                'username' => $login,
                 'ip' => $request->ip(),
             ]);
 
             throw ValidationException::withMessages([
-                'email' => ['This account is inactive.'],
+                'username' => ['This account is inactive.'],
             ]);
         }
 

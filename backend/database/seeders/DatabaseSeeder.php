@@ -21,9 +21,10 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $admin = User::query()->updateOrCreate(
-            ['email' => 'admin@taghvim.local'],
+            ['username' => 'admin'],
             [
                 'name' => 'مدیر سیستم',
+                'email' => 'admin@taghvim.local',
                 'password' => 'password',
                 'role' => UserRole::SuperAdmin,
                 'is_active' => true,
@@ -33,9 +34,10 @@ class DatabaseSeeder extends Seeder
         );
 
         $editor = User::query()->updateOrCreate(
-            ['email' => 'editor@taghvim.local'],
+            ['username' => 'editor'],
             [
                 'name' => 'کارشناس رصد',
+                'email' => 'editor@taghvim.local',
                 'password' => 'password',
                 'role' => UserRole::Editor,
                 'is_active' => true,

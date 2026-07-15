@@ -16,6 +16,7 @@ export type Permission =
 export type AdminUser = {
   id: string;
   name: string;
+  username: string;
   email: string;
   role: UserRole;
   is_active: boolean;

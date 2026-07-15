@@ -12,6 +12,7 @@ const SEED_USERS: AdminUser[] = [
   {
     id: "u-admin",
     name: "مدیر سیستم",
+    username: "admin",
     email: "admin@taghvim.local",
     role: "super_admin",
     is_active: true,
@@ -35,6 +36,7 @@ const SEED_USERS: AdminUser[] = [
   {
     id: "u-editor",
     name: "کارشناس رصد",
+    username: "editor",
     email: "editor@taghvim.local",
     role: "editor",
     is_active: true,
@@ -51,6 +53,7 @@ const SEED_USERS: AdminUser[] = [
   {
     id: "u-health",
     name: "کارشناس بهداشت",
+    username: "health",
     email: "health@taghvim.local",
     role: "editor",
     is_active: true,
@@ -62,11 +65,18 @@ const SEED_USERS: AdminUser[] = [
 ];
 
 const USERS_VERSION_KEY = "taghvim_admin_users_version";
-const USERS_SEED_VERSION = "users-roles-v2";
+const USERS_SEED_VERSION = "users-username-v1";
 
 function normalizeUser(user: AdminUser): AdminUser {
   return {
     ...user,
+    username:
+      user.username?.trim() ||
+      (user.email?.includes("@")
+        ? user.email.split("@")[0]!
+        : user.email) ||
+      "",
+    email: user.email ?? "",
     agencyIds: Array.isArray(user.agencyIds) ? user.agencyIds : [],
     permissions: Array.isArray(user.permissions) ? user.permissions : [],
     parent_id: user.parent_id ?? null,
@@ -120,6 +130,7 @@ export function getUsersWithSecrets(): AdminUser[] {
 
 export function createUser(input: {
   name: string;
+  username: string;
   email?: string;
   role: AdminUser["role"];
   password: string;
@@ -129,18 +140,19 @@ export function createUser(input: {
   parent_id?: string | number | null;
 }): AdminUser {
   const users = ensureSeedUsers();
-  const email = (input.email ?? "").trim();
-  if (
-    email &&
-    users.some((u) => u.email && u.email.toLowerCase() === email.toLowerCase())
-  ) {
-    throw new Error("این ایمیل قبلاً ثبت شده است.");
+  const username = input.username.trim().toLowerCase();
+  if (!username) {
+    throw new Error("نام کاربری الزامی است.");
+  }
+  if (users.some((u) => u.username?.toLowerCase() === username)) {
+    throw new Error("این نام کاربری قبلاً ثبت شده است.");
   }
 
   const user: AdminUser = {
     id: `u-${Date.now()}`,
     name: input.name,
-    email,
+    username,
+    email: (input.email ?? "").trim(),
     role: input.role,
     is_active: input.is_active ?? true,
     created_at: new Date().toISOString(),
@@ -160,7 +172,14 @@ export function updateUser(
   patch: Partial<
     Pick<
       AdminUser,
-      "name" | "email" | "role" | "is_active" | "agencyIds" | "permissions" | "parent_id"
+      | "name"
+      | "username"
+      | "email"
+      | "role"
+      | "is_active"
+      | "agencyIds"
+      | "permissions"
+      | "parent_id"
     >
   > & {
     password?: string;
@@ -171,15 +190,15 @@ export function updateUser(
   if (index < 0) throw new Error("کاربر پیدا نشد.");
 
   if (
-    patch.email &&
+    patch.username &&
     users.some(
       (u) =>
         u.id !== id &&
-        u.email &&
-        u.email.toLowerCase() === patch.email!.toLowerCase(),
+        u.username &&
+        u.username.toLowerCase() === patch.username!.toLowerCase(),
     )
   ) {
-    throw new Error("این ایمیل قبلاً ثبت شده است.");
+    throw new Error("این نام کاربری قبلاً ثبت شده است.");
   }
 
   const next = normalizeUser({ ...users[index]!, ...patch });
@@ -195,19 +214,20 @@ export function deleteUser(id: string) {
 }
 
 export function authenticateLocal(
-  email: string,
+  username: string,
   password: string,
 ): AdminUser {
   const users = ensureSeedUsers();
-  const login = email.trim().toLowerCase();
+  const login = username.trim().toLowerCase();
   const user = users.find(
     (u) =>
+      (u.username && u.username.toLowerCase() === login) ||
       (u.email && u.email.toLowerCase() === login) ||
       u.name.toLowerCase() === login,
   );
 
   if (!user || user.password !== password) {
-    throw new Error("ایمیل/نام یا رمز عبور نادرست است.");
+    throw new Error("نام کاربری یا رمز عبور نادرست است.");
   }
   if (!user.is_active) {
     throw new Error("این حساب غیرفعال است.");

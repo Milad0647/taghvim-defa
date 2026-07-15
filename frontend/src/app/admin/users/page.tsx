@@ -52,6 +52,7 @@ function UsersManager() {
       const rows = (payload.data ?? []).map((u: Record<string, unknown>) => ({
         id: String(u.id),
         name: String(u.name ?? ""),
+        username: String(u.username ?? u.email ?? ""),
         email: String(u.email ?? ""),
         role: (u.role as UserRole) ?? "editor",
         is_active: Boolean(u.is_active),
@@ -137,6 +138,7 @@ function UsersManager() {
 
       {(creating || editing) && me ? (
         <UserForm
+          key={editing?.id ?? "create"}
           grantable={grantable}
           agencies={agencies}
           users={users}
@@ -194,7 +196,8 @@ function UserTreeNode({
         <div>
           <p className="text-sm font-medium text-[var(--text-primary)]">{node.user.name}</p>
           <p className="text-xs text-[var(--text-secondary)]">
-            {node.user.email} · {ROLE_LABELS[node.user.role]} ·{" "}
+            {node.user.username || node.user.email || "—"} ·{" "}
+            {ROLE_LABELS[node.user.role]} ·{" "}
             {(node.user.permissions ?? []).length} مجوز
             {node.user.agencyIds?.length
               ? ` · ${node.user.agencyIds.length} وزارتخانه`
@@ -249,7 +252,7 @@ function UserForm({
   onError: (msg: string) => void;
 }) {
   const [name, setName] = useState(initial?.name ?? "");
-  const [email, setEmail] = useState(initial?.email ?? "");
+  const [username, setUsername] = useState(initial?.username ?? "");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState<UserRole>(initial?.role ?? "editor");
   const [parentId, setParentId] = useState(
@@ -259,11 +262,22 @@ function UserForm({
   const [agencyIds, setAgencyIds] = useState<string[]>(initial?.agencyIds ?? []);
   const [isActive, setIsActive] = useState(initial?.is_active ?? true);
 
+  useEffect(() => {
+    setName(initial?.name ?? "");
+    setUsername(initial?.username ?? "");
+    setPassword("");
+    setRole(initial?.role ?? "editor");
+    setParentId(initial?.parent_id != null ? String(initial.parent_id) : "");
+    setPerms(initial?.permissions ?? []);
+    setAgencyIds(initial?.agencyIds ?? []);
+    setIsActive(initial?.is_active ?? true);
+  }, [initial]);
+
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     const body: Record<string, unknown> = {
       name,
-      email: email.trim() || null,
+      username: username.trim().toLowerCase(),
       role,
       is_active: isActive,
       permissions: perms,
@@ -273,6 +287,10 @@ function UserForm({
     if (password) body.password = password;
     if (!initial && !password) {
       onError("رمز عبور الزامی است");
+      return;
+    }
+    if (!username.trim()) {
+      onError("نام کاربری الزامی است");
       return;
     }
     if (password && !evaluatePasswordStrength(password).isStrong) {
@@ -306,22 +324,23 @@ function UserForm({
       className="space-y-3 rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-4"
     >
       <h3 className="font-semibold text-[var(--text-primary)]">
-        {initial ? "ویرایش کاربر" : "کاربر جدید"}
+        {initial ? `ویرایش کاربر · ${initial.name}` : "کاربر جدید"}
       </h3>
       <div className="grid gap-3 sm:grid-cols-2">
         <input
           className="rounded-xl border border-[var(--border)] bg-[var(--panel-2)] px-3 py-2 text-sm"
-          placeholder="نام"
+          placeholder="نام نمایشی"
           value={name}
           onChange={(e) => setName(e.target.value)}
           required
         />
         <input
           className="rounded-xl border border-[var(--border)] bg-[var(--panel-2)] px-3 py-2 text-sm"
-          placeholder="ایمیل (اختیاری)"
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          placeholder="نام کاربری (برای ورود)"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          autoComplete="username"
+          required
         />
         <div className="sm:col-span-2">
           <PasswordField

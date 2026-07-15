@@ -2,8 +2,11 @@
 
 namespace App\Http\Controllers\Api\V1;
 
-use App\Enums\PublishStatus;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\V1\StoreCalendarDayRequest;
+use App\Http\Requests\Api\V1\StoreEnemyActionRequest;
+use App\Http\Requests\Api\V1\StoreGovernmentActionRequest;
+use App\Http\Requests\Api\V1\UpdateCalendarDayRequest;
 use App\Http\Resources\CalendarDayResource;
 use App\Http\Resources\EnemyActionResource;
 use App\Http\Resources\GovernmentActionResource;
@@ -14,7 +17,6 @@ use App\Models\GovernmentAction;
 use App\Services\CalendarService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 
 class CalendarDayController extends Controller
 {
@@ -24,71 +26,61 @@ class CalendarDayController extends Controller
 
     public function index(Request $request): JsonResponse
     {
+        $this->authorize('viewAny', CalendarDay::class);
+
+        $viewer = $request->user();
         $days = CalendarDay::query()
             ->withCount(['enemyActions', 'governmentActions'])
             ->when($request->query('status'), fn ($q, $status) => $q->where('status', $status))
+            ->when(
+                $viewer && ($ids = $viewer->visibleCreatorIds()) !== null,
+                fn ($q) => $q->where(function ($inner) use ($ids) {
+                    $inner->whereIn('created_by', $ids)
+                        ->orWhereHas('enemyActions', fn ($e) => $e->whereIn('created_by', $ids))
+                        ->orWhereHas('governmentActions', fn ($g) => $g->whereIn('created_by', $ids));
+                }),
+            )
             ->orderByDesc('date')
             ->paginate(30);
 
         return CalendarDayResource::collection($days)->response();
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(StoreCalendarDayRequest $request): JsonResponse
     {
-        $data = $request->validate([
-            'date' => ['required', 'date', 'unique:calendar_days,date'],
-            'title' => ['nullable', 'string', 'max:255'],
-            'summary' => ['nullable', 'string'],
-            'status' => ['nullable', Rule::enum(PublishStatus::class)],
-            'is_featured' => ['boolean'],
-        ]);
-
-        $day = $this->calendarService->createDay($data, $request->user()?->id);
+        $day = $this->calendarService->createDay($request->validated(), $request->user()?->id);
 
         return response()->json([
             'data' => new CalendarDayResource($day),
         ], 201);
     }
 
-    public function update(Request $request, CalendarDay $calendarDay): JsonResponse
+    public function update(UpdateCalendarDayRequest $request, CalendarDay $calendarDay): JsonResponse
     {
-        $data = $request->validate([
-            'title' => ['sometimes', 'nullable', 'string', 'max:255'],
-            'summary' => ['sometimes', 'nullable', 'string'],
-            'status' => ['sometimes', Rule::enum(PublishStatus::class)],
-            'is_featured' => ['sometimes', 'boolean'],
-        ]);
-
-        $calendarDay->update($data);
+        $calendarDay->update($request->validated());
 
         return response()->json([
             'data' => new CalendarDayResource($calendarDay->fresh()->loadCount(['enemyActions', 'governmentActions'])),
         ]);
     }
 
-    public function destroy(CalendarDay $calendarDay): JsonResponse
+    public function destroy(Request $request, CalendarDay $calendarDay): JsonResponse
     {
+        $this->authorize('delete', $calendarDay);
         $calendarDay->delete();
 
         return response()->json(['message' => 'Deleted']);
     }
 
-    public function storeEnemyAction(Request $request, CalendarDay $calendarDay): JsonResponse
+    public function storeEnemyAction(StoreEnemyActionRequest $request, CalendarDay $calendarDay): JsonResponse
     {
-        $data = $request->validate([
-            'title' => ['required', 'string', 'max:255'],
-            'description' => ['nullable', 'string'],
-            'severity' => ['nullable', 'in:low,medium,high,critical'],
-            'source' => ['nullable', 'string', 'max:255'],
-            'location' => ['nullable', 'string', 'max:255'],
-            'latitude' => ['nullable', 'numeric'],
-            'longitude' => ['nullable', 'numeric'],
-            'occurred_at' => ['nullable', 'date'],
-            'category_id' => ['nullable', 'exists:categories,id'],
-            'status' => ['nullable', Rule::enum(PublishStatus::class)],
-        ]);
+        $this->authorize('view', $calendarDay);
 
-        $action = $this->calendarService->createEnemyAction($calendarDay, $data, $request->user()?->id);
+        $action = $this->calendarService->createEnemyAction(
+            $calendarDay,
+            $request->validated(),
+            $request->user()?->id,
+        );
         $action->load(['media', 'category']);
 
         return response()->json([
@@ -96,19 +88,15 @@ class CalendarDayController extends Controller
         ], 201);
     }
 
-    public function storeGovernmentAction(Request $request, CalendarDay $calendarDay): JsonResponse
+    public function storeGovernmentAction(StoreGovernmentActionRequest $request, CalendarDay $calendarDay): JsonResponse
     {
-        $data = $request->validate([
-            'title' => ['required', 'string', 'max:255'],
-            'description' => ['nullable', 'string'],
-            'agency' => ['nullable', 'string', 'max:255'],
-            'completed_at' => ['nullable', 'date'],
-            'category_id' => ['nullable', 'exists:categories,id'],
-            'response_to_id' => ['nullable', 'exists:enemy_actions,id'],
-            'status' => ['nullable', Rule::enum(PublishStatus::class)],
-        ]);
+        $this->authorize('view', $calendarDay);
 
-        $action = $this->calendarService->createGovernmentAction($calendarDay, $data, $request->user()?->id);
+        $action = $this->calendarService->createGovernmentAction(
+            $calendarDay,
+            $request->validated(),
+            $request->user()?->id,
+        );
         $action->load(['media', 'category', 'responseTo']);
 
         return response()->json([
@@ -118,6 +106,8 @@ class CalendarDayController extends Controller
 
     public function uploadMedia(Request $request, CalendarDay $calendarDay): JsonResponse
     {
+        $this->authorize('update', $calendarDay);
+
         $request->validate([
             'file' => ['required', 'file', 'image', 'max:10240'],
             'alt' => ['nullable', 'string', 'max:255'],
@@ -136,6 +126,8 @@ class CalendarDayController extends Controller
 
     public function uploadEnemyMedia(Request $request, EnemyAction $enemyAction): JsonResponse
     {
+        $this->authorize('update', $enemyAction);
+
         $request->validate([
             'file' => ['required', 'file', 'image', 'max:10240'],
             'alt' => ['nullable', 'string', 'max:255'],
@@ -154,6 +146,8 @@ class CalendarDayController extends Controller
 
     public function uploadGovernmentMedia(Request $request, GovernmentAction $governmentAction): JsonResponse
     {
+        $this->authorize('update', $governmentAction);
+
         $request->validate([
             'file' => ['required', 'file', 'image', 'max:10240'],
             'alt' => ['nullable', 'string', 'max:255'],
@@ -168,5 +162,21 @@ class CalendarDayController extends Controller
         return response()->json([
             'data' => new MediaResource($media),
         ], 201);
+    }
+
+    public function destroyEnemyAction(Request $request, EnemyAction $enemyAction): JsonResponse
+    {
+        $this->authorize('delete', $enemyAction);
+        $enemyAction->delete();
+
+        return response()->json(['message' => 'Deleted']);
+    }
+
+    public function destroyGovernmentAction(Request $request, GovernmentAction $governmentAction): JsonResponse
+    {
+        $this->authorize('delete', $governmentAction);
+        $governmentAction->delete();
+
+        return response()->json(['message' => 'Deleted']);
     }
 }

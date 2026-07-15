@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\UserResource;
+use App\Services\SecurityLog;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -19,6 +20,11 @@ class AuthController extends Controller
         ]);
 
         if (! Auth::attempt($credentials)) {
+            SecurityLog::warning('auth.login_failed', [
+                'email' => $credentials['email'],
+                'ip' => $request->ip(),
+            ]);
+
             throw ValidationException::withMessages([
                 'email' => ['Invalid credentials.'],
             ]);
@@ -30,12 +36,22 @@ class AuthController extends Controller
         if (! $user->is_active) {
             Auth::logout();
 
+            SecurityLog::warning('auth.login_inactive', [
+                'email' => $credentials['email'],
+                'ip' => $request->ip(),
+            ]);
+
             throw ValidationException::withMessages([
                 'email' => ['This account is inactive.'],
             ]);
         }
 
         $token = $user->createToken('api')->plainTextToken;
+
+        SecurityLog::info('auth.login_success', [
+            'user_id' => $user->id,
+            'ip' => $request->ip(),
+        ]);
 
         return response()->json([
             'token' => $token,

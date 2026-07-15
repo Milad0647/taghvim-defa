@@ -17,6 +17,8 @@ class GovernmentActionResource extends JsonResource
             'agency' => $this->agency,
             'completed_at' => $this->completed_at?->toIso8601String(),
             'status' => $this->status?->value,
+            'custom_fields' => $this->custom_fields ?? [],
+            'created_by' => $this->created_by,
             'response_to_id' => $this->response_to_id,
             'category' => new CategoryResource($this->whenLoaded('category')),
             'media' => MediaResource::collection($this->whenLoaded('media')),

@@ -15,8 +15,8 @@ export type DashboardSettings = {
 export const defaultDashboardSettings: DashboardSettings = {
   rangeStart: "",
   rangeEnd: "",
-  siteTitle: "تقویم دفاعی",
-  siteTagline: "گزارش زنده اقدامات دشمن و پاسخ دولت",
+  siteTitle: "تقویم دفاع ملی",
+  siteTagline: "دبیرخانه شورای اطلاع رسانی دولت",
   liveEnabled: true,
   defaultView: "timeline",
   showEnemySection: true,

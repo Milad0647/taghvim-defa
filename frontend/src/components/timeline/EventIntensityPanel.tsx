@@ -261,7 +261,7 @@ export function EventIntensityPanel({
       startScroll: scrollRef.current.scrollLeft,
       moved: false,
     };
-    scrollRef.current.setPointerCapture(e.pointerId);
+    // Delay capture until we actually pan so bar clicks still fire.
   }, []);
 
   const clearHover = useCallback(() => {
@@ -279,6 +279,7 @@ export function EventIntensityPanel({
           drag.moved = true;
           setIsPanning(true);
           clearHover();
+          scrollRef.current.setPointerCapture(e.pointerId);
         }
         scrollRef.current.scrollLeft = drag.startScroll - dx;
       }
@@ -297,8 +298,12 @@ export function EventIntensityPanel({
       if (wasPanning) {
         clearHover();
         // Keep hover suppressed briefly so mouseenter after drag doesn't flash tooltip
-        window.setTimeout(() => setIsPanning(false), 120);
+        window.setTimeout(() => {
+          dragRef.current.moved = false;
+          setIsPanning(false);
+        }, 120);
       } else {
+        drag.moved = false;
         setIsPanning(false);
       }
     },
@@ -307,10 +312,10 @@ export function EventIntensityPanel({
 
   const handleBarClick = useCallback(
     (date: string) => {
-      if (dragRef.current.moved || isPanning) return;
+      if (dragRef.current.moved) return;
       onSelectDay?.(date);
     },
-    [onSelectDay, isPanning],
+    [onSelectDay],
   );
 
   const handleBarHover = useCallback(

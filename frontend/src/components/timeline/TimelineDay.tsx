@@ -45,16 +45,12 @@ export function TimelineDaySection({
         isActive ? "border-[var(--primary)]/40" : "border-[var(--border)]",
         day.isCritical && "ring-1 ring-red-500/20",
       )}
-      style={{
-        scrollMarginTop:
-          "calc(var(--timeline-sticky-top, 4rem) + 0.75rem)",
-      }}
+      style={{ scrollMarginTop: "0.5rem" }}
     >
       <button
         type="button"
         onClick={() => onToggle(day.date)}
-        className="sticky z-20 flex h-[42px] w-full items-center justify-between gap-3 border-b border-[var(--border)] bg-[var(--panel)] px-3 text-right shadow-[0_8px_16px_-12px_rgba(0,0,0,0.45)]"
-        style={{ top: "var(--timeline-sticky-top, 4rem)" }}
+        className="sticky top-0 z-20 flex h-[42px] w-full items-center justify-between gap-3 border-b border-[var(--border)] bg-[var(--panel)] px-3 text-right shadow-[0_8px_16px_-12px_rgba(0,0,0,0.45)]"
         aria-expanded={!collapsed}
       >
         <div className="flex min-w-0 flex-wrap items-center gap-2">

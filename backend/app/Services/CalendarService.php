@@ -7,25 +7,41 @@ use App\Models\CalendarDay;
 use App\Models\EnemyAction;
 use App\Models\GovernmentAction;
 use App\Models\Media;
+use App\Models\User;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\UploadedFile;
 
 class CalendarService
 {
-    public function timeline(?string $from = null, ?string $to = null): array
+    public function timeline(?string $from = null, ?string $to = null, ?User $viewer = null): array
     {
         $query = CalendarDay::query()
             ->where('status', PublishStatus::Published)
             ->with([
                 'media',
-                'enemyActions' => fn ($q) => $q->where('status', PublishStatus::Published)->with(['media', 'category']),
-                'governmentActions' => fn ($q) => $q->where('status', PublishStatus::Published)->with(['media', 'category']),
+                'enemyActions' => function ($q) use ($viewer) {
+                    $q->where('status', PublishStatus::Published)->with(['media', 'category']);
+                    $this->scopeCreatedBy($q, $viewer);
+                },
+                'governmentActions' => function ($q) use ($viewer) {
+                    $q->where('status', PublishStatus::Published)->with(['media', 'category']);
+                    $this->scopeCreatedBy($q, $viewer);
+                },
             ])
             ->withCount([
-                'enemyActions as enemy_actions_count' => fn ($q) => $q->where('status', PublishStatus::Published),
-                'governmentActions as government_actions_count' => fn ($q) => $q->where('status', PublishStatus::Published),
+                'enemyActions as enemy_actions_count' => function ($q) use ($viewer) {
+                    $q->where('status', PublishStatus::Published);
+                    $this->scopeCreatedBy($q, $viewer);
+                },
+                'governmentActions as government_actions_count' => function ($q) use ($viewer) {
+                    $q->where('status', PublishStatus::Published);
+                    $this->scopeCreatedBy($q, $viewer);
+                },
             ])
             ->orderBy('date');
+
+        $this->scopeDayVisibility($query, $viewer);
 
         if ($from) {
             $query->whereDate('date', '>=', $from);
@@ -35,7 +51,12 @@ class CalendarService
             $query->whereDate('date', '<=', $to);
         }
 
-        $days = $query->get();
+        $days = $query->get()->filter(function (CalendarDay $day) {
+            return ($day->enemy_actions_count ?? 0) > 0
+                || ($day->government_actions_count ?? 0) > 0
+                || $day->created_by !== null;
+        })->values();
+
         $maxScore = max(1, (int) $days->max(fn (CalendarDay $day) => $day->activityScore()));
 
         return [
@@ -53,21 +74,54 @@ class CalendarService
         ];
     }
 
-    public function findByDate(string $date): ?CalendarDay
+    public function findByDate(string $date, ?User $viewer = null): ?CalendarDay
     {
-        return CalendarDay::query()
+        $query = CalendarDay::query()
             ->whereDate('date', $date)
             ->where('status', PublishStatus::Published)
             ->with([
                 'media',
-                'enemyActions.media',
-                'enemyActions.category',
-                'governmentActions.media',
-                'governmentActions.category',
-                'governmentActions.responseTo',
+                'enemyActions' => function ($q) use ($viewer) {
+                    $q->with(['media', 'category']);
+                    $this->scopeCreatedBy($q, $viewer);
+                },
+                'governmentActions' => function ($q) use ($viewer) {
+                    $q->with(['media', 'category', 'responseTo']);
+                    $this->scopeCreatedBy($q, $viewer);
+                },
             ])
-            ->withCount(['enemyActions', 'governmentActions'])
-            ->first();
+            ->withCount([
+                'enemyActions' => fn ($q) => $this->scopeCreatedBy($q, $viewer),
+                'governmentActions' => fn ($q) => $this->scopeCreatedBy($q, $viewer),
+            ]);
+
+        $this->scopeDayVisibility($query, $viewer);
+
+        return $query->first();
+    }
+
+    public function myContent(User $viewer): array
+    {
+        $ids = $viewer->visibleCreatorIds() ?? $viewer->descendantIdsIncludingSelf();
+
+        $enemy = EnemyAction::query()
+            ->with(['media', 'category', 'calendarDay'])
+            ->whereIn('created_by', $ids)
+            ->orderByDesc('occurred_at')
+            ->orderByDesc('id')
+            ->get();
+
+        $government = GovernmentAction::query()
+            ->with(['media', 'category', 'calendarDay', 'responseTo'])
+            ->whereIn('created_by', $ids)
+            ->orderByDesc('completed_at')
+            ->orderByDesc('id')
+            ->get();
+
+        return [
+            'enemy_actions' => $enemy,
+            'government_actions' => $government,
+        ];
     }
 
     public function createDay(array $data, ?int $userId = null): CalendarDay
@@ -110,20 +164,34 @@ class CalendarService
         return $media;
     }
 
-    public function dashboardStats(): array
+    public function dashboardStats(?User $viewer = null): array
     {
-        $enemyTotal = EnemyAction::query()->where('status', PublishStatus::Published)->count();
-        $govTotal = GovernmentAction::query()->where('status', PublishStatus::Published)->count();
+        $enemyQuery = EnemyAction::query()->where('status', PublishStatus::Published);
+        $govQuery = GovernmentAction::query()->where('status', PublishStatus::Published);
+        $this->scopeCreatedBy($enemyQuery, $viewer);
+        $this->scopeCreatedBy($govQuery, $viewer);
 
-        $daily = CalendarDay::query()
+        $enemyTotal = $enemyQuery->count();
+        $govTotal = $govQuery->count();
+
+        $daysQuery = CalendarDay::query()
             ->where('status', PublishStatus::Published)
             ->withCount([
-                'enemyActions as enemy_actions_count' => fn ($q) => $q->where('status', PublishStatus::Published),
-                'governmentActions as government_actions_count' => fn ($q) => $q->where('status', PublishStatus::Published),
+                'enemyActions as enemy_actions_count' => function ($q) use ($viewer) {
+                    $q->where('status', PublishStatus::Published);
+                    $this->scopeCreatedBy($q, $viewer);
+                },
+                'governmentActions as government_actions_count' => function ($q) use ($viewer) {
+                    $q->where('status', PublishStatus::Published);
+                    $this->scopeCreatedBy($q, $viewer);
+                },
             ])
             ->orderByDesc('date')
-            ->limit(30)
-            ->get()
+            ->limit(30);
+
+        $this->scopeDayVisibility($daysQuery, $viewer);
+
+        $daily = $daysQuery->get()
             ->map(fn (CalendarDay $day) => [
                 'date' => $day->date->toDateString(),
                 'enemy' => $day->enemy_actions_count,
@@ -133,13 +201,48 @@ class CalendarService
             ->reverse()
             ->values();
 
+        $publishedDays = CalendarDay::query()->where('status', PublishStatus::Published);
+        $this->scopeDayVisibility($publishedDays, $viewer);
+
         return [
             'total_enemy_actions' => $enemyTotal,
             'total_government_actions' => $govTotal,
             'response_ratio' => $this->responseRatio($enemyTotal, $govTotal),
-            'published_days' => CalendarDay::query()->where('status', PublishStatus::Published)->count(),
+            'published_days' => $publishedDays->count(),
             'daily_activity' => $daily,
         ];
+    }
+
+    private function scopeCreatedBy(Builder $query, ?User $viewer): void
+    {
+        if (! $viewer) {
+            return;
+        }
+
+        $ids = $viewer->visibleCreatorIds();
+        if ($ids === null) {
+            return;
+        }
+
+        $query->whereIn('created_by', $ids);
+    }
+
+    private function scopeDayVisibility(Builder $query, ?User $viewer): void
+    {
+        if (! $viewer) {
+            return;
+        }
+
+        $ids = $viewer->visibleCreatorIds();
+        if ($ids === null) {
+            return;
+        }
+
+        $query->where(function (Builder $q) use ($ids) {
+            $q->whereIn('created_by', $ids)
+                ->orWhereHas('enemyActions', fn (Builder $e) => $e->whereIn('created_by', $ids))
+                ->orWhereHas('governmentActions', fn (Builder $g) => $g->whereIn('created_by', $ids));
+        });
     }
 
     private function responseRatio(int $enemy, int $government): float

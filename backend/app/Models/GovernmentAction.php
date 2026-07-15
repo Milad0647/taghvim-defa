@@ -21,6 +21,7 @@ class GovernmentAction extends Model
         'agency',
         'completed_at',
         'status',
+        'custom_fields',
         'created_by',
     ];
 
@@ -29,6 +30,7 @@ class GovernmentAction extends Model
         return [
             'status' => PublishStatus::class,
             'completed_at' => 'datetime',
+            'custom_fields' => 'array',
         ];
     }
 

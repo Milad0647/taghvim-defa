@@ -7,7 +7,7 @@ import {
   getDemoDataStats,
   restoreConflictDemoData,
 } from "@/lib/timeline-store";
-import { ROLE_LABELS, ROLE_PERMISSIONS } from "@/types/auth";
+import { ROLE_LABELS, userHasPermission } from "@/types/auth";
 import { Eraser, RotateCcw } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -26,6 +26,9 @@ function AdminHomeContent() {
   const [canUsers, setCanUsers] = useState(false);
   const [canSettings, setCanSettings] = useState(false);
   const [canContent, setCanContent] = useState(false);
+  const [canArchive, setCanArchive] = useState(false);
+  const [canBackup, setCanBackup] = useState(false);
+  const [canForm, setCanForm] = useState(false);
   const [stats, setStats] = useState({ days: 0, events: 0, cleared: false });
   const [message, setMessage] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -35,9 +38,12 @@ function AdminHomeContent() {
     if (!user) return;
     setName(user.name);
     setRoleLabel(ROLE_LABELS[user.role]);
-    setCanUsers(ROLE_PERMISSIONS[user.role].manageUsers);
-    setCanSettings(ROLE_PERMISSIONS[user.role].manageSettings);
-    setCanContent(ROLE_PERMISSIONS[user.role].manageContent);
+    setCanUsers(userHasPermission(user, "manage_users"));
+    setCanSettings(userHasPermission(user, "manage_settings"));
+    setCanContent(userHasPermission(user, "manage_content"));
+    setCanArchive(userHasPermission(user, "view_archive"));
+    setCanBackup(userHasPermission(user, "run_backup"));
+    setCanForm(userHasPermission(user, "manage_form_schema"));
     setStats(getDemoDataStats());
   }, []);
 
@@ -102,7 +108,7 @@ function AdminHomeContent() {
           >
             <h3 className="font-semibold text-[var(--text-primary)]">کاربران و دسترسی‌ها</h3>
             <p className="mt-2 text-sm text-[var(--text-secondary)]">
-              ساخت کاربر جدید، تخصیص وزارتخانه، تغییر نقش
+              سلسله‌مراتب کاربران و تفویض مجوزها
             </p>
           </Link>
         ) : null}
@@ -115,6 +121,42 @@ function AdminHomeContent() {
             <h3 className="font-semibold text-[var(--text-primary)]">وزارتخانه‌ها</h3>
             <p className="mt-2 text-sm text-[var(--text-secondary)]">
               تعریف بخش‌های دولت مثل بهداشت، دفاع، امور خارجه برای ثبت داده جداگانه
+            </p>
+          </Link>
+        ) : null}
+
+        {canForm ? (
+          <Link
+            href="/admin/form-builder"
+            className="rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-5 transition hover:border-blue-500/30"
+          >
+            <h3 className="font-semibold text-[var(--text-primary)]">فرم‌ساز رویداد</h3>
+            <p className="mt-2 text-sm text-[var(--text-secondary)]">
+              افزودن و مدیریت فیلدهای فرم ثبت رویداد
+            </p>
+          </Link>
+        ) : null}
+
+        {canArchive ? (
+          <Link
+            href="/admin/archive"
+            className="rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-5 transition hover:border-blue-500/30"
+          >
+            <h3 className="font-semibold text-[var(--text-primary)]">آرشیو</h3>
+            <p className="mt-2 text-sm text-[var(--text-secondary)]">
+              بازیابی یا حذف دائم موارد soft-delete شده
+            </p>
+          </Link>
+        ) : null}
+
+        {canBackup ? (
+          <Link
+            href="/admin/backup"
+            className="rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-5 transition hover:border-blue-500/30"
+          >
+            <h3 className="font-semibold text-[var(--text-primary)]">بکاپ پایگاه داده</h3>
+            <p className="mt-2 text-sm text-[var(--text-secondary)]">
+              تهیه و دانلود نسخه پشتیبان PostgreSQL
             </p>
           </Link>
         ) : null}
@@ -137,7 +179,7 @@ function AdminHomeContent() {
         >
           <h3 className="font-semibold text-[var(--text-primary)]">مشاهده خط زمانی</h3>
           <p className="mt-2 text-sm text-[var(--text-secondary)]">
-            بازگشت به صفحه عمومی گزارش زنده
+            بازگشت به صفحه گزارش زنده
           </p>
         </Link>
       </div>

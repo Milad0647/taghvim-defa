@@ -7,6 +7,7 @@ import {
   CalendarRange,
   ChevronLeft,
   ChevronRight,
+  FileText,
   LayoutDashboard,
   Map,
   Menu,
@@ -23,6 +24,8 @@ import { useEffect, useState } from "react";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { IranEmblem } from "@/components/brand/IranEmblem";
 import { getSiteBranding } from "@/lib/branding";
+import { getCurrentUser } from "@/lib/auth";
+import { canViewAdminViews, userHasPermission } from "@/types/auth";
 
 const MENU = [
   { href: "/overview", label: "نمای کلی", icon: LayoutDashboard, match: "overview" },
@@ -58,9 +61,17 @@ export function AppSidebar({
   const searchParams = useSearchParams();
   const view = searchParams.get("view") || "timeline";
   const [branding, setBranding] = useState(() => getSiteBranding());
+  const [showAdminViews, setShowAdminViews] = useState(false);
+  const [showAdminPanel, setShowAdminPanel] = useState(false);
 
   useEffect(() => {
     setBranding(getSiteBranding());
+    const current = getCurrentUser();
+    setShowAdminViews(canViewAdminViews(current));
+    setShowAdminPanel(
+      userHasPermission(current, "manage_users") ||
+        current?.role === "super_admin",
+    );
   }, []);
 
   useEffect(() => {
@@ -70,7 +81,7 @@ export function AppSidebar({
   const content = (
     <div
       className={clsx(
-        "flex h-[calc(100vh-1.5rem)] flex-col overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--panel)]",
+        "flex h-full flex-col overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--panel)]",
         collapsed ? "w-[72px]" : "w-[240px]",
       )}
     >
@@ -113,38 +124,67 @@ export function AppSidebar({
       </div>
 
       <nav className="flex-1 space-y-0.5 overflow-y-auto p-2 scrollbar-thin">
-        {MENU.map((item) => {
-          const active =
-            item.match === "overview"
-              ? pathname.startsWith("/overview")
-              : item.match === "timeline"
-                ? pathname.startsWith("/timeline") && view === "timeline"
-                : pathname.startsWith("/timeline") && view === item.match;
-          const Icon = item.icon;
+        {showAdminViews
+          ? MENU.map((item) => {
+              const active =
+                item.match === "overview"
+                  ? pathname.startsWith("/overview")
+                  : item.match === "timeline"
+                    ? pathname.startsWith("/timeline") && view === "timeline"
+                    : pathname.startsWith("/timeline") && view === item.match;
+              const Icon = item.icon;
 
-          return (
-            <Link
-              key={item.label}
-              href={item.href}
-              scroll={false}
-              replace={pathname.startsWith("/timeline") && item.href.startsWith("/timeline")}
-              className={clsx(
-                "relative flex h-11 items-center gap-3 rounded-xl px-3 text-[13px] transition",
-                active
-                  ? "bg-blue-500/15 font-medium text-[var(--primary)]"
-                  : "text-[var(--text-secondary)] hover:bg-[var(--hover)] hover:text-[var(--text-primary)]",
-                collapsed && "justify-center px-2",
-              )}
-              title={item.label}
-            >
-              {active ? (
-                <span className="absolute inset-y-2 right-0 w-[3px] rounded-full bg-[var(--primary)]" />
-              ) : null}
-              <Icon className="h-4 w-4 shrink-0" />
-              {!collapsed ? <span>{item.label}</span> : null}
-            </Link>
-          );
-        })}
+              return (
+                <Link
+                  key={item.label}
+                  href={item.href}
+                  scroll={false}
+                  replace={pathname.startsWith("/timeline") && item.href.startsWith("/timeline")}
+                  className={clsx(
+                    "relative flex h-11 items-center gap-3 rounded-xl px-3 text-[13px] transition",
+                    active
+                      ? "bg-blue-500/15 font-medium text-[var(--primary)]"
+                      : "text-[var(--text-secondary)] hover:bg-[var(--hover)] hover:text-[var(--text-primary)]",
+                    collapsed && "justify-center px-2",
+                  )}
+                  title={item.label}
+                >
+                  {active ? (
+                    <span className="absolute inset-y-2 right-0 w-[3px] rounded-full bg-[var(--primary)]" />
+                  ) : null}
+                  <Icon className="h-4 w-4 shrink-0" />
+                  {!collapsed ? <span>{item.label}</span> : null}
+                </Link>
+              );
+            })
+          : null}
+
+        <Link
+          href="/my-content"
+          className={clsx(
+            "relative flex h-11 items-center gap-3 rounded-xl px-3 text-[13px] transition",
+            pathname.startsWith("/my-content")
+              ? "bg-blue-500/15 font-medium text-[var(--primary)]"
+              : "text-[var(--text-secondary)] hover:bg-[var(--hover)]",
+            collapsed && "justify-center px-2",
+          )}
+        >
+          <FileText className="h-4 w-4 shrink-0" />
+          {!collapsed ? <span>محتوای من</span> : null}
+        </Link>
+
+        {showAdminPanel ? (
+          <Link
+            href="/admin"
+            className={clsx(
+              "relative flex h-11 items-center gap-3 rounded-xl px-3 text-[13px] text-[var(--text-secondary)] hover:bg-[var(--hover)]",
+              collapsed && "justify-center px-2",
+            )}
+          >
+            <LayoutDashboard className="h-4 w-4 shrink-0" />
+            {!collapsed ? <span>پنل ادمین</span> : null}
+          </Link>
+        ) : null}
       </nav>
 
       <div className="space-y-3 border-t border-[var(--border)] p-3">

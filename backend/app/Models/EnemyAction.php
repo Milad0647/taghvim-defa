@@ -26,6 +26,7 @@ class EnemyAction extends Model
         'longitude',
         'occurred_at',
         'status',
+        'custom_fields',
         'created_by',
     ];
 
@@ -37,6 +38,7 @@ class EnemyAction extends Model
             'occurred_at' => 'datetime',
             'latitude' => 'decimal:7',
             'longitude' => 'decimal:7',
+            'custom_fields' => 'array',
         ];
     }
 

@@ -2,43 +2,81 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Enums\Permission;
 use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\V1\StoreUserRequest;
+use App\Http\Requests\Api\V1\UpdateUserRequest;
 use App\Http\Resources\UserResource;
 use App\Models\User;
+use App\Services\SecurityLog;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
-use Illuminate\Validation\Rules\Password;
 
 class UserController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        $this->ensureAdmin($request);
+        $this->authorize('viewAny', User::class);
 
-        $users = User::query()->orderBy('name')->get();
+        /** @var User $actor */
+        $actor = $request->user();
+
+        $query = User::query()->orderBy('name');
+
+        if (! $actor->isAdmin() && ! $actor->hasPermission(Permission::ManageUsers)) {
+            $descendantIds = $actor->descendantIds();
+            $query->whereIn('id', $descendantIds === [] ? [0] : $descendantIds);
+        }
+
+        $users = $query->get();
 
         return response()->json([
             'data' => UserResource::collection($users),
         ]);
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(StoreUserRequest $request): JsonResponse
     {
-        $this->ensureAdmin($request);
+        /** @var User $actor */
+        $actor = $request->user();
+        $data = $request->validated();
 
-        $data = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255', 'unique:users,email'],
-            'password' => ['required', 'string', Password::defaults()],
-            'role' => ['required', Rule::enum(UserRole::class)],
-            'is_active' => ['boolean'],
-        ]);
+        $permissions = $data['permissions'] ?? [];
+        unset($data['permissions']);
+
+        if (! $actor->canGrantPermissions($permissions)) {
+            return response()->json(['message' => 'Cannot grant permissions you do not have.'], 422);
+        }
+
+        if ($actor->isAdmin() || $actor->hasPermission(Permission::ManageUsers)) {
+            $parentId = $data['parent_id'] ?? null;
+            $role = $data['role'] ?? UserRole::Editor->value;
+        } else {
+            $parentId = $actor->id;
+            $role = UserRole::Editor->value;
+            unset($data['role'], $data['parent_id']);
+        }
+
+        if ($parentId !== null) {
+            $parent = User::query()->findOrFail($parentId);
+            if (! $actor->isAdmin() && (int) $parent->id !== (int) $actor->id && ! $actor->canManageUser($parent)) {
+                return response()->json(['message' => 'Invalid parent user.'], 422);
+            }
+        }
 
         $user = User::create([
             ...$data,
+            'role' => $role,
+            'parent_id' => $parentId,
+            'permissions' => $permissions,
             'is_active' => $data['is_active'] ?? true,
+        ]);
+
+        SecurityLog::info('user.created', [
+            'actor_id' => $actor->id,
+            'user_id' => $user->id,
+            'permissions' => $permissions,
         ]);
 
         return response()->json([
@@ -46,20 +84,32 @@ class UserController extends Controller
         ], 201);
     }
 
-    public function update(Request $request, User $user): JsonResponse
+    public function update(UpdateUserRequest $request, User $user): JsonResponse
     {
-        $this->ensureAdmin($request);
+        /** @var User $actor */
+        $actor = $request->user();
+        $data = $request->validated();
 
-        $data = $request->validate([
-            'name' => ['sometimes', 'string', 'max:255'],
-            'email' => ['sometimes', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user.id)],
-            'password' => ['nullable', 'string', Password::defaults()],
-            'role' => ['sometimes', Rule::enum(UserRole::class)],
-            'is_active' => ['sometimes', 'boolean'],
-        ]);
+        if (array_key_exists('permissions', $data)) {
+            $permissions = $data['permissions'] ?? [];
+            if (! $actor->canGrantPermissions($permissions)) {
+                return response()->json(['message' => 'Cannot grant permissions you do not have.'], 422);
+            }
+            $data['permissions'] = $permissions;
+
+            SecurityLog::info('user.permissions_updated', [
+                'actor_id' => $actor->id,
+                'user_id' => $user->id,
+                'permissions' => $permissions,
+            ]);
+        }
 
         if (empty($data['password'])) {
             unset($data['password']);
+        }
+
+        if (! $actor->isAdmin() && ! $actor->hasPermission(Permission::ManageUsers)) {
+            unset($data['role'], $data['parent_id']);
         }
 
         $user->update($data);
@@ -71,24 +121,38 @@ class UserController extends Controller
 
     public function destroy(Request $request, User $user): JsonResponse
     {
-        $this->ensureAdmin($request);
+        $this->authorize('delete', $user);
 
-        if ($request->user()?->id === $user->id) {
+        /** @var User $actor */
+        $actor = $request->user();
+
+        if ($actor->id === $user->id) {
             return response()->json(['message' => 'Cannot delete your own account'], 422);
         }
 
+        $user->deactivateDescendants();
+        $user->is_active = false;
+        $user->save();
+        $user->tokens()->delete();
         $user->delete();
+
+        SecurityLog::warning('user.deleted', [
+            'actor_id' => $actor->id,
+            'user_id' => $user->id,
+        ]);
 
         return response()->json(['message' => 'Deleted']);
     }
 
-    private function ensureAdmin(Request $request): void
+    public function permissions(Request $request, User $user): JsonResponse
     {
-        /** @var User|null $user */
-        $user = $request->user();
+        $this->authorize('view', $user);
 
-        if (! $user || ! $user->isAdmin()) {
-            abort(403, 'Only super admins can manage users.');
-        }
+        return response()->json([
+            'data' => [
+                'permissions' => $user->permissionList(),
+                'grantable' => $request->user()->permissionList(),
+            ],
+        ]);
     }
 }

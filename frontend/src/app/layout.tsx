@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Vazirmatn } from "next/font/google";
+import { AuthGate } from "@/components/auth/AuthGate";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import { SITE_TAGLINE, SITE_TITLE } from "@/lib/branding";
 import { THEME_STORAGE_KEY } from "@/lib/theme";
@@ -56,7 +57,9 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: themeBootScript }} />
       </head>
       <body className="min-h-full bg-[var(--background)] font-sans text-[var(--text-primary)]">
-        <ThemeProvider>{children}</ThemeProvider>
+        <ThemeProvider>
+          <AuthGate>{children}</AuthGate>
+        </ThemeProvider>
       </body>
     </html>
   );

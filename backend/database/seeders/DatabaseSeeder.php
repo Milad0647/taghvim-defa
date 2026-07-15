@@ -3,11 +3,14 @@
 namespace Database\Seeders;
 
 use App\Enums\ActionSeverity;
+use App\Enums\Permission;
 use App\Enums\PublishStatus;
 use App\Enums\UserRole;
 use App\Models\CalendarDay;
 use App\Models\Category;
 use App\Models\EnemyAction;
+use App\Models\FormDefinition;
+use App\Models\FormField;
 use App\Models\GovernmentAction;
 use App\Models\User;
 use Illuminate\Database\Seeder;
@@ -24,6 +27,8 @@ class DatabaseSeeder extends Seeder
                 'password' => 'password',
                 'role' => UserRole::SuperAdmin,
                 'is_active' => true,
+                'parent_id' => null,
+                'permissions' => Permission::adminDefaults(),
             ],
         );
 
@@ -34,8 +39,12 @@ class DatabaseSeeder extends Seeder
                 'password' => 'password',
                 'role' => UserRole::Editor,
                 'is_active' => true,
+                'parent_id' => $admin->id,
+                'permissions' => Permission::editorDefaults(),
             ],
         );
+
+        $this->seedFormSchema();
 
         $enemyCategories = [
             ['name' => 'حمله پهپادی', 'slug' => 'drone-attack', 'color' => '#EF4444', 'type' => 'enemy'],
@@ -204,6 +213,38 @@ class DatabaseSeeder extends Seeder
                     'created_by' => $admin->id,
                 ]);
             }
+        }
+    }
+
+    private function seedFormSchema(): void
+    {
+        $definition = FormDefinition::query()->updateOrCreate(
+            ['key' => 'event_create'],
+            ['name' => 'ثبت رویداد', 'is_active' => true],
+        );
+
+        $fields = [
+            ['key' => 'eventType', 'label' => 'نوع رویداد', 'type' => 'select', 'options' => [['value' => 'enemy', 'label' => 'اقدام دشمن'], ['value' => 'government', 'label' => 'اقدام دولت']], 'required' => true, 'sort_order' => 0, 'section' => 'main', 'is_system' => true],
+            ['key' => 'title', 'label' => 'عنوان', 'type' => 'text', 'options' => null, 'required' => true, 'sort_order' => 1, 'section' => 'main', 'is_system' => true],
+            ['key' => 'summary', 'label' => 'خلاصه', 'type' => 'textarea', 'options' => null, 'required' => false, 'sort_order' => 2, 'section' => 'main', 'is_system' => true],
+            ['key' => 'date', 'label' => 'تاریخ', 'type' => 'date', 'options' => null, 'required' => true, 'sort_order' => 3, 'section' => 'main', 'is_system' => true],
+            ['key' => 'severity', 'label' => 'شدت', 'type' => 'select', 'options' => [['value' => 'low', 'label' => 'کم'], ['value' => 'medium', 'label' => 'متوسط'], ['value' => 'high', 'label' => 'بالا'], ['value' => 'critical', 'label' => 'بحرانی']], 'required' => true, 'sort_order' => 4, 'section' => 'main', 'is_system' => true],
+            ['key' => 'description', 'label' => 'توضیحات', 'type' => 'textarea', 'options' => null, 'required' => false, 'sort_order' => 5, 'section' => 'details', 'is_system' => false],
+            ['key' => 'location', 'label' => 'مکان', 'type' => 'text', 'options' => null, 'required' => false, 'sort_order' => 6, 'section' => 'details', 'is_system' => false],
+            ['key' => 'source', 'label' => 'منبع', 'type' => 'text', 'options' => null, 'required' => false, 'sort_order' => 7, 'section' => 'details', 'is_system' => false],
+        ];
+
+        foreach ($fields as $field) {
+            FormField::query()->updateOrCreate(
+                [
+                    'form_definition_id' => $definition->id,
+                    'key' => $field['key'],
+                ],
+                [
+                    ...$field,
+                    'is_active' => true,
+                ],
+            );
         }
     }
 }

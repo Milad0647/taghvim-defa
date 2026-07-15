@@ -2,13 +2,24 @@
 
 import { PersianDatePicker } from "@/components/shared/PersianDatePicker";
 import { getAgencyById, listAgencies } from "@/lib/agency-store";
-import { getCurrentUser } from "@/lib/auth";
+import { apiFetch, getCurrentUser } from "@/lib/auth";
 import { upsertTimelineEvent } from "@/lib/timeline-store";
 import type { GovernmentAgency } from "@/types/agency";
-import { ROLE_PERMISSIONS } from "@/types/auth";
+import { userHasPermission } from "@/types/auth";
 import type { EventType, Severity, TimelineEvent } from "@/types/timeline";
 import { X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+
+type SchemaField = {
+  key: string;
+  label: string;
+  type: string;
+  options: Array<{ value: string; label: string }> | null;
+  required: boolean;
+  section: string;
+  is_system: boolean;
+  is_active: boolean;
+};
 
 type CreateEventFormProps = {
   open: boolean;
@@ -16,76 +27,69 @@ type CreateEventFormProps = {
   onCreated?: (event: TimelineEvent) => void;
 };
 
-const STEPS = [
-  "اطلاعات اصلی",
-  "مکان و زمان",
-  "رسانه و منبع",
-  "ارتباط‌ها",
-  "مرور و انتشار",
-] as const;
+const SYSTEM_KEYS = new Set([
+  "eventType",
+  "title",
+  "summary",
+  "date",
+  "severity",
+  "description",
+  "location",
+  "source",
+]);
 
 export function CreateEventForm({
   open,
   onClose,
   onCreated,
 }: CreateEventFormProps) {
-  const [step, setStep] = useState(0);
   const [error, setError] = useState<string | null>(null);
-  const [allowedAgencies, setAllowedAgencies] = useState<GovernmentAgency[]>(
-    [],
-  );
-  const [draft, setDraft] = useState({
-    eventType: "enemy" as EventType,
+  const [fields, setFields] = useState<SchemaField[]>([]);
+  const [allowedAgencies, setAllowedAgencies] = useState<GovernmentAgency[]>([]);
+  const [values, setValues] = useState<Record<string, string>>({
+    eventType: "enemy",
     title: "",
     summary: "",
     description: "",
     date: "",
-    time: "",
-    province: "",
-    city: "",
-    category: "",
-    severity: "medium" as Severity,
+    time: "12:00",
+    severity: "medium",
     agencyId: "",
-    organization: "",
     source: "",
-    tags: "",
+    location: "",
   });
 
   const agencyOptions = useMemo(() => allowedAgencies, [allowedAgencies]);
+  const activeFields = useMemo(
+    () => fields.filter((f) => f.is_active !== false),
+    [fields],
+  );
 
   useEffect(() => {
     if (!open) return;
     const user = getCurrentUser();
     const all = listAgencies({ activeOnly: true });
     const scoped =
-      !user ||
-      user.role === "super_admin" ||
-      !user.agencyIds?.length
+      !user || user.role === "super_admin" || !user.agencyIds?.length
         ? all
         : all.filter((a) => user.agencyIds.includes(a.id));
     setAllowedAgencies(scoped);
-    setDraft((d) => ({
+    setValues((d) => ({
       ...d,
       agencyId: d.agencyId || scoped[0]?.id || "",
     }));
-  }, [open]);
 
-  useEffect(() => {
-    if (!open) return;
-    const saved = localStorage.getItem("taghvim_event_draft");
-    if (saved) {
+    void (async () => {
       try {
-        setDraft((d) => ({ ...d, ...JSON.parse(saved) }));
+        const res = await apiFetch("/form-schema");
+        if (!res.ok) return;
+        const payload = await res.json();
+        setFields(payload.data?.fields ?? []);
       } catch {
-        // ignore
+        // keep defaults
       }
-    }
+    })();
   }, [open]);
-
-  useEffect(() => {
-    if (!open) return;
-    localStorage.setItem("taghvim_event_draft", JSON.stringify(draft));
-  }, [draft, open]);
 
   useEffect(() => {
     if (!open) return;
@@ -96,58 +100,64 @@ export function CreateEventForm({
     return () => document.removeEventListener("keydown", onKey);
   }, [open, onClose]);
 
-  function publish() {
+  function setValue(key: string, value: string) {
+    setValues((prev) => ({ ...prev, [key]: value }));
+  }
+
+  async function publish() {
     setError(null);
     const user = getCurrentUser();
-    if (!user || !ROLE_PERMISSIONS[user.role].manageContent) {
+    if (!user || !userHasPermission(user, "manage_content")) {
       setError("اجازه ثبت محتوا ندارید.");
       return;
     }
-    if (!draft.title.trim() || !draft.date || !draft.time) {
-      setError("عنوان، تاریخ و ساعت الزامی است.");
+
+    for (const field of activeFields) {
+      if (field.required && !String(values[field.key] ?? "").trim()) {
+        setError(`فیلد «${field.label}» الزامی است.`);
+        return;
+      }
+    }
+
+    if (!values.title?.trim() || !values.date) {
+      setError("عنوان و تاریخ الزامی است.");
       return;
     }
-    if (!draft.agencyId) {
+    if (!values.agencyId) {
       setError("وزارتخانه / بخش دولت را انتخاب کنید.");
       return;
     }
-    if (
-      user.role !== "super_admin" &&
-      user.agencyIds?.length &&
-      !user.agencyIds.includes(draft.agencyId)
-    ) {
-      setError("به این وزارتخانه دسترسی ندارید.");
-      return;
+
+    const customFields: Record<string, string> = {};
+    for (const field of activeFields) {
+      if (!SYSTEM_KEYS.has(field.key) && values[field.key]) {
+        customFields[field.key] = values[field.key]!;
+      }
     }
 
-    const agency = getAgencyById(draft.agencyId);
+    const agency = getAgencyById(values.agencyId);
+    const eventType = (values.eventType as EventType) || "enemy";
     const now = new Date().toISOString();
     const event: TimelineEvent = {
       id: `evt-${Date.now()}`,
-      eventType: draft.eventType,
-      title: draft.title.trim(),
-      summary: draft.summary.trim() || draft.title.trim(),
-      description: draft.description.trim() || undefined,
-      date: draft.date,
-      time: draft.time,
-      severity: draft.severity,
+      eventType,
+      title: values.title.trim(),
+      summary: (values.summary || values.title).trim(),
+      description: values.description?.trim() || undefined,
+      date: values.date,
+      time: values.time || "12:00",
+      severity: (values.severity as Severity) || "medium",
       verificationStatus: "published",
-      actionStatus:
-        draft.eventType === "government" ? "in_progress" : undefined,
-      category: draft.category.trim() || agency?.shortName || "عمومی",
+      actionStatus: eventType === "government" ? "in_progress" : undefined,
+      category: agency?.shortName || "عمومی",
       location: {
-        province: draft.province.trim() || undefined,
-        city: draft.city.trim() || undefined,
+        province: values.location?.trim() || undefined,
       },
-      organization:
-        draft.organization.trim() || agency?.shortName || undefined,
-      agencyId: draft.agencyId,
+      organization: agency?.shortName,
+      agencyId: values.agencyId,
       agencyName: agency?.name,
-      source: draft.source.trim() || undefined,
-      tags: draft.tags
-        .split(/[,،]/)
-        .map((t) => t.trim())
-        .filter(Boolean),
+      source: values.source?.trim() || undefined,
+      tags: [],
       relatedEventIds: [],
       relatedResponseIds: [],
       commentsCount: 0,
@@ -155,11 +165,71 @@ export function CreateEventForm({
       updatedAt: now,
     };
 
+    // Persist to API when possible
+    try {
+      const dayRes = await apiFetch("/days", {
+        method: "POST",
+        body: JSON.stringify({
+          date: values.date,
+          title: values.title.trim(),
+          summary: values.summary || null,
+          status: "published",
+        }),
+      });
+
+      let dayId: number | null = null;
+      if (dayRes.ok) {
+        const dayPayload = await dayRes.json();
+        dayId = dayPayload.data?.id ?? null;
+      } else if (dayRes.status === 422) {
+        const listRes = await apiFetch(`/days?status=published`);
+        if (listRes.ok) {
+          const listPayload = await listRes.json();
+          const found = (listPayload.data ?? []).find(
+            (d: { date?: string; id: number }) =>
+              String(d.date).startsWith(values.date),
+          );
+          dayId = found?.id ?? null;
+        }
+      }
+
+      if (dayId) {
+        const endpoint =
+          eventType === "enemy"
+            ? `/days/${dayId}/enemy-actions`
+            : `/days/${dayId}/government-actions`;
+        const body =
+          eventType === "enemy"
+            ? {
+                title: values.title.trim(),
+                description: values.description || values.summary || null,
+                severity: values.severity || "medium",
+                source: values.source || null,
+                location: values.location || null,
+                occurred_at: `${values.date}T${values.time || "12:00"}:00`,
+                status: "published",
+                custom_fields: customFields,
+              }
+            : {
+                title: values.title.trim(),
+                description: values.description || values.summary || null,
+                agency: agency?.shortName || null,
+                completed_at: `${values.date}T${values.time || "12:00"}:00`,
+                status: "published",
+                custom_fields: customFields,
+              };
+        await apiFetch(endpoint, {
+          method: "POST",
+          body: JSON.stringify(body),
+        });
+      }
+    } catch {
+      // Fall back to local store below
+    }
+
     upsertTimelineEvent(event);
-    localStorage.removeItem("taghvim_event_draft");
     onCreated?.(event);
     onClose();
-    setStep(0);
   }
 
   if (!open) return null;
@@ -183,8 +253,7 @@ export function CreateEventForm({
               ثبت رویداد جدید
             </h3>
             <p className="text-xs text-[var(--text-secondary)]">
-              مرحله {(step + 1).toLocaleString("fa-IR")} از{" "}
-              {STEPS.length.toLocaleString("fa-IR")}: {STEPS[step]}
+              فرم بر اساس تنظیمات ادمین ساخته می‌شود
             </p>
           </div>
           <button
@@ -197,61 +266,47 @@ export function CreateEventForm({
           </button>
         </div>
 
-        <div className="mb-4 flex gap-1">
-          {STEPS.map((label, i) => (
-            <div
-              key={label}
-              className={`h-1.5 flex-1 rounded-full ${
-                i <= step ? "bg-[var(--purple)]" : "bg-white/10"
-              }`}
-            />
-          ))}
-        </div>
-
         <div className="space-y-3 text-sm">
-          {step === 0 ? (
+          <Select
+            label="وزارتخانه / بخش دولت"
+            value={values.agencyId || ""}
+            onChange={(v) => setValue("agencyId", v)}
+            options={agencyOptions.map((a) => ({
+              value: a.id,
+              label: a.shortName,
+            }))}
+          />
+
+          {activeFields.length === 0 ? (
             <>
               <Select
-                label="وزارتخانه / بخش دولت"
-                value={draft.agencyId}
-                onChange={(v) => setDraft((d) => ({ ...d, agencyId: v }))}
-                options={agencyOptions.map((a) => ({
-                  value: a.id,
-                  label: a.shortName,
-                }))}
-              />
-              <Select
                 label="نوع رویداد"
-                value={draft.eventType}
-                onChange={(v) =>
-                  setDraft((d) => ({ ...d, eventType: v as EventType }))
-                }
+                value={values.eventType || "enemy"}
+                onChange={(v) => setValue("eventType", v)}
                 options={[
-                  { value: "enemy", label: "اقدام دشمن (مرتبط با این بخش)" },
-                  { value: "government", label: "اقدام دولت / این وزارتخانه" },
+                  { value: "enemy", label: "اقدام دشمن" },
+                  { value: "government", label: "اقدام دولت" },
                 ]}
               />
               <Field
                 label="عنوان"
-                value={draft.title}
-                onChange={(v) => setDraft((d) => ({ ...d, title: v }))}
+                value={values.title || ""}
+                onChange={(v) => setValue("title", v)}
               />
-              <TextArea
-                label="خلاصه"
-                value={draft.summary}
-                onChange={(v) => setDraft((d) => ({ ...d, summary: v }))}
-              />
-              <TextArea
-                label="شرح کامل"
-                value={draft.description}
-                onChange={(v) => setDraft((d) => ({ ...d, description: v }))}
-              />
+              <div className="space-y-1.5">
+                <span className="text-xs text-[var(--text-secondary)]">تاریخ</span>
+                <PersianDatePicker
+                  value={values.date || ""}
+                  onChange={(date) => setValue("date", date)}
+                  placeholder="انتخاب تاریخ شمسی"
+                  ariaLabel="تاریخ رویداد"
+                  allowClear={false}
+                />
+              </div>
               <Select
                 label="شدت"
-                value={draft.severity}
-                onChange={(v) =>
-                  setDraft((d) => ({ ...d, severity: v as Severity }))
-                }
+                value={values.severity || "medium"}
+                onChange={(v) => setValue("severity", v)}
                 options={[
                   { value: "low", label: "کم" },
                   { value: "medium", label: "متوسط" },
@@ -260,98 +315,23 @@ export function CreateEventForm({
                 ]}
               />
             </>
-          ) : null}
+          ) : (
+            activeFields.map((field) => (
+              <DynamicField
+                key={field.key}
+                field={field}
+                value={values[field.key] ?? ""}
+                onChange={(v) => setValue(field.key, v)}
+              />
+            ))
+          )}
 
-          {step === 1 ? (
-            <>
-              <div className="space-y-1.5">
-                <span className="text-xs text-[var(--text-secondary)]">تاریخ</span>
-                <PersianDatePicker
-                  value={draft.date}
-                  onChange={(date) => setDraft((d) => ({ ...d, date }))}
-                  placeholder="انتخاب تاریخ شمسی"
-                  ariaLabel="تاریخ رویداد"
-                  allowClear={false}
-                />
-              </div>
-              <Field
-                label="ساعت"
-                type="time"
-                value={draft.time}
-                onChange={(v) => setDraft((d) => ({ ...d, time: v }))}
-              />
-              <Field
-                label="استان"
-                value={draft.province}
-                onChange={(v) => setDraft((d) => ({ ...d, province: v }))}
-              />
-              <Field
-                label="شهر"
-                value={draft.city}
-                onChange={(v) => setDraft((d) => ({ ...d, city: v }))}
-              />
-              <Field
-                label="دسته‌بندی"
-                value={draft.category}
-                onChange={(v) => setDraft((d) => ({ ...d, category: v }))}
-              />
-            </>
-          ) : null}
-
-          {step === 2 ? (
-            <>
-              <Field
-                label="منبع"
-                value={draft.source}
-                onChange={(v) => setDraft((d) => ({ ...d, source: v }))}
-              />
-              <Field
-                label="نهاد اجرایی (اختیاری)"
-                value={draft.organization}
-                onChange={(v) => setDraft((d) => ({ ...d, organization: v }))}
-              />
-              <Field
-                label="تگ‌ها (با ویرگول)"
-                value={draft.tags}
-                onChange={(v) => setDraft((d) => ({ ...d, tags: v }))}
-              />
-              <p className="rounded-xl border border-dashed border-[var(--border)] p-4 text-xs text-[var(--text-secondary)]">
-                آپلود تصویر / ویدئو / سند در اتصال به API فعال می‌شود.
-              </p>
-            </>
-          ) : null}
-
-          {step === 3 ? (
-            <p className="rounded-xl border border-[var(--border)] bg-[var(--surface-3)] p-4 text-sm text-[var(--text-secondary)]">
-              می‌توانید پس از ثبت، رخداد را به پاسخ‌های مرتبط یا رخدادهای دیگر
-              متصل کنید.
-            </p>
-          ) : null}
-
-          {step === 4 ? (
-            <div className="space-y-2 rounded-xl border border-[var(--border)] bg-[var(--surface-3)] p-4 text-sm text-[var(--text-secondary)]">
-              <p>
-                <strong className="text-[var(--text-primary)]">عنوان:</strong>{" "}
-                {draft.title || "—"}
-              </p>
-              <p>
-                <strong className="text-[var(--text-primary)]">وزارتخانه:</strong>{" "}
-                {getAgencyById(draft.agencyId)?.shortName || "—"}
-              </p>
-              <p>
-                <strong className="text-[var(--text-primary)]">نوع:</strong>{" "}
-                {draft.eventType === "enemy" ? "دشمن" : "دولت"}
-              </p>
-              <p>
-                <strong className="text-[var(--text-primary)]">زمان:</strong>{" "}
-                {draft.date} {draft.time}
-              </p>
-              <p>
-                <strong className="text-[var(--text-primary)]">مکان:</strong>{" "}
-                {draft.city} {draft.province}
-              </p>
-            </div>
-          ) : null}
+          <Field
+            label="ساعت"
+            type="time"
+            value={values.time || "12:00"}
+            onChange={(v) => setValue("time", v)}
+          />
 
           {error ? (
             <p className="rounded-xl bg-red-500/15 px-3 py-2 text-sm text-red-200">
@@ -361,35 +341,116 @@ export function CreateEventForm({
         </div>
 
         <div className="mt-5 flex flex-wrap gap-2">
-          {step > 0 ? (
-            <button
-              type="button"
-              onClick={() => setStep((s) => s - 1)}
-              className="rounded-xl border border-[var(--border)] px-4 py-2 text-sm"
-            >
-              قبلی
-            </button>
-          ) : null}
-          {step < STEPS.length - 1 ? (
-            <button
-              type="button"
-              onClick={() => setStep((s) => s + 1)}
-              className="rounded-xl bg-[var(--purple)] px-4 py-2 text-sm font-semibold text-[var(--text-primary)]"
-            >
-              بعدی
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={publish}
-              className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white"
-            >
-              انتشار / ثبت
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-xl border border-[var(--border)] px-4 py-2 text-sm"
+          >
+            انصراف
+          </button>
+          <button
+            type="button"
+            onClick={() => void publish()}
+            className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white"
+          >
+            انتشار / ثبت
+          </button>
         </div>
       </div>
     </div>
+  );
+}
+
+function DynamicField({
+  field,
+  value,
+  onChange,
+}: {
+  field: SchemaField;
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  if (field.type === "date" || field.key === "date") {
+    return (
+      <div className="space-y-1.5">
+        <span className="text-xs text-[var(--text-secondary)]">
+          {field.label}
+          {field.required ? " *" : ""}
+        </span>
+        <PersianDatePicker
+          value={value}
+          onChange={onChange}
+          placeholder="انتخاب تاریخ شمسی"
+          ariaLabel={field.label}
+          allowClear={!field.required}
+        />
+      </div>
+    );
+  }
+
+  if (field.type === "textarea") {
+    return (
+      <label className="block space-y-1.5">
+        <span className="text-xs text-[var(--text-secondary)]">
+          {field.label}
+          {field.required ? " *" : ""}
+        </span>
+        <textarea
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          rows={3}
+          className="w-full rounded-xl border border-[var(--border)] bg-[var(--surface-3)] px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+        />
+      </label>
+    );
+  }
+
+  if (field.type === "select" || field.key === "eventType" || field.key === "severity") {
+    const options =
+      field.options ??
+      (field.key === "eventType"
+        ? [
+            { value: "enemy", label: "اقدام دشمن" },
+            { value: "government", label: "اقدام دولت" },
+          ]
+        : field.key === "severity"
+          ? [
+              { value: "low", label: "کم" },
+              { value: "medium", label: "متوسط" },
+              { value: "high", label: "شدید" },
+              { value: "critical", label: "بحرانی" },
+            ]
+          : []);
+    return (
+      <Select
+        label={`${field.label}${field.required ? " *" : ""}`}
+        value={value}
+        onChange={onChange}
+        options={options}
+      />
+    );
+  }
+
+  if (field.type === "boolean") {
+    return (
+      <label className="inline-flex items-center gap-2 text-sm">
+        <input
+          type="checkbox"
+          checked={value === "1" || value === "true"}
+          onChange={(e) => onChange(e.target.checked ? "1" : "0")}
+        />
+        {field.label}
+      </label>
+    );
+  }
+
+  return (
+    <Field
+      label={`${field.label}${field.required ? " *" : ""}`}
+      type={field.type === "number" ? "number" : "text"}
+      value={value}
+      onChange={onChange}
+    />
   );
 }
 
@@ -417,28 +478,6 @@ function Field({
   );
 }
 
-function TextArea({
-  label,
-  value,
-  onChange,
-}: {
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-}) {
-  return (
-    <label className="block space-y-1.5">
-      <span className="text-xs text-[var(--text-secondary)]">{label}</span>
-      <textarea
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        rows={3}
-        className="w-full rounded-xl border border-[var(--border)] bg-[var(--surface-3)] px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
-      />
-    </label>
-  );
-}
-
 function Select({
   label,
   value,
@@ -458,9 +497,7 @@ function Select({
         onChange={(e) => onChange(e.target.value)}
         className="w-full rounded-xl border border-[var(--border)] bg-[var(--surface-3)] px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
       >
-        {options.length === 0 ? (
-          <option value="">وزارتخانه‌ای تعریف نشده</option>
-        ) : null}
+        {options.length === 0 ? <option value="">—</option> : null}
         {options.map((opt) => (
           <option key={opt.value} value={opt.value}>
             {opt.label}

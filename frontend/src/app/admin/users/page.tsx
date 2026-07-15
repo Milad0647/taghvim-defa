@@ -1,22 +1,17 @@
 "use client";
 
 import { RequireAuth } from "@/components/admin/RequireAuth";
-import { listAgencies } from "@/lib/agency-store";
+import { apiFetch, getCurrentUser } from "@/lib/auth";
 import {
-  createUser,
-  deleteUser,
-  listUsers,
-  updateUser,
-} from "@/lib/admin-store";
-import type { GovernmentAgency } from "@/types/agency";
-import {
+  ALL_PERMISSIONS,
+  PERMISSION_LABELS,
   ROLE_LABELS,
-  ROLE_PERMISSIONS,
   type AdminUser,
+  type Permission,
   type UserRole,
 } from "@/types/auth";
-import { Pencil, Plus, Trash2, UserPlus } from "lucide-react";
-import { useMemo, useState } from "react";
+import { Pencil, Trash2, UserPlus } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 
 const ROLES: UserRole[] = ["super_admin", "editor", "reviewer", "viewer"];
 
@@ -29,15 +24,45 @@ export default function AdminUsersPage() {
 }
 
 function UsersManager() {
-  const [users, setUsers] = useState<AdminUser[]>(() => listUsers());
-  const [agencies] = useState<GovernmentAgency[]>(() => listAgencies());
+  const [users, setUsers] = useState<AdminUser[]>([]);
+  const [me, setMe] = useState<AdminUser | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [editing, setEditing] = useState<AdminUser | null>(null);
   const [creating, setCreating] = useState(false);
 
-  const refresh = () => setUsers(listUsers());
-  const agencyName = (id: string) =>
-    agencies.find((a) => a.id === id)?.shortName ?? id;
+  const grantable = useMemo(() => {
+    if (!me) return [] as Permission[];
+    if (me.role === "super_admin") return ALL_PERMISSIONS;
+    return me.permissions ?? [];
+  }, [me]);
+
+  async function refresh() {
+    const res = await apiFetch("/users");
+    if (!res.ok) {
+      setError("بارگذاری کاربران ناموفق بود");
+      return;
+    }
+    const payload = await res.json();
+    const rows = (payload.data ?? []).map((u: Record<string, unknown>) => ({
+      id: String(u.id),
+      name: String(u.name ?? ""),
+      email: String(u.email ?? ""),
+      role: (u.role as UserRole) ?? "viewer",
+      is_active: Boolean(u.is_active),
+      created_at: String(u.created_at ?? ""),
+      parent_id: u.parent_id ?? null,
+      permissions: Array.isArray(u.permissions) ? u.permissions : [],
+      agencyIds: [],
+    })) as AdminUser[];
+    setUsers(rows);
+  }
+
+  useEffect(() => {
+    setMe(getCurrentUser());
+    void refresh();
+  }, []);
+
+  const tree = useMemo(() => buildTree(users), [users]);
 
   return (
     <div className="space-y-4">
@@ -47,8 +72,7 @@ function UsersManager() {
             کاربران و دسترسی‌ها
           </h2>
           <p className="mt-1 text-sm text-[var(--text-secondary)]">
-            نقش سطح دسترسی را مشخص می‌کند؛ وزارتخانه‌ها دامنه داده قابل‌ثبت کاربر
-            را.
+            سلسله‌مراتب کاربران و تفویض مجوزها.
           </p>
         </div>
         <button
@@ -64,83 +88,31 @@ function UsersManager() {
         </button>
       </div>
 
-      <div className="overflow-x-auto rounded-2xl border border-[var(--border)] bg-[var(--panel)]">
-        <table className="min-w-full text-sm">
-          <thead className="border-b border-[var(--border)] text-[var(--text-secondary)]">
-            <tr>
-              <th className="px-4 py-3 text-right font-medium">نام</th>
-              <th className="px-4 py-3 text-right font-medium">ایمیل</th>
-              <th className="px-4 py-3 text-right font-medium">نقش</th>
-              <th className="px-4 py-3 text-right font-medium">وزارتخانه‌ها</th>
-              <th className="px-4 py-3 text-right font-medium">وضعیت</th>
-              <th className="px-4 py-3 text-right font-medium">عملیات</th>
-            </tr>
-          </thead>
-          <tbody>
-            {users.map((user) => (
-              <tr key={user.id} className="border-b border-[var(--border)]">
-                <td className="px-4 py-3 text-[var(--text-primary)]">
-                  {user.name}
-                </td>
-                <td className="px-4 py-3 text-[var(--text-secondary)]">
-                  {user.email}
-                </td>
-                <td className="px-4 py-3 text-blue-300">
-                  {ROLE_LABELS[user.role]}
-                </td>
-                <td className="px-4 py-3 text-[11px] text-[var(--text-secondary)]">
-                  {user.role === "super_admin"
-                    ? "همه"
-                    : user.agencyIds?.length
-                      ? user.agencyIds.map(agencyName).join(" · ")
-                      : "—"}
-                </td>
-                <td className="px-4 py-3">
-                  <span
-                    className={
-                      user.is_active
-                        ? "rounded-md bg-emerald-500/15 px-2 py-0.5 text-xs text-emerald-300"
-                        : "rounded-md bg-slate-500/20 px-2 py-0.5 text-xs text-[var(--text-secondary)]"
-                    }
-                  >
-                    {user.is_active ? "فعال" : "غیرفعال"}
-                  </span>
-                </td>
-                <td className="px-4 py-3">
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setEditing(user);
-                        setCreating(false);
-                      }}
-                      className="rounded-lg border border-[var(--border)] p-2 text-[var(--text-secondary)] hover:bg-[var(--hover)]"
-                      aria-label="ویرایش"
-                    >
-                      <Pencil className="h-3.5 w-3.5" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (!confirm("حذف این کاربر؟")) return;
-                        try {
-                          deleteUser(user.id);
-                          refresh();
-                        } catch (err) {
-                          setError(err instanceof Error ? err.message : "خطا");
-                        }
-                      }}
-                      className="rounded-lg border border-red-500/30 p-2 text-red-300 hover:bg-red-500/10"
-                      aria-label="حذف"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <div className="space-y-2 rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-4">
+        {tree.length === 0 ? (
+          <p className="text-sm text-[var(--text-secondary)]">کاربری نیست</p>
+        ) : (
+          tree.map((node) => (
+            <UserTreeNode
+              key={node.user.id}
+              node={node}
+              depth={0}
+              onEdit={(u) => {
+                setEditing(u);
+                setCreating(false);
+              }}
+              onDelete={async (u) => {
+                if (!confirm("حذف این کاربر؟")) return;
+                const res = await apiFetch(`/users/${u.id}`, { method: "DELETE" });
+                if (!res.ok) {
+                  setError("حذف ناموفق بود");
+                  return;
+                }
+                await refresh();
+              }}
+            />
+          ))
+        )}
       </div>
 
       {error ? (
@@ -149,256 +121,252 @@ function UsersManager() {
         </p>
       ) : null}
 
-      {(creating || editing) && (
-        <UserFormModal
+      {(creating || editing) && me ? (
+        <UserForm
+          grantable={grantable}
+          users={users}
           initial={editing}
-          agencies={agencies}
           onClose={() => {
             setCreating(false);
             setEditing(null);
-            setError(null);
           }}
-          onSaved={() => {
-            refresh();
+          onSaved={async () => {
             setCreating(false);
             setEditing(null);
+            await refresh();
           }}
           onError={setError}
         />
-      )}
-
-      <PermissionsGuide />
+      ) : null}
     </div>
   );
 }
 
-function UserFormModal({
+type TreeNode = { user: AdminUser; children: TreeNode[] };
+
+function buildTree(users: AdminUser[]): TreeNode[] {
+  const map = new Map<string, TreeNode>();
+  users.forEach((u) => map.set(u.id, { user: u, children: [] }));
+  const roots: TreeNode[] = [];
+  map.forEach((node) => {
+    const parentId = node.user.parent_id != null ? String(node.user.parent_id) : null;
+    if (parentId && map.has(parentId)) {
+      map.get(parentId)!.children.push(node);
+    } else {
+      roots.push(node);
+    }
+  });
+  return roots;
+}
+
+function UserTreeNode({
+  node,
+  depth,
+  onEdit,
+  onDelete,
+}: {
+  node: TreeNode;
+  depth: number;
+  onEdit: (u: AdminUser) => void;
+  onDelete: (u: AdminUser) => void;
+}) {
+  return (
+    <div>
+      <div
+        className="flex items-center justify-between gap-2 rounded-xl border border-[var(--border)] bg-[var(--panel-2)] px-3 py-2"
+        style={{ marginRight: depth * 16 }}
+      >
+        <div>
+          <p className="text-sm font-medium text-[var(--text-primary)]">{node.user.name}</p>
+          <p className="text-xs text-[var(--text-secondary)]">
+            {node.user.email} · {ROLE_LABELS[node.user.role]} ·{" "}
+            {(node.user.permissions ?? []).length} مجوز
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => onEdit(node.user)}
+            className="rounded-lg border border-[var(--border)] p-2"
+          >
+            <Pencil className="h-3.5 w-3.5" />
+          </button>
+          <button
+            type="button"
+            onClick={() => onDelete(node.user)}
+            className="rounded-lg border border-red-500/30 p-2 text-red-400"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      </div>
+      {node.children.map((child) => (
+        <UserTreeNode
+          key={child.user.id}
+          node={child}
+          depth={depth + 1}
+          onEdit={onEdit}
+          onDelete={onDelete}
+        />
+      ))}
+    </div>
+  );
+}
+
+function UserForm({
+  grantable,
+  users,
   initial,
-  agencies,
   onClose,
   onSaved,
   onError,
 }: {
+  grantable: Permission[];
+  users: AdminUser[];
   initial: AdminUser | null;
-  agencies: GovernmentAgency[];
   onClose: () => void;
-  onSaved: () => void;
+  onSaved: () => Promise<void>;
   onError: (msg: string) => void;
 }) {
   const [name, setName] = useState(initial?.name ?? "");
   const [email, setEmail] = useState(initial?.email ?? "");
-  const [role, setRole] = useState<UserRole>(initial?.role ?? "editor");
   const [password, setPassword] = useState("");
+  const [role, setRole] = useState<UserRole>(initial?.role ?? "editor");
+  const [parentId, setParentId] = useState(
+    initial?.parent_id != null ? String(initial.parent_id) : "",
+  );
+  const [perms, setPerms] = useState<Permission[]>(initial?.permissions ?? []);
   const [isActive, setIsActive] = useState(initial?.is_active ?? true);
-  const [agencyIds, setAgencyIds] = useState<string[]>(
-    initial?.agencyIds ?? [],
-  );
 
-  const title = initial ? "ویرایش کاربر" : "ساخت کاربر جدید";
-
-  function toggleAgency(id: string) {
-    setAgencyIds((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
-    );
-  }
-
-  function onSubmit(e: React.FormEvent) {
+  async function submit(e: React.FormEvent) {
     e.preventDefault();
-    try {
-      if (initial) {
-        updateUser(initial.id, {
-          name,
-          email,
-          role,
-          is_active: isActive,
-          agencyIds,
-          ...(password ? { password } : {}),
-        });
-      } else {
-        if (!password) throw new Error("رمز عبور الزامی است.");
-        createUser({
-          name,
-          email,
-          role,
-          password,
-          is_active: isActive,
-          agencyIds,
-        });
-      }
-      onSaved();
-    } catch (err) {
-      onError(err instanceof Error ? err.message : "خطا در ذخیره");
+    const body: Record<string, unknown> = {
+      name,
+      email,
+      role,
+      is_active: isActive,
+      permissions: perms,
+      parent_id: parentId ? Number(parentId) : null,
+    };
+    if (password) body.password = password;
+    if (!initial && !password) {
+      onError("رمز عبور الزامی است");
+      return;
     }
+
+    const res = await apiFetch(initial ? `/users/${initial.id}` : "/users", {
+      method: initial ? "PUT" : "POST",
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) {
+      const payload = await res.json().catch(() => ({}));
+      onError(payload.message ?? "ذخیره ناموفق بود");
+      return;
+    }
+    await onSaved();
   }
 
   return (
-    <div className="fixed inset-0 z-50">
-      <button
-        type="button"
-        className="absolute inset-0 bg-black/60"
-        aria-label="بستن"
-        onClick={onClose}
-      />
-      <div className="absolute inset-x-4 top-1/2 mx-auto max-w-lg -translate-y-1/2 rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-5">
-        <h3 className="mb-4 text-lg font-bold text-[var(--text-primary)]">
-          {title}
-        </h3>
-        <form onSubmit={onSubmit} className="space-y-3 text-sm">
-          <Field label="نام" value={name} onChange={setName} required />
-          <Field
-            label="ایمیل"
-            value={email}
-            onChange={setEmail}
-            type="email"
-            required
-          />
-          <label className="block space-y-1.5">
-            <span className="text-[var(--text-secondary)]">نقش / دسترسی</span>
-            <select
-              value={role}
-              onChange={(e) => setRole(e.target.value as UserRole)}
-              className="w-full rounded-xl border border-[var(--border)] bg-[var(--panel-2)] px-3 py-2"
-            >
-              {ROLES.map((r) => (
-                <option key={r} value={r}>
-                  {ROLE_LABELS[r]}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <div className="space-y-2 rounded-xl border border-[var(--border)] bg-[var(--panel-2)] p-3">
-            <p className="text-xs font-semibold text-[var(--text-primary)]">
-              وزارتخانه‌های قابل‌دسترسی
-            </p>
-            <p className="text-[11px] text-[var(--text-secondary)]">
-              مدیر کل به همه دسترسی دارد. برای ویرایشگر حداقل یک وزارتخانه انتخاب
-              کنید تا بتواند داده همان بخش را پر کند.
-            </p>
-            <div className="grid max-h-40 gap-2 overflow-y-auto sm:grid-cols-2">
-              {agencies.map((agency) => (
-                <label
-                  key={agency.id}
-                  className="flex items-center gap-2 text-xs text-[var(--text-secondary)]"
-                >
-                  <input
-                    type="checkbox"
-                    checked={agencyIds.includes(agency.id)}
-                    onChange={() => toggleAgency(agency.id)}
-                    disabled={role === "super_admin"}
-                  />
-                  {agency.shortName}
-                </label>
-              ))}
-            </div>
-          </div>
-
-          <Field
-            label={initial ? "رمز جدید (اختیاری)" : "رمز عبور"}
-            value={password}
-            onChange={setPassword}
-            type="password"
-            required={!initial}
-          />
-          <label className="flex items-center gap-2 text-[var(--text-secondary)]">
-            <input
-              type="checkbox"
-              checked={isActive}
-              onChange={(e) => setIsActive(e.target.checked)}
-            />
-            حساب فعال باشد
-          </label>
-          <div className="flex gap-2 pt-2">
-            <button
-              type="submit"
-              className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 font-semibold text-white"
-            >
-              <Plus className="h-4 w-4" />
-              ذخیره
-            </button>
-            <button
-              type="button"
-              onClick={onClose}
-              className="rounded-xl border border-[var(--border)] px-4 py-2"
-            >
-              انصراف
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-}
-
-function Field({
-  label,
-  value,
-  onChange,
-  type = "text",
-  required,
-}: {
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-  type?: string;
-  required?: boolean;
-}) {
-  return (
-    <label className="block space-y-1.5">
-      <span className="text-[var(--text-secondary)]">{label}</span>
-      <input
-        type={type}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        required={required}
-        className="w-full rounded-xl border border-[var(--border)] bg-[var(--panel-2)] px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
-      />
-    </label>
-  );
-}
-
-function PermissionsGuide() {
-  const rows = useMemo(
-    () =>
-      (Object.keys(ROLE_LABELS) as UserRole[]).map((role) => ({
-        role,
-        label: ROLE_LABELS[role],
-        ...ROLE_PERMISSIONS[role],
-      })),
-    [],
-  );
-
-  return (
-    <section className="rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-4">
-      <h3 className="mb-3 text-sm font-semibold text-[var(--text-primary)]">
-        راهنمای نقش‌ها
+    <form
+      onSubmit={(e) => void submit(e)}
+      className="space-y-3 rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-4"
+    >
+      <h3 className="font-semibold text-[var(--text-primary)]">
+        {initial ? "ویرایش کاربر" : "کاربر جدید"}
       </h3>
-      <div className="overflow-x-auto">
-        <table className="min-w-full text-xs text-[var(--text-secondary)]">
-          <thead className="text-[var(--text-muted)]">
-            <tr>
-              <th className="px-2 py-2 text-right">نقش</th>
-              <th className="px-2 py-2 text-right">کاربران</th>
-              <th className="px-2 py-2 text-right">وزارتخانه‌ها</th>
-              <th className="px-2 py-2 text-right">تنظیمات</th>
-              <th className="px-2 py-2 text-right">محتوا</th>
-              <th className="px-2 py-2 text-right">انتشار</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row) => (
-              <tr key={row.role} className="border-t border-[var(--border)]">
-                <td className="px-2 py-2">{row.label}</td>
-                <td className="px-2 py-2">{row.manageUsers ? "✓" : "—"}</td>
-                <td className="px-2 py-2">{row.manageAgencies ? "✓" : "—"}</td>
-                <td className="px-2 py-2">{row.manageSettings ? "✓" : "—"}</td>
-                <td className="px-2 py-2">{row.manageContent ? "✓" : "—"}</td>
-                <td className="px-2 py-2">{row.publish ? "✓" : "—"}</td>
-              </tr>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <input
+          className="rounded-xl border border-[var(--border)] bg-[var(--panel-2)] px-3 py-2 text-sm"
+          placeholder="نام"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          required
+        />
+        <input
+          className="rounded-xl border border-[var(--border)] bg-[var(--panel-2)] px-3 py-2 text-sm"
+          placeholder="ایمیل"
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+        />
+        <input
+          className="rounded-xl border border-[var(--border)] bg-[var(--panel-2)] px-3 py-2 text-sm"
+          placeholder={initial ? "رمز جدید (اختیاری)" : "رمز عبور"}
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
+        <select
+          className="rounded-xl border border-[var(--border)] bg-[var(--panel-2)] px-3 py-2 text-sm"
+          value={role}
+          onChange={(e) => setRole(e.target.value as UserRole)}
+        >
+          {ROLES.map((r) => (
+            <option key={r} value={r}>
+              {ROLE_LABELS[r]}
+            </option>
+          ))}
+        </select>
+        <select
+          className="rounded-xl border border-[var(--border)] bg-[var(--panel-2)] px-3 py-2 text-sm"
+          value={parentId}
+          onChange={(e) => setParentId(e.target.value)}
+        >
+          <option value="">بدون والد (ریشه)</option>
+          {users
+            .filter((u) => u.id !== initial?.id)
+            .map((u) => (
+              <option key={u.id} value={u.id}>
+                {u.name}
+              </option>
             ))}
-          </tbody>
-        </table>
+        </select>
+        <label className="inline-flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={isActive}
+            onChange={(e) => setIsActive(e.target.checked)}
+          />
+          فعال
+        </label>
       </div>
-    </section>
+
+      <div>
+        <p className="mb-2 text-xs text-[var(--text-secondary)]">مجوزها (فقط آنچه خودتان دارید)</p>
+        <div className="grid gap-2 sm:grid-cols-2">
+          {grantable.map((p) => (
+            <label key={p} className="inline-flex items-center gap-2 text-xs">
+              <input
+                type="checkbox"
+                checked={perms.includes(p)}
+                onChange={(e) => {
+                  setPerms((prev) =>
+                    e.target.checked ? [...prev, p] : prev.filter((x) => x !== p),
+                  );
+                }}
+              />
+              {PERMISSION_LABELS[p]}
+            </label>
+          ))}
+        </div>
+      </div>
+
+      <div className="flex gap-2">
+        <button
+          type="submit"
+          className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white"
+        >
+          ذخیره
+        </button>
+        <button
+          type="button"
+          onClick={onClose}
+          className="rounded-xl border border-[var(--border)] px-4 py-2 text-sm"
+        >
+          انصراف
+        </button>
+      </div>
+    </form>
   );
 }

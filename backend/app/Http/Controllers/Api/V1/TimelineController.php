@@ -2,8 +2,11 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Enums\Permission;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\CalendarDayResource;
+use App\Http\Resources\EnemyActionResource;
+use App\Http\Resources\GovernmentActionResource;
 use App\Services\CalendarService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -16,9 +19,16 @@ class TimelineController extends Controller
 
     public function index(Request $request): JsonResponse
     {
+        $user = $request->user();
+
+        if (! $user->isAdmin() && ! $user->hasPermission(Permission::ViewAdminViews)) {
+            abort(403, 'Admin views access required.');
+        }
+
         $data = $this->calendarService->timeline(
             $request->query('from'),
             $request->query('to'),
+            $user,
         );
 
         return response()->json([
@@ -30,9 +40,15 @@ class TimelineController extends Controller
         ]);
     }
 
-    public function show(string $date): JsonResponse
+    public function show(Request $request, string $date): JsonResponse
     {
-        $day = $this->calendarService->findByDate($date);
+        $user = $request->user();
+
+        if (! $user->isAdmin() && ! $user->hasPermission(Permission::ViewAdminViews)) {
+            abort(403, 'Admin views access required.');
+        }
+
+        $day = $this->calendarService->findByDate($date, $user);
 
         if (! $day) {
             return response()->json(['message' => 'Day not found'], 404);
@@ -43,10 +59,28 @@ class TimelineController extends Controller
         ]);
     }
 
-    public function stats(): JsonResponse
+    public function stats(Request $request): JsonResponse
     {
+        $user = $request->user();
+
+        if (! $user->isAdmin() && ! $user->hasPermission(Permission::ViewAdminViews)) {
+            abort(403, 'Admin views access required.');
+        }
+
         return response()->json([
-            'data' => $this->calendarService->dashboardStats(),
+            'data' => $this->calendarService->dashboardStats($user),
+        ]);
+    }
+
+    public function myContent(Request $request): JsonResponse
+    {
+        $data = $this->calendarService->myContent($request->user());
+
+        return response()->json([
+            'data' => [
+                'enemy_actions' => EnemyActionResource::collection($data['enemy_actions']),
+                'government_actions' => GovernmentActionResource::collection($data['government_actions']),
+            ],
         ]);
     }
 }

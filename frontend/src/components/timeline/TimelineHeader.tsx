@@ -76,7 +76,7 @@ export function TimelineHeader({
   return (
     <header
       ref={headerRef}
-      className="sticky top-0 z-30 space-y-2 bg-[var(--background)] pb-2"
+      className="z-30 space-y-2 bg-[var(--background)] pb-1"
     >
       <div className="flex items-center gap-2 sm:gap-3">
         <MobileMenuButton onClick={onOpenMobileMenu} />

@@ -22,12 +22,6 @@ class SettingsController extends Controller
 
     public function update(Request $request): JsonResponse
     {
-        /** @var \App\Models\User|null $user */
-        $user = $request->user();
-        if (! $user || ! $user->isAdmin()) {
-            abort(403, 'Only super admins can update settings.');
-        }
-
         $data = $request->validate([
             'rangeStart' => ['nullable', 'string', 'max:32'],
             'rangeEnd' => ['nullable', 'string', 'max:32'],

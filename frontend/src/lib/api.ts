@@ -4,6 +4,12 @@ const API_BASE =
   process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") ||
   "http://localhost:8000/api/v1";
 
+function authHeaders(): HeadersInit {
+  if (typeof window === "undefined") return {};
+  const token = localStorage.getItem("taghvim_token");
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
 export async function fetchTimeline(
   from?: string,
   to?: string,
@@ -16,7 +22,11 @@ export async function fetchTimeline(
   const url = `${API_BASE}/timeline${query ? `?${query}` : ""}`;
 
   const response = await fetch(url, {
-    next: { revalidate: 30 },
+    cache: "no-store",
+    headers: {
+      Accept: "application/json",
+      ...authHeaders(),
+    },
   });
 
   if (!response.ok) {
@@ -29,6 +39,10 @@ export async function fetchTimeline(
 export async function fetchDay(date: string) {
   const response = await fetch(`${API_BASE}/timeline/${date}`, {
     cache: "no-store",
+    headers: {
+      Accept: "application/json",
+      ...authHeaders(),
+    },
   });
 
   if (!response.ok) {

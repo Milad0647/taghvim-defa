@@ -143,6 +143,7 @@ export function TimelinePage({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialDays]);
   const appliedDefaultView = useRef(false);
+  const timelineScrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setDashboardSettings(getDashboardSettings());
@@ -293,6 +294,7 @@ export function TimelinePage({
 
   useEffect(() => {
     if (selectedView !== "timeline") return;
+    const root = timelineScrollRef.current;
     const observer = new IntersectionObserver(
       (entries) => {
         const visible = entries
@@ -302,7 +304,11 @@ export function TimelinePage({
           setSelectedDay(visible.target.id.replace("day-", ""));
         }
       },
-      { rootMargin: "-20% 0px -55% 0px", threshold: [0.15, 0.4, 0.7] },
+      {
+        root: root ?? null,
+        rootMargin: "-10% 0px -55% 0px",
+        threshold: [0.15, 0.4, 0.7],
+      },
     );
 
     filteredDays.forEach((day) => {
@@ -312,56 +318,100 @@ export function TimelinePage({
     return () => observer.disconnect();
   }, [filteredDays, selectedView]);
 
+  const scrollDayIntoView = useCallback((date: string) => {
+    const container = timelineScrollRef.current;
+    const el = document.getElementById(`day-${date}`);
+    if (!container || !el) return false;
+
+    const containerRect = container.getBoundingClientRect();
+    const elRect = el.getBoundingClientRect();
+    const nextTop =
+      container.scrollTop + (elRect.top - containerRect.top) - 8;
+    container.scrollTo({ top: Math.max(0, nextTop), behavior: "smooth" });
+    return true;
+  }, []);
+
   const scrollToDay = useCallback(
-    (date: string, switchToTimeline = true) => {
+    (rawDate: string, switchToTimeline = true) => {
+      if (!rawDate) return;
+
+      // Prefer the clicked day; if empty, jump to nearest day that has events.
+      const sourceDays = rangedDays.length ? rangedDays : days;
+      const resolveDate = (): string => {
+        if (sourceDays.some((d) => d.date === rawDate && d.events.length > 0)) {
+          return rawDate;
+        }
+        const withEvents = sourceDays.filter((d) => d.events.length > 0);
+        if (withEvents.length === 0) return rawDate;
+        const nearest = withEvents.reduce((best, day) => {
+          const bestDist = Math.abs(
+            Date.parse(`${best.date}T12:00:00`) -
+              Date.parse(`${rawDate}T12:00:00`),
+          );
+          const dist = Math.abs(
+            Date.parse(`${day.date}T12:00:00`) -
+              Date.parse(`${rawDate}T12:00:00`),
+          );
+          return dist < bestDist ? day : best;
+        });
+        return nearest.date;
+      };
+
+      const date = resolveDate();
       if (switchToTimeline) setSelectedView("timeline");
       setSelectedDay(date);
       setCollapsedDays((prev) => ({ ...prev, [date]: false }));
 
       const day =
-        rangedDays.find((d) => d.date === date) ??
+        sourceDays.find((d) => d.date === date) ??
         days.find((d) => d.date === date) ??
         null;
       const top = day?.events[0] ?? null;
       if (top) setSelectedEvent(top);
 
       const dayVisible = filterTimelineDays(
-        rangedDays.length ? rangedDays : days,
+        sourceDays,
         filters,
         searchQuery,
       ).some((d) => d.date === date);
 
-      const nextFilters = dayVisible
-        ? filters
-        : { ...filters, agencyId: "all" as const };
-      if (!dayVisible) setFilters(nextFilters);
+      // Clear filters that hide the target day so the section exists in the DOM.
+      const nextFilters = dayVisible ? filters : defaultFilters;
+      if (!dayVisible) {
+        setFilters(nextFilters);
+        setSearchInput("");
+        setSearchQuery("");
+      }
 
       syncUrl({
         date,
         view: switchToTimeline ? "timeline" : selectedView,
         event: top?.id ?? null,
         filters: nextFilters,
+        q: dayVisible ? undefined : "",
       });
 
       const tryScroll = (attempt = 0) => {
-        const el = document.getElementById(`day-${date}`);
-        if (el) {
-          el.scrollIntoView({ behavior: "smooth", block: "start" });
-          // Second pass after sticky header settles
-          window.setTimeout(() => {
-            el.scrollIntoView({ behavior: "smooth", block: "start" });
-          }, 120);
+        if (scrollDayIntoView(date)) {
+          window.setTimeout(() => scrollDayIntoView(date), 160);
           return;
         }
-        if (attempt < 20) {
+        if (attempt < 25) {
           window.setTimeout(() => tryScroll(attempt + 1), 40);
         }
       };
 
-      // Wait for React to paint the day section (and filter reset if needed)
-      window.setTimeout(() => tryScroll(), 80);
+      window.setTimeout(() => tryScroll(), 60);
     },
-    [days, filters, rangedDays, searchQuery, selectedView, syncUrl],
+    [
+      days,
+      filters,
+      rangedDays,
+      scrollDayIntoView,
+      searchQuery,
+      selectedView,
+      syncUrl,
+    ],
   );
 
   const relatedLookup = useCallback(
@@ -441,91 +491,99 @@ export function TimelinePage({
   };
 
   const main = (
-    <div className="min-w-0 flex-1 space-y-3 pb-24 md:pb-6">
-      <TimelineHeader
-        showViewSwitcher={
-          selectedView !== "timeline" &&
-          selectedView !== "day" &&
-          selectedView !== "week" &&
-          selectedView !== "month"
-        }
-        showDateFilters={
-          selectedView !== "day" &&
-          selectedView !== "week" &&
-          selectedView !== "month"
-        }
-        searchQuery={searchInput}
-        onSearchChange={setSearchInput}
-        dateFrom={filters.dateFrom}
-        dateTo={filters.dateTo}
-        onDateFromChange={(value) => {
-          const next = { ...filters, dateFrom: value };
-          setFilters(next);
-          syncUrl({ filters: next });
-        }}
-        onDateToChange={(value) => {
-          const next = { ...filters, dateTo: value };
-          setFilters(next);
-          syncUrl({ filters: next });
-        }}
-        onOpenFilters={() => setFiltersOpen(true)}
-        onOpenMobileMenu={() => setMobileMenuOpen(true)}
-        activeFilterCount={activeFilterCount}
-        selectedView={selectedView}
-        onViewChange={changeView}
-      />
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-3 pb-20 md:pb-2">
+      <div className="shrink-0 space-y-3">
+        <TimelineHeader
+          showViewSwitcher={
+            selectedView !== "timeline" &&
+            selectedView !== "day" &&
+            selectedView !== "week" &&
+            selectedView !== "month"
+          }
+          showDateFilters={
+            selectedView !== "day" &&
+            selectedView !== "week" &&
+            selectedView !== "month"
+          }
+          searchQuery={searchInput}
+          onSearchChange={setSearchInput}
+          dateFrom={filters.dateFrom}
+          dateTo={filters.dateTo}
+          onDateFromChange={(value) => {
+            const next = { ...filters, dateFrom: value };
+            setFilters(next);
+            syncUrl({ filters: next });
+          }}
+          onDateToChange={(value) => {
+            const next = { ...filters, dateTo: value };
+            setFilters(next);
+            syncUrl({ filters: next });
+          }}
+          onOpenFilters={() => setFiltersOpen(true)}
+          onOpenMobileMenu={() => setMobileMenuOpen(true)}
+          activeFilterCount={activeFilterCount}
+          selectedView={selectedView}
+          onViewChange={changeView}
+        />
 
-      <AgencyFilterBar
-        value={filters.agencyId}
-        onChange={(agencyId) => {
-          const next = { ...filters, agencyId };
-          setFilters(next);
-          syncUrl({ filters: next });
-        }}
-      />
-
-      {selectedView === "timeline" ? (
-        <ActiveFilterChips
-          chips={chips}
-          onRemove={removeChip}
-          onClearAll={() => {
-            setFilters(defaultFilters);
-            syncUrl({ filters: defaultFilters });
+        <AgencyFilterBar
+          value={filters.agencyId}
+          onChange={(agencyId) => {
+            const next = { ...filters, agencyId };
+            setFilters(next);
+            syncUrl({ filters: next });
           }}
         />
-      ) : null}
 
-      {loading ? <TimelineSkeleton /> : null}
-      {error ? (
-        <EmptyTimelineState
-          title="دریافت اطلاعات با خطا مواجه شد."
-          description={error}
-          onRetry={() => window.location.reload()}
-        />
-      ) : null}
-
-      {!loading && !error && selectedView === "timeline" ? (
-        filteredDays.length === 0 ? (
-          <EmptyTimelineState
-            title={
-              searchQuery
-                ? "نتیجه‌ای برای جست‌وجوی شما پیدا نشد."
-                : "در این بازه رویدادی ثبت نشده است."
-            }
-            onRetry={() => {
+        {selectedView === "timeline" ? (
+          <ActiveFilterChips
+            chips={chips}
+            onRemove={removeChip}
+            onClearAll={() => {
               setFilters(defaultFilters);
-              setSearchInput("");
-              setSearchQuery("");
+              syncUrl({ filters: defaultFilters });
             }}
           />
-        ) : (
-          <>
-            <EventIntensityPanel
-              days={rangedDays}
-              activeDate={selectedDay}
-              onSelectDay={(date) => scrollToDay(date, true)}
+        ) : null}
+
+        {!loading && !error && selectedView === "timeline" && filteredDays.length > 0 ? (
+          <EventIntensityPanel
+            days={rangedDays}
+            activeDate={selectedDay}
+            onSelectDay={(date) => scrollToDay(date, true)}
+          />
+        ) : null}
+      </div>
+
+      <div
+        ref={timelineScrollRef}
+        className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden scrollbar-thin"
+      >
+        {loading ? <TimelineSkeleton /> : null}
+        {error ? (
+          <EmptyTimelineState
+            title="دریافت اطلاعات با خطا مواجه شد."
+            description={error}
+            onRetry={() => window.location.reload()}
+          />
+        ) : null}
+
+        {!loading && !error && selectedView === "timeline" ? (
+          filteredDays.length === 0 ? (
+            <EmptyTimelineState
+              title={
+                searchQuery
+                  ? "نتیجه‌ای برای جست‌وجوی شما پیدا نشد."
+                  : "در این بازه رویدادی ثبت نشده است."
+              }
+              onRetry={() => {
+                setFilters(defaultFilters);
+                setSearchInput("");
+                setSearchQuery("");
+              }}
             />
-            <div className="space-y-4">
+          ) : (
+            <div className="space-y-4 pb-4">
               {filteredDays.map((day) => (
                 <TimelineDaySection
                   key={day.date}
@@ -547,65 +605,65 @@ export function TimelinePage({
                 />
               ))}
             </div>
-          </>
-        )
-      ) : null}
+          )
+        ) : null}
 
-      {!loading && !error && selectedView === "day" ? (
-        <DailyView
-          days={rangedDays}
-          selectedDay={selectedDay}
-          selectedEventId={selectedEvent?.id ?? null}
-          searchQuery={searchQuery}
-          showEnemy={dashboardSettings.showEnemySection}
-          showGovernment={dashboardSettings.showGovernmentSection}
-          relatedLookup={relatedLookup}
-          onSelectDay={(date) => {
-            setSelectedDay(date);
-            const day = rangedDays.find((d) => d.date === date);
-            const top = day?.events[0] ?? null;
-            if (top) setSelectedEvent(top);
-            else setSelectedEvent(null);
-            syncUrl({ date, view: "day", event: top?.id ?? null });
-          }}
-          onOpenEvent={openEvent}
-        />
-      ) : null}
+        {!loading && !error && selectedView === "day" ? (
+          <DailyView
+            days={rangedDays}
+            selectedDay={selectedDay}
+            selectedEventId={selectedEvent?.id ?? null}
+            searchQuery={searchQuery}
+            showEnemy={dashboardSettings.showEnemySection}
+            showGovernment={dashboardSettings.showGovernmentSection}
+            relatedLookup={relatedLookup}
+            onSelectDay={(date) => {
+              setSelectedDay(date);
+              const day = rangedDays.find((d) => d.date === date);
+              const top = day?.events[0] ?? null;
+              if (top) setSelectedEvent(top);
+              else setSelectedEvent(null);
+              syncUrl({ date, view: "day", event: top?.id ?? null });
+            }}
+            onOpenEvent={openEvent}
+          />
+        ) : null}
 
-      {!loading && !error && selectedView === "week" ? (
-        <WeeklyView
-          days={rangedDays}
-          selectedDay={selectedDay}
-          onSelectDay={openDayModal}
-        />
-      ) : null}
-      {!loading && !error && selectedView === "month" ? (
-        <MonthlyView
-          days={rangedDays}
-          selectedDay={selectedDay}
-          onSelectDay={openDayModal}
-        />
-      ) : null}
-      {!loading && !error && selectedView === "heatmap" ? (
-        <HeatmapView
-          days={filteredDays}
-          onSelectDay={(date) => scrollToDay(date, true)}
-        />
-      ) : null}
-      {!loading && !error && selectedView === "map" ? (
-        <MapView
-          days={filteredDays}
-          onSelectProvince={(province) => {
-            const next = { ...filters, province };
-            setFilters(next);
-            setSelectedView("timeline");
-            syncUrl({ filters: next, view: "timeline" });
-          }}
-        />
-      ) : null}
-      {!loading && !error && selectedView === "analytics" ? (
-        <AnalyticsView days={filteredDays} />
-      ) : null}
+        {!loading && !error && selectedView === "week" ? (
+          <WeeklyView
+            days={rangedDays}
+            selectedDay={selectedDay}
+            onSelectDay={openDayModal}
+          />
+        ) : null}
+        {!loading && !error && selectedView === "month" ? (
+          <MonthlyView
+            days={rangedDays}
+            selectedDay={selectedDay}
+            onSelectDay={openDayModal}
+          />
+        ) : null}
+        {!loading && !error && selectedView === "heatmap" ? (
+          <HeatmapView
+            days={filteredDays}
+            onSelectDay={(date) => scrollToDay(date, true)}
+          />
+        ) : null}
+        {!loading && !error && selectedView === "map" ? (
+          <MapView
+            days={filteredDays}
+            onSelectProvince={(province) => {
+              const next = { ...filters, province };
+              setFilters(next);
+              setSelectedView("timeline");
+              syncUrl({ filters: next, view: "timeline" });
+            }}
+          />
+        ) : null}
+        {!loading && !error && selectedView === "analytics" ? (
+          <AnalyticsView days={filteredDays} />
+        ) : null}
+      </div>
 
       {selectedView === "timeline" ? (
         <button

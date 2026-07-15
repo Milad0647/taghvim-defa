@@ -17,6 +17,19 @@ const SEED_USERS: AdminUser[] = [
     is_active: true,
     created_at: new Date().toISOString(),
     agencyIds: [],
+    permissions: [
+      "view_admin_views",
+      "manage_content",
+      "publish",
+      "manage_subusers",
+      "manage_users",
+      "manage_settings",
+      "manage_agencies",
+      "manage_form_schema",
+      "view_archive",
+      "force_delete",
+      "run_backup",
+    ],
     password: "password",
   },
   {
@@ -27,6 +40,12 @@ const SEED_USERS: AdminUser[] = [
     is_active: true,
     created_at: new Date().toISOString(),
     agencyIds: ["agency-defense", "agency-mfa"],
+    permissions: [
+      "manage_content",
+      "publish",
+      "manage_subusers",
+      "view_archive",
+    ],
     password: "password",
   },
   {
@@ -37,6 +56,7 @@ const SEED_USERS: AdminUser[] = [
     is_active: true,
     created_at: new Date().toISOString(),
     agencyIds: ["agency-health"],
+    permissions: ["manage_content", "publish", "view_archive"],
     password: "password",
   },
   {
@@ -47,6 +67,7 @@ const SEED_USERS: AdminUser[] = [
     is_active: true,
     created_at: new Date().toISOString(),
     agencyIds: [],
+    permissions: [],
     password: "password",
   },
 ];
@@ -58,6 +79,8 @@ function normalizeUser(user: AdminUser): AdminUser {
   return {
     ...user,
     agencyIds: Array.isArray(user.agencyIds) ? user.agencyIds : [],
+    permissions: Array.isArray(user.permissions) ? user.permissions : [],
+    parent_id: user.parent_id ?? null,
   };
 }
 
@@ -113,6 +136,8 @@ export function createUser(input: {
   password: string;
   is_active?: boolean;
   agencyIds?: string[];
+  permissions?: AdminUser["permissions"];
+  parent_id?: string | number | null;
 }): AdminUser {
   const users = ensureSeedUsers();
   if (users.some((u) => u.email.toLowerCase() === input.email.toLowerCase())) {
@@ -127,6 +152,8 @@ export function createUser(input: {
     is_active: input.is_active ?? true,
     created_at: new Date().toISOString(),
     agencyIds: input.agencyIds ?? [],
+    permissions: input.permissions ?? [],
+    parent_id: input.parent_id ?? null,
     password: input.password,
   };
 
@@ -138,7 +165,10 @@ export function createUser(input: {
 export function updateUser(
   id: string,
   patch: Partial<
-    Pick<AdminUser, "name" | "email" | "role" | "is_active" | "agencyIds">
+    Pick<
+      AdminUser,
+      "name" | "email" | "role" | "is_active" | "agencyIds" | "permissions" | "parent_id"
+    >
   > & {
     password?: string;
   },

@@ -131,19 +131,24 @@ export function CreateEventForm({
 
     const user = getCurrentUser();
     const all = listAgencies({ activeOnly: true });
+    // Non-admins only see ministries assigned to them
     const scoped =
-      !user || user.role === "super_admin" || !user.agencyIds?.length
+      user?.role === "super_admin"
         ? all
-        : all.filter((a) => user.agencyIds.includes(a.id));
+        : all.filter((a) => (user?.agencyIds ?? []).includes(a.id));
     setAllowedAgencies(scoped);
     setValues((d) => {
       let nextDate = d.date;
       if (!nextDate || nextDate < min || nextDate > max) {
         nextDate = min;
       }
+      const nextAgency =
+        d.agencyId && scoped.some((a) => a.id === d.agencyId)
+          ? d.agencyId
+          : scoped[0]?.id || "";
       return {
         ...d,
-        agencyId: d.agencyId || scoped[0]?.id || "",
+        agencyId: nextAgency,
         date: nextDate,
       };
     });
@@ -314,12 +319,26 @@ export function CreateEventForm({
       setError("تاریخ باید داخل بازه مجاز سامانه باشد.");
       return;
     }
-    if (!values.agencyId) {
-      setError("وزارتخانه / بخش دولت را انتخاب کنید.");
-      return;
+
+    const eventType = (values.eventType as EventType) || "enemy";
+
+    if (eventType === "government") {
+      if (!values.agencyId) {
+        setError(
+          agencyOptions.length === 0
+            ? "برای شما وزارتخانه‌ای تعریف نشده است؛ با مدیر هماهنگ کنید."
+            : "وزارتخانه را انتخاب کنید.",
+        );
+        return;
+      }
+      if (!agencyOptions.some((a) => a.id === values.agencyId)) {
+        setError("فقط وزارتخانه‌های مجاز خودتان را می‌توانید انتخاب کنید.");
+        return;
+      }
     }
+
     if (
-      ((values.eventType as EventType) || "enemy") === "government" &&
+      eventType === "government" &&
       responseMode === "linked" &&
       !responseToId
     ) {
@@ -334,8 +353,8 @@ export function CreateEventForm({
       }
     }
 
-    const agency = getAgencyById(values.agencyId);
-    const eventType = (values.eventType as EventType) || "enemy";
+    const agency =
+      eventType === "government" ? getAgencyById(values.agencyId) : null;
     const tags =
       eventType === "government"
         ? withNationalHeroTag([], nationalHero)
@@ -360,23 +379,22 @@ export function CreateEventForm({
       severity: (values.severity as Severity) || "medium",
       verificationStatus: "published",
       actionStatus: eventType === "government" ? "in_progress" : undefined,
-      category: agency?.shortName || "عمومی",
+      category:
+        eventType === "government"
+          ? agency?.shortName || "عمومی"
+          : "عمومی",
       location: {
         province: values.location?.trim() || undefined,
         lat: mapPin?.latitude,
         lng: mapPin?.longitude,
       },
-      organization: agency?.shortName,
-      agencyId: values.agencyId,
-      agencyName: agency?.name,
+      organization:
+        eventType === "government" ? agency?.shortName : undefined,
+      agencyId: eventType === "government" ? values.agencyId : undefined,
+      agencyName: eventType === "government" ? agency?.name : undefined,
       createdByUserId: user.id,
       createdByName: user.name,
-      createdByAgencyIds:
-        user.agencyIds?.length > 0
-          ? user.agencyIds
-          : values.agencyId
-            ? [values.agencyId]
-            : [],
+      createdByAgencyIds: user.agencyIds?.length ? user.agencyIds : [],
       source: values.source?.trim() || undefined,
       imageUrl: localMedia.find((m) => m.type === "image")?.url,
       media: localMedia,
@@ -439,7 +457,6 @@ export function CreateEventForm({
                 occurred_at: `${values.date}T${values.time || "12:00"}:00`,
                 status: "published",
                 custom_fields: customFields,
-                agency_id: values.agencyId || null,
               }
             : {
                 title: values.title.trim(),
@@ -527,16 +544,6 @@ export function CreateEventForm({
         </div>
 
         <div className="space-y-3 text-sm">
-          <Select
-            label="وزارتخانه / بخش دولت"
-            value={values.agencyId || ""}
-            onChange={(v) => setValue("agencyId", v)}
-            options={agencyOptions.map((a) => ({
-              value: a.id,
-              label: a.shortName,
-            }))}
-          />
-
           {activeFields.length === 0 ? (
             <>
               <Select
@@ -548,6 +555,28 @@ export function CreateEventForm({
                   { value: "government", label: "اقدام دولت" },
                 ]}
               />
+              {(values.eventType || "enemy") === "government" ? (
+                <div className="space-y-1.5">
+                  <Select
+                    label="وزارتخانه *"
+                    value={values.agencyId || ""}
+                    onChange={(v) => setValue("agencyId", v)}
+                    options={agencyOptions.map((a) => ({
+                      value: a.id,
+                      label: a.shortName,
+                    }))}
+                  />
+                  {agencyOptions.length === 0 ? (
+                    <p className="text-[11px] text-amber-600">
+                      وزارتخانه‌ای برای حساب شما تعریف نشده است.
+                    </p>
+                  ) : (
+                    <p className="text-[11px] text-[var(--text-muted)]">
+                      فقط وزارتخانه‌هایی که به شما دسترسی داده شده قابل انتخاب هستند.
+                    </p>
+                  )}
+                </div>
+              ) : null}
               <Field
                 label="عنوان"
                 value={values.title || ""}
@@ -578,16 +607,40 @@ export function CreateEventForm({
               />
             </>
           ) : (
-            activeFields.map((field) => (
-              <DynamicField
-                key={field.key}
-                field={field}
-                value={values[field.key] ?? ""}
-                onChange={(v) => setValue(field.key, v)}
-                minDate={dateMin}
-                maxDate={dateMax}
-              />
-            ))
+            <>
+              {activeFields.map((field) => (
+                <DynamicField
+                  key={field.key}
+                  field={field}
+                  value={values[field.key] ?? ""}
+                  onChange={(v) => setValue(field.key, v)}
+                  minDate={dateMin}
+                  maxDate={dateMax}
+                />
+              ))}
+              {(values.eventType || "enemy") === "government" ? (
+                <div className="space-y-1.5">
+                  <Select
+                    label="وزارتخانه *"
+                    value={values.agencyId || ""}
+                    onChange={(v) => setValue("agencyId", v)}
+                    options={agencyOptions.map((a) => ({
+                      value: a.id,
+                      label: a.shortName,
+                    }))}
+                  />
+                  {agencyOptions.length === 0 ? (
+                    <p className="text-[11px] text-amber-600">
+                      وزارتخانه‌ای برای حساب شما تعریف نشده است.
+                    </p>
+                  ) : (
+                    <p className="text-[11px] text-[var(--text-muted)]">
+                      فقط وزارتخانه‌هایی که به شما دسترسی داده شده قابل انتخاب هستند.
+                    </p>
+                  )}
+                </div>
+              ) : null}
+            </>
           )}
 
           <Field

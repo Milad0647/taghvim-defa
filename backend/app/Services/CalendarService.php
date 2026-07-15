@@ -137,7 +137,8 @@ class CalendarService
 
     public function createEnemyAction(CalendarDay $day, array $data, ?User $actor = null): EnemyAction
     {
-        $data = $this->withResolvedAgencyId($data, $actor);
+        unset($data['agency_id']);
+        $data['agency_id'] = null;
 
         $action = $day->enemyActions()->create([
             ...$data,
@@ -151,7 +152,7 @@ class CalendarService
 
     public function createGovernmentAction(CalendarDay $day, array $data, ?User $actor = null): GovernmentAction
     {
-        $data = $this->withResolvedAgencyId($data, $actor);
+        $data = $this->withResolvedAgencyId($data, $actor, requireAgency: true);
 
         $action = $day->governmentActions()->create([
             ...$data,
@@ -229,28 +230,49 @@ class CalendarService
     }
 
     /**
-     * Bind content to a ministry: prefer requested agency_id when allowed,
-     * otherwise fall back to the first agency assigned to the user.
+     * Bind government content to a ministry the actor is allowed to use.
+     *
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
      */
-    public function withResolvedAgencyId(array $data, ?User $actor): array
+    public function withResolvedAgencyId(array $data, ?User $actor, bool $requireAgency = true): array
     {
-        $requested = isset($data['agency_id']) ? (string) $data['agency_id'] : '';
+        if (! $requireAgency) {
+            $data['agency_id'] = null;
+
+            return $data;
+        }
+
+        $requested = isset($data['agency_id']) ? trim((string) $data['agency_id']) : '';
         $requested = $requested !== '' ? $requested : null;
         $allowed = array_values(array_map('strval', $actor?->agency_ids ?? []));
+        $isAdmin = $actor?->isAdmin() ?? false;
 
-        if ($actor === null || $actor->isAdmin() || $allowed === []) {
+        if ($requested === null) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'agency_id' => ['انتخاب وزارتخانه برای اقدام دولت الزامی است.'],
+            ]);
+        }
+
+        if ($isAdmin) {
             $data['agency_id'] = $requested;
 
             return $data;
         }
 
-        if ($requested !== null && in_array($requested, $allowed, true)) {
-            $data['agency_id'] = $requested;
-
-            return $data;
+        if ($allowed === []) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'agency_id' => ['برای حساب شما وزارتخانه‌ای تعریف نشده است.'],
+            ]);
         }
 
-        $data['agency_id'] = $allowed[0];
+        if (! in_array($requested, $allowed, true)) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'agency_id' => ['فقط وزارتخانه‌های مجاز خودتان را می‌توانید انتخاب کنید.'],
+            ]);
+        }
+
+        $data['agency_id'] = $requested;
 
         return $data;
     }

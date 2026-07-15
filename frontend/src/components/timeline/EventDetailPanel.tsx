@@ -173,11 +173,15 @@ export function EventDetailPanel({
                 }
               />
             ) : null}
-            <Meta label="نهاد" value={event.organization || "—"} />
-            <Meta
-              label="وزارتخانه"
-              value={event.agencyName || event.organization || "—"}
-            />
+            {!isEnemy ? (
+              <>
+                <Meta label="نهاد" value={event.organization || "—"} />
+                <Meta
+                  label="وزارتخانه"
+                  value={event.agencyName || event.organization || "—"}
+                />
+              </>
+            ) : null}
             {event.createdByName ? (
               <Meta label="ثبت‌کننده" value={event.createdByName} />
             ) : null}

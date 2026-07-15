@@ -155,9 +155,8 @@ class CalendarDayController extends Controller
     public function updateEnemyAction(UpdateEnemyActionRequest $request, EnemyAction $enemyAction): JsonResponse
     {
         $data = $request->validated();
-        if (array_key_exists('agency_id', $data)) {
-            $data = $this->calendarService->withResolvedAgencyId($data, $request->user());
-        }
+        unset($data['agency_id']);
+        $data['agency_id'] = null;
         $enemyAction->update($data);
         $enemyAction->load(['media', 'category', 'calendarDay', 'creator:id,name']);
 
@@ -170,7 +169,7 @@ class CalendarDayController extends Controller
     {
         $data = $request->validated();
         if (array_key_exists('agency_id', $data)) {
-            $data = $this->calendarService->withResolvedAgencyId($data, $request->user());
+            $data = $this->calendarService->withResolvedAgencyId($data, $request->user(), requireAgency: true);
         }
         $governmentAction->update($data);
         $governmentAction->load(['media', 'category', 'calendarDay', 'responseTo', 'creator:id,name']);

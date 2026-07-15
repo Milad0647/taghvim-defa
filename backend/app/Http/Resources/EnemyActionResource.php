@@ -23,7 +23,6 @@ class EnemyActionResource extends JsonResource
             'status' => $this->status?->value,
             'custom_fields' => $this->custom_fields ?? [],
             'created_by' => $this->created_by,
-            'agency_id' => $this->agency_id,
             'date' => $this->occurred_at?->toDateString()
                 ?? $this->calendarDay?->date?->toDateString(),
             'creator' => $this->whenLoaded('creator', fn () => $this->creator ? [

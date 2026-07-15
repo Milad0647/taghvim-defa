@@ -6,6 +6,7 @@ import { SiteMottoBanner } from "@/components/brand/SiteMottoBanner";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { apiFetch, getCurrentUser, logoutRequest } from "@/lib/auth";
+import { getAgencyById, listAgencies } from "@/lib/agency-store";
 import { getSiteBranding } from "@/lib/branding";
 import { formatPersianDateLabel } from "@/lib/persian-date";
 import { severityLabel } from "@/lib/timeline";
@@ -238,7 +239,6 @@ export default function MyContentPage() {
               source: draft.source || null,
               location: draft.location || null,
               status: draft.status || "published",
-              agency_id: draft.agency_id || null,
             }
           : {
               title: draft.title.trim(),
@@ -700,6 +700,12 @@ function ContentModal({
   }, [item, mode]);
 
   const isEnemy = draft.kind === "enemy";
+  const currentUser = getCurrentUser();
+  const agencyOptions = (() => {
+    const all = listAgencies({ activeOnly: true });
+    if (currentUser?.role === "super_admin") return all;
+    return all.filter((a) => (currentUser?.agencyIds ?? []).includes(a.id));
+  })();
 
   return (
     <div className="fixed inset-0 z-[60]">
@@ -768,8 +774,8 @@ function ContentModal({
               <MetaRow label="محل" value={item.location} />
             ) : null}
             {item.source ? <MetaRow label="منبع" value={item.source} /> : null}
-            {item.agency ? (
-              <MetaRow label="نهاد" value={item.agency} />
+            {item.agency && item.kind === "government" ? (
+              <MetaRow label="وزارتخانه" value={item.agency} />
             ) : null}
             <div>
               <p className="text-[11px] text-[var(--text-muted)]">شرح</p>
@@ -856,11 +862,33 @@ function ContentModal({
                 />
               </>
             ) : (
-              <Field
-                label="نهاد / سازمان"
-                value={draft.agency ?? ""}
-                onChange={(v) => setDraft((d) => ({ ...d, agency: v }))}
-              />
+              <div className="space-y-1.5">
+                <SelectField
+                  label="وزارتخانه *"
+                  value={draft.agency_id || ""}
+                  onChange={(v) => {
+                    const agency = getAgencyById(v);
+                    setDraft((d) => ({
+                      ...d,
+                      agency_id: v || null,
+                      agency: agency?.shortName ?? d.agency ?? null,
+                    }));
+                  }}
+                  options={agencyOptions.map((a) => ({
+                    value: a.id,
+                    label: a.shortName,
+                  }))}
+                />
+                {agencyOptions.length === 0 ? (
+                  <p className="text-[11px] text-amber-600">
+                    وزارتخانه‌ای برای حساب شما تعریف نشده است.
+                  </p>
+                ) : (
+                  <p className="text-[11px] text-[var(--text-muted)]">
+                    فقط وزارتخانه‌های مجاز شما قابل انتخاب هستند.
+                  </p>
+                )}
+              </div>
             )}
             <SelectField
               label="وضعیت"

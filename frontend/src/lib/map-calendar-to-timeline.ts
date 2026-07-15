@@ -91,7 +91,8 @@ function mapEnemy(
     verificationStatus: (action.status as VerificationStatus) || "published",
     category: action.category?.name || "عمومی",
     location: mapLocation(action.location, action.latitude, action.longitude),
-    agencyId: action.agency_id ?? undefined,
+    agencyId: undefined,
+    agencyName: undefined,
     createdByUserId:
       action.created_by != null ? String(action.created_by) : undefined,
     createdByName: action.creator?.name,

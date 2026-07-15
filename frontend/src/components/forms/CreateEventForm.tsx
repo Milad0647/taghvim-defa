@@ -1,6 +1,10 @@
 "use client";
 
 import { PersianDatePicker } from "@/components/shared/PersianDatePicker";
+import {
+  LocationMapPicker,
+  type MapCoordinates,
+} from "@/components/forms/LocationMapPicker";
 import { getAgencyById, listAgencies } from "@/lib/agency-store";
 import { getDashboardSettings } from "@/lib/admin-store";
 import { apiFetch, getCurrentUser } from "@/lib/auth";
@@ -79,6 +83,7 @@ export function CreateEventForm({
   const [dateMin, setDateMin] = useState(SEED_RANGE_START);
   const [dateMax, setDateMax] = useState(SEED_RANGE_END);
   const [mediaFiles, setMediaFiles] = useState<File[]>([]);
+  const [mapPin, setMapPin] = useState<MapCoordinates | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [isDraggingMedia, setIsDraggingMedia] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -111,6 +116,7 @@ export function CreateEventForm({
   useEffect(() => {
     if (!open) return;
     setMediaFiles([]);
+    setMapPin(null);
     setError(null);
     setIsDraggingMedia(false);
     dragDepthRef.current = 0;
@@ -357,6 +363,8 @@ export function CreateEventForm({
       category: agency?.shortName || "عمومی",
       location: {
         province: values.location?.trim() || undefined,
+        lat: mapPin?.latitude,
+        lng: mapPin?.longitude,
       },
       organization: agency?.shortName,
       agencyId: values.agencyId,
@@ -426,6 +434,8 @@ export function CreateEventForm({
                 severity: values.severity || "medium",
                 source: values.source || null,
                 location: values.location || null,
+                latitude: mapPin?.latitude ?? null,
+                longitude: mapPin?.longitude ?? null,
                 occurred_at: `${values.date}T${values.time || "12:00"}:00`,
                 status: "published",
                 custom_fields: customFields,
@@ -435,6 +445,9 @@ export function CreateEventForm({
                 title: values.title.trim(),
                 description: values.description || values.summary || null,
                 agency: agency?.shortName || null,
+                location: values.location || null,
+                latitude: mapPin?.latitude ?? null,
+                longitude: mapPin?.longitude ?? null,
                 completed_at: `${values.date}T${values.time || "12:00"}:00`,
                 status: "published",
                 custom_fields: customFields,
@@ -662,6 +675,8 @@ export function CreateEventForm({
               </span>
             </label>
           ) : null}
+
+          <LocationMapPicker value={mapPin} onChange={setMapPin} />
 
           <div className="space-y-2">
             <div className="flex items-center justify-between gap-2">

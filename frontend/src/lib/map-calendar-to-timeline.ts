@@ -44,6 +44,30 @@ function dateFromAction(
   return dayDate;
 }
 
+function mapLocation(
+  location?: string | null,
+  lat?: number | string | null,
+  lng?: number | string | null,
+): TimelineEvent["location"] | undefined {
+  const latitude =
+    lat != null && String(lat).trim() !== "" ? Number(lat) : undefined;
+  const longitude =
+    lng != null && String(lng).trim() !== "" ? Number(lng) : undefined;
+  const hasCoords =
+    latitude != null &&
+    longitude != null &&
+    Number.isFinite(latitude) &&
+    Number.isFinite(longitude);
+
+  if (!location && !hasCoords) return undefined;
+
+  return {
+    province: location || undefined,
+    lat: hasCoords ? latitude : undefined,
+    lng: hasCoords ? longitude : undefined,
+  };
+}
+
 function mapEnemy(
   action: EnemyAction & {
     creator?: { id?: number; name?: string } | null;
@@ -66,9 +90,7 @@ function mapEnemy(
     severity: (action.severity as Severity) || "medium",
     verificationStatus: (action.status as VerificationStatus) || "published",
     category: action.category?.name || "عمومی",
-    location: action.location
-      ? { province: action.location }
-      : undefined,
+    location: mapLocation(action.location, action.latitude, action.longitude),
     agencyId: action.agency_id ?? undefined,
     createdByUserId:
       action.created_by != null ? String(action.created_by) : undefined,
@@ -107,6 +129,7 @@ function mapGovernment(
     verificationStatus: (action.status as VerificationStatus) || "published",
     actionStatus: "in_progress",
     category: action.category?.name || action.agency || "عمومی",
+    location: mapLocation(action.location, action.latitude, action.longitude),
     organization: action.agency ?? undefined,
     agencyId: action.agency_id ?? undefined,
     agencyName: action.agency ?? undefined,

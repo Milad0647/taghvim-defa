@@ -21,6 +21,8 @@ export type EnemyAction = {
   severity: "low" | "medium" | "high" | "critical";
   source: string | null;
   location: string | null;
+  latitude?: number | string | null;
+  longitude?: number | string | null;
   occurred_at: string | null;
   status: string;
   agency_id?: string | null;
@@ -36,6 +38,9 @@ export type GovernmentAction = {
   title: string;
   description: string | null;
   agency: string | null;
+  location?: string | null;
+  latitude?: number | string | null;
+  longitude?: number | string | null;
   completed_at: string | null;
   status: string;
   response_to_id: number | null;

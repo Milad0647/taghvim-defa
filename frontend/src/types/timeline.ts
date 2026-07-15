@@ -50,6 +50,8 @@ export type TimelineEvent = {
   location?: {
     province?: string;
     city?: string;
+    lat?: number;
+    lng?: number;
   };
   organization?: string;
   /** Owning / responsible government agency (ministry) */

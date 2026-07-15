@@ -19,6 +19,9 @@ class GovernmentAction extends Model
         'title',
         'description',
         'agency',
+        'location',
+        'latitude',
+        'longitude',
         'completed_at',
         'status',
         'custom_fields',
@@ -32,6 +35,8 @@ class GovernmentAction extends Model
         return [
             'status' => PublishStatus::class,
             'completed_at' => 'datetime',
+            'latitude' => 'decimal:7',
+            'longitude' => 'decimal:7',
             'custom_fields' => 'array',
             'tags' => 'array',
         ];

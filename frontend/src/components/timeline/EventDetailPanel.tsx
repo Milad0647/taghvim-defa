@@ -5,7 +5,7 @@ import { RelatedResponseCard } from "@/components/timeline/RelatedResponseCard";
 import { formatResponseTime, severityLabel } from "@/lib/timeline";
 import type { TimelineEvent } from "@/types/timeline";
 import { Bug, MessageCircle, Shield, X } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 
 type EventDetailPanelProps = {
   event: TimelineEvent | null;
@@ -158,6 +158,21 @@ export function EventDetailPanel({
                   .join("، ") || "—"
               }
             />
+            {event.location?.lat != null && event.location?.lng != null ? (
+              <Meta
+                label="نقشه"
+                value={
+                  <a
+                    href={`https://www.openstreetmap.org/?mlat=${event.location.lat}&mlon=${event.location.lng}#map=14/${event.location.lat}/${event.location.lng}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-blue-500 hover:underline"
+                  >
+                    مشاهده روی نقشه
+                  </a>
+                }
+              />
+            ) : null}
             <Meta label="نهاد" value={event.organization || "—"} />
             <Meta
               label="وزارتخانه"
@@ -395,11 +410,11 @@ export function EventDetailPanel({
   );
 }
 
-function Meta({ label, value }: { label: string; value: string }) {
+function Meta({ label, value }: { label: string; value: ReactNode }) {
   return (
     <div>
       <p className="text-[10px] text-[var(--text-muted)]">{label}</p>
-      <p className="mt-[5px] text-[11px] text-[var(--text-primary)]">{value}</p>
+      <div className="mt-[5px] text-[11px] text-[var(--text-primary)]">{value}</div>
     </div>
   );
 }

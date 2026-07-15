@@ -3,6 +3,7 @@
 import { CreateEventForm } from "@/components/forms/CreateEventForm";
 import { IranEmblem } from "@/components/brand/IranEmblem";
 import { SiteMottoBanner } from "@/components/brand/SiteMottoBanner";
+import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { apiFetch, getCurrentUser, logoutRequest } from "@/lib/auth";
 import { getSiteBranding } from "@/lib/branding";
@@ -343,6 +344,7 @@ export default function MyContentPage() {
           </div>
           <div className="flex items-center gap-2">
             <ThemeToggle />
+            <NotificationBell />
             {canManage ? (
               <button
                 type="button"

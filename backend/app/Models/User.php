@@ -154,18 +154,25 @@ class User extends Authenticatable
         return array_values(array_diff($this->descendantIdsIncludingSelf(), [(int) $this->id]));
     }
 
-    public function isAncestorOf(User $other): bool
+    /**
+     * @return list<int>
+     */
+    public function ancestorIds(): array
     {
-        $current = $other->parent;
+        $ids = [];
+        $current = $this->parent;
 
         while ($current) {
-            if ((int) $current->id === (int) $this->id) {
-                return true;
-            }
+            $ids[] = (int) $current->id;
             $current = $current->parent;
         }
 
-        return false;
+        return $ids;
+    }
+
+    public function isAncestorOf(User $other): bool
+    {
+        return in_array((int) $this->id, $other->ancestorIds(), true);
     }
 
     public function canManageUser(User $target): bool
@@ -194,6 +201,24 @@ class User extends Authenticatable
         }
 
         return in_array((int) $createdBy, $visible, true);
+    }
+
+    /**
+     * Walk parent chain upward.
+     *
+     * @return list<int>
+     */
+    public function ancestorIds(): array
+    {
+        $ids = [];
+        $current = $this->parent;
+
+        while ($current) {
+            $ids[] = (int) $current->id;
+            $current = $current->parent;
+        }
+
+        return $ids;
     }
 
     public function deactivateDescendants(): void

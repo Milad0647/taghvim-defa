@@ -1,5 +1,6 @@
 "use client";
 
+import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { MobileMenuButton } from "@/components/layout/AppSidebar";
 import { PersianDatePicker } from "@/components/shared/PersianDatePicker";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
@@ -102,6 +103,7 @@ export function TimelineHeader({
         </button>
 
         <ThemeToggle />
+        <NotificationBell />
       </div>
 
       {showExtras ? (

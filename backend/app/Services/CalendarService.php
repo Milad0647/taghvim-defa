@@ -3,14 +3,17 @@
 namespace App\Services;
 
 use App\Enums\PublishStatus;
+use App\Enums\UserRole;
 use App\Models\CalendarDay;
 use App\Models\EnemyAction;
 use App\Models\GovernmentAction;
 use App\Models\Media;
 use App\Models\User;
+use App\Notifications\ContentPublishedNotification;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Notification;
 
 class CalendarService
 {
@@ -136,20 +139,93 @@ class CalendarService
     {
         $data = $this->withResolvedAgencyId($data, $actor);
 
-        return $day->enemyActions()->create([
+        $action = $day->enemyActions()->create([
             ...$data,
             'created_by' => $actor?->id,
         ]);
+
+        $this->notifyContentCreated($actor, 'enemy', $action, $day);
+
+        return $action;
     }
 
     public function createGovernmentAction(CalendarDay $day, array $data, ?User $actor = null): GovernmentAction
     {
         $data = $this->withResolvedAgencyId($data, $actor);
 
-        return $day->governmentActions()->create([
+        $action = $day->governmentActions()->create([
             ...$data,
             'created_by' => $actor?->id,
         ]);
+
+        $this->notifyContentCreated($actor, 'government', $action, $day);
+
+        return $action;
+    }
+
+    /**
+     * Notify admins (all content) and ancestors (subordinate content).
+     */
+    public function notifyContentCreated(
+        ?User $actor,
+        string $kind,
+        EnemyAction|GovernmentAction $action,
+        ?CalendarDay $day = null,
+    ): void
+    {
+        if (! $actor) {
+            return;
+        }
+
+        $recipientIds = array_values(array_unique([
+            ...User::query()
+                ->where('role', UserRole::SuperAdmin)
+                ->where('is_active', true)
+                ->where('id', '!=', $actor->id)
+                ->pluck('id')
+                ->map(fn ($id) => (int) $id)
+                ->all(),
+            ...$actor->ancestorIds(),
+        ]));
+
+        $recipientIds = array_values(array_filter(
+            $recipientIds,
+            fn (int $id) => $id !== (int) $actor->id,
+        ));
+
+        if ($recipientIds === []) {
+            return;
+        }
+
+        $recipients = User::query()
+            ->whereIn('id', $recipientIds)
+            ->where('is_active', true)
+            ->get();
+
+        if ($recipients->isEmpty()) {
+            return;
+        }
+
+        $date = null;
+        if ($action instanceof EnemyAction) {
+            $date = $action->occurred_at?->toDateString()
+                ?? $day?->date?->toDateString();
+        } else {
+            $date = $action->completed_at?->toDateString()
+                ?? $day?->date?->toDateString();
+        }
+
+        Notification::send(
+            $recipients,
+            new ContentPublishedNotification(
+                kind: $kind,
+                actionId: (int) $action->id,
+                title: (string) $action->title,
+                actorId: (int) $actor->id,
+                actorName: (string) $actor->name,
+                date: $date,
+            ),
+        );
     }
 
     /**

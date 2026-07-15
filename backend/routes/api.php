@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\V1\BackupController;
 use App\Http\Controllers\Api\V1\CalendarDayController;
 use App\Http\Controllers\Api\V1\CategoryController;
 use App\Http\Controllers\Api\V1\FormSchemaController;
+use App\Http\Controllers\Api\V1\NotificationController;
 use App\Http\Controllers\Api\V1\SettingsController;
 use App\Http\Controllers\Api\V1\TimelineController;
 use App\Http\Controllers\Api\V1\UserController;
@@ -29,6 +30,11 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
     Route::get('/timeline/stats', [TimelineController::class, 'stats']);
     Route::get('/timeline/{date}', [TimelineController::class, 'show']);
     Route::get('/my-content', [TimelineController::class, 'myContent']);
+
+    Route::get('/notifications', [NotificationController::class, 'index']);
+    Route::get('/notifications/unread-count', [NotificationController::class, 'unreadCount']);
+    Route::post('/notifications/read-all', [NotificationController::class, 'markAllRead']);
+    Route::post('/notifications/{id}/read', [NotificationController::class, 'markRead']);
 
     Route::get('/categories', [CategoryController::class, 'index']);
     Route::get('/settings', [SettingsController::class, 'show']);

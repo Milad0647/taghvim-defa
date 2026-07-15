@@ -187,6 +187,7 @@ function DaySectionCard({
                 selected={selectedEventId === event.id}
                 hasResponse={related.hasResponse}
                 responseTimeMinutes={related.responseTimeMinutes}
+                layout="stack"
                 onOpen={onOpen}
               />
             );

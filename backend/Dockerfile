@@ -26,7 +26,7 @@ RUN composer dump-autoload --optimize \
 # Run after webdevops php/nginx setup (99-*), never block boot
 COPY docker/laravel-init.sh /opt/docker/provision/entrypoint.d/99-laravel.sh
 RUN chmod +x /opt/docker/provision/entrypoint.d/99-laravel.sh \
-    && apk add --no-cache curl 2>/dev/null || true
+    && apk add --no-cache curl postgresql-client 2>/dev/null || true
 
 EXPOSE 80
 

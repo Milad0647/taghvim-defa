@@ -2,6 +2,7 @@
 
 import { MonthlyDayCellCard } from "@/components/views/monthly/MonthlyDayCell";
 import { MonthlyToolbar } from "@/components/views/monthly/MonthlyToolbar";
+import { WeeklyKpiCards } from "@/components/views/weekly/WeeklyKpiCards";
 import {
   WEEKDAY_LABELS,
   buildMonthCells,
@@ -103,26 +104,13 @@ export function MonthlyView({
         canGoNext={canGoNext}
       />
 
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-        <Kpi
-          label="روزهای ماه"
-          value={summary.dayCount.toLocaleString("fa-IR")}
-        />
-        <Kpi
-          label="روز فعال"
-          value={summary.activeDays.toLocaleString("fa-IR")}
-        />
-        <Kpi
-          label="اقدام دشمن"
-          value={summary.enemy.toLocaleString("fa-IR")}
-          tone="var(--enemy)"
-        />
-        <Kpi
-          label="اقدام دولت"
-          value={summary.government.toLocaleString("fa-IR")}
-          tone="var(--government)"
-        />
-      </div>
+      <WeeklyKpiCards
+        totalEvents={summary.totalEvents}
+        enemy={summary.enemy}
+        government={summary.government}
+        responseRatio={summary.responseRatio}
+        avgResponseMinutes={summary.avgResponseMinutes}
+      />
 
       <div className="overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-2 sm:p-3">
         <div className="mb-2 grid grid-cols-7 gap-1.5 text-center text-[11px] font-medium text-[var(--text-muted)]">
@@ -145,27 +133,5 @@ export function MonthlyView({
         </div>
       </div>
     </section>
-  );
-}
-
-function Kpi({
-  label,
-  value,
-  tone,
-}: {
-  label: string;
-  value: string;
-  tone?: string;
-}) {
-  return (
-    <div className="rounded-xl border border-[var(--border)] bg-[var(--panel)] px-3 py-2.5">
-      <p className="m-0 text-[11px] text-[var(--text-secondary)]">{label}</p>
-      <p
-        className="mt-1 mb-0 text-lg font-bold tabular-nums text-[var(--text-primary)]"
-        style={tone ? { color: tone } : undefined}
-      >
-        {value}
-      </p>
-    </div>
   );
 }

@@ -50,6 +50,7 @@ export default function MySubusersPage() {
   const [formOpen, setFormOpen] = useState(false);
   const [name, setName] = useState("");
   const [username, setUsername] = useState("");
+  const [mobile, setMobile] = useState("");
   const [password, setPassword] = useState("");
   const [selectedPerms, setSelectedPerms] = useState<Permission[]>([]);
   const [branding, setBranding] = useState(() => getSiteBranding());
@@ -149,6 +150,7 @@ export default function MySubusersPage() {
         id: String(u.id),
         name: String(u.name),
         username: String(u.username ?? u.email ?? ""),
+        mobile: u.mobile != null && String(u.mobile).trim() !== "" ? String(u.mobile) : null,
         email: u.email != null ? String(u.email) : "",
         role: (u.role as UserRole) ?? "editor",
         is_active: Boolean(u.is_active),
@@ -191,6 +193,7 @@ export default function MySubusersPage() {
       body: JSON.stringify({
         name,
         username: username.trim().toLowerCase(),
+        mobile: mobile.trim() || null,
         password,
         role: "editor",
         permissions: selectedPerms.filter((p) => grantable.includes(p)),
@@ -211,6 +214,7 @@ export default function MySubusersPage() {
     }
     setName("");
     setUsername("");
+    setMobile("");
     setPassword("");
     setFormOpen(false);
     setSuccess("زیردست جدید با موفقیت اضافه شد.");
@@ -385,6 +389,19 @@ export default function MySubusersPage() {
                   placeholder="مثلاً west_editor"
                   required
                   autoComplete="username"
+                  className="w-full rounded-xl border border-[var(--border)] bg-[var(--panel-2)] px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </label>
+              <label className="space-y-1.5 text-sm sm:col-span-2">
+                <span className="text-xs text-[var(--text-secondary)]">
+                  شماره موبایل (برای پیامک دوعاملی بعدی)
+                </span>
+                <input
+                  value={mobile}
+                  onChange={(e) => setMobile(e.target.value)}
+                  placeholder="09123456789"
+                  inputMode="tel"
+                  autoComplete="tel"
                   className="w-full rounded-xl border border-[var(--border)] bg-[var(--panel-2)] px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </label>
@@ -638,7 +655,8 @@ function SubuserNode({
             </div>
 
             <p className="mt-0.5 text-[11px] text-[var(--text-secondary)]">
-              @{u.username || "—"} · {ROLE_LABELS[u.role]}
+              @{u.username || "—"}
+              {u.mobile ? ` · ${u.mobile}` : ""} · {ROLE_LABELS[u.role]}
               {hasChildren
                 ? ` · ${node.children.length.toLocaleString("fa-IR")} زیرمجموعه`
                 : ""}

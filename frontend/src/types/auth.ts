@@ -17,6 +17,8 @@ export type AdminUser = {
   id: string;
   name: string;
   username: string;
+  /** Iranian mobile in 09xxxxxxxxx form — reserved for future SMS 2FA */
+  mobile?: string | null;
   email: string;
   role: UserRole;
   is_active: boolean;

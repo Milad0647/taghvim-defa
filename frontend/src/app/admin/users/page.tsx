@@ -53,6 +53,7 @@ function UsersManager() {
         id: String(u.id),
         name: String(u.name ?? ""),
         username: String(u.username ?? u.email ?? ""),
+        mobile: u.mobile != null && String(u.mobile).trim() !== "" ? String(u.mobile) : null,
         email: String(u.email ?? ""),
         role: (u.role as UserRole) ?? "editor",
         is_active: Boolean(u.is_active),
@@ -196,7 +197,8 @@ function UserTreeNode({
         <div>
           <p className="text-sm font-medium text-[var(--text-primary)]">{node.user.name}</p>
           <p className="text-xs text-[var(--text-secondary)]">
-            {node.user.username || node.user.email || "—"} ·{" "}
+            {node.user.username || node.user.email || "—"}
+            {node.user.mobile ? ` · ${node.user.mobile}` : ""} ·{" "}
             {ROLE_LABELS[node.user.role]} ·{" "}
             {(node.user.permissions ?? []).length} مجوز
             {node.user.agencyIds?.length
@@ -253,6 +255,7 @@ function UserForm({
 }) {
   const [name, setName] = useState(initial?.name ?? "");
   const [username, setUsername] = useState(initial?.username ?? "");
+  const [mobile, setMobile] = useState(initial?.mobile ?? "");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState<UserRole>(initial?.role ?? "editor");
   const [parentId, setParentId] = useState(
@@ -265,6 +268,7 @@ function UserForm({
   useEffect(() => {
     setName(initial?.name ?? "");
     setUsername(initial?.username ?? "");
+    setMobile(initial?.mobile ?? "");
     setPassword("");
     setRole(initial?.role ?? "editor");
     setParentId(initial?.parent_id != null ? String(initial.parent_id) : "");
@@ -278,6 +282,7 @@ function UserForm({
     const body: Record<string, unknown> = {
       name,
       username: username.trim().toLowerCase(),
+      mobile: mobile.trim() || null,
       role,
       is_active: isActive,
       permissions: perms,
@@ -341,6 +346,14 @@ function UserForm({
           onChange={(e) => setUsername(e.target.value)}
           autoComplete="username"
           required
+        />
+        <input
+          className="rounded-xl border border-[var(--border)] bg-[var(--panel-2)] px-3 py-2 text-sm"
+          placeholder="موبایل (09xxxxxxxxx)"
+          value={mobile}
+          onChange={(e) => setMobile(e.target.value)}
+          inputMode="tel"
+          autoComplete="tel"
         />
         <div className="sm:col-span-2">
           <PasswordField

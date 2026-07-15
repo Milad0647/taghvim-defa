@@ -21,6 +21,7 @@ class UserResource extends JsonResource
             'id' => $this->id,
             'name' => $this->name,
             'username' => $this->username,
+            'mobile' => $this->mobile,
             'email' => $this->email,
             'role' => $role instanceof \BackedEnum ? $role->value : (is_string($role) ? $role : null),
             'is_active' => $this->is_active,

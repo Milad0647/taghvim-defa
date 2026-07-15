@@ -77,6 +77,7 @@ function normalizeUser(user: AdminUser): AdminUser {
         : user.email) ||
       "",
     email: user.email ?? "",
+    mobile: user.mobile?.trim() || null,
     agencyIds: Array.isArray(user.agencyIds) ? user.agencyIds : [],
     permissions: Array.isArray(user.permissions) ? user.permissions : [],
     parent_id: user.parent_id ?? null,
@@ -131,6 +132,7 @@ export function getUsersWithSecrets(): AdminUser[] {
 export function createUser(input: {
   name: string;
   username: string;
+  mobile?: string | null;
   email?: string;
   role: AdminUser["role"];
   password: string;
@@ -152,6 +154,7 @@ export function createUser(input: {
     id: `u-${Date.now()}`,
     name: input.name,
     username,
+    mobile: input.mobile?.trim() || null,
     email: (input.email ?? "").trim(),
     role: input.role,
     is_active: input.is_active ?? true,

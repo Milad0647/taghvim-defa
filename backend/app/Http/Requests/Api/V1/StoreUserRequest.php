@@ -5,9 +5,11 @@ namespace App\Http\Requests\Api\V1;
 use App\Enums\Permission;
 use App\Enums\UserRole;
 use App\Models\User;
+use App\Support\IranMobile;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
+use Illuminate\Validation\Validator;
 
 class StoreUserRequest extends FormRequest
 {
@@ -27,6 +29,13 @@ class StoreUserRequest extends FormRequest
                 'username' => mb_strtolower(trim((string) $this->input('username'))),
             ]);
         }
+
+        if ($this->has('mobile')) {
+            $raw = trim((string) $this->input('mobile'));
+            $this->merge([
+                'mobile' => $raw === '' ? null : IranMobile::normalize($raw),
+            ]);
+        }
     }
 
     public function rules(): array
@@ -41,6 +50,7 @@ class StoreUserRequest extends FormRequest
                 'regex:/^[a-zA-Z0-9._-]+$/',
                 'unique:users,username',
             ],
+            'mobile' => ['nullable', 'string', 'size:11', 'unique:users,mobile'],
             'email' => ['nullable', 'email', 'max:255', 'unique:users,email'],
             'password' => ['required', 'string', Password::defaults()],
             'role' => ['sometimes', Rule::enum(UserRole::class)],
@@ -53,12 +63,24 @@ class StoreUserRequest extends FormRequest
         ];
     }
 
+    public function withValidator(Validator $validator): void
+    {
+        $validator->after(function (Validator $validator): void {
+            $mobile = $this->input('mobile');
+            if ($mobile !== null && $mobile !== '' && ! IranMobile::isValid(is_string($mobile) ? $mobile : null)) {
+                $validator->errors()->add('mobile', 'شماره موبایل معتبر نیست (مثال: 09123456789).');
+            }
+        });
+    }
+
     public function messages(): array
     {
         return [
             'username.required' => 'نام کاربری الزامی است.',
             'username.regex' => 'نام کاربری فقط می‌تواند شامل حروف انگلیسی، عدد، نقطه، خط تیره و زیرخط باشد.',
             'username.unique' => 'این نام کاربری قبلاً استفاده شده است.',
+            'mobile.unique' => 'این شماره موبایل قبلاً ثبت شده است.',
+            'mobile.size' => 'شماره موبایل باید ۱۱ رقم باشد.',
             'password.min' => 'رمز عبور باید حداقل ۱۰ کاراکتر باشد.',
             'password.mixed' => 'رمز عبور باید شامل حروف بزرگ و کوچک باشد.',
             'password.letters' => 'رمز عبور باید شامل حروف باشد.',

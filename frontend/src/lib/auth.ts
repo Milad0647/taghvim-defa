@@ -30,6 +30,10 @@ function normalizeUser(raw: Record<string, unknown>): AdminUser {
         : raw.email != null
           ? String(raw.email)
           : "",
+    mobile:
+      raw.mobile != null && String(raw.mobile).trim() !== ""
+        ? String(raw.mobile)
+        : null,
     email: raw.email != null ? String(raw.email) : "",
     role: (raw.role as AdminUser["role"]) ?? "editor",
     is_active: Boolean(raw.is_active ?? true),

@@ -170,17 +170,11 @@ function SettingsForm() {
           </label>
         </div>
 
-        <div
-          className="rounded-xl border border-[var(--border)] px-3 py-2.5 text-xs leading-6"
-          style={{
-            background: "color-mix(in srgb, var(--primary) 12%, var(--panel-2))",
-            color: "var(--text-primary)",
-          }}
-        >
-          <p className="font-semibold" style={{ color: "var(--text-primary)" }}>
+        <div className="settings-range-hint rounded-xl px-3 py-2.5 text-xs leading-6">
+          <p className="settings-range-hint__title font-semibold">
             راهنمای بازه تاریخ
           </p>
-          <p className="mt-1" style={{ color: "var(--text-secondary)" }}>
+          <p className="mt-1">
             اگر روز اول/آخر خالی باشد، همه روزهای موجود در Timeline نمایش داده
             می‌شود. با تنظیم بازه، نمودار شدت و لیست روزها محدود می‌شوند.
           </p>
@@ -195,10 +189,7 @@ function SettingsForm() {
             ذخیره تنظیمات
           </button>
           {saved ? (
-            <span
-              className="text-sm font-medium"
-              style={{ color: "var(--success, #059669)" }}
-            >
+            <span className="text-sm font-medium text-[var(--success)]">
               ذخیره شد.
             </span>
           ) : null}

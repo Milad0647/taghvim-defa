@@ -171,3 +171,21 @@ mark {
   border: 1px solid var(--border);
   border-radius: 16px;
 }
+
+/* Settings range hint — readable in both themes */
+.settings-range-hint {
+  border: 1px solid rgba(59, 130, 246, 0.35);
+  background: rgba(59, 130, 246, 0.12);
+  color: #bfdbfe;
+}
+.settings-range-hint__title {
+  color: #dbeafe;
+}
+[data-theme="light"] .settings-range-hint {
+  border-color: #93c5fd;
+  background: #eff6ff;
+  color: #1e40af;
+}
+[data-theme="light"] .settings-range-hint__title {
+  color: #1e3a8a;
+}

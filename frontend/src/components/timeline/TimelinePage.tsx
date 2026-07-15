@@ -7,7 +7,7 @@ import { ActiveFilterChips } from "@/components/timeline/ActiveFilterChips";
 import { AgencyFilterBar } from "@/components/timeline/AgencyFilterBar";
 import { EventIntensityPanel } from "@/components/timeline/EventIntensityPanel";
 import { EventDetailPanel } from "@/components/timeline/EventDetailPanel";
-import { EventDetailsDrawer } from "@/components/timeline/EventDetailsDrawer";
+import { EventDetailModal } from "@/components/timeline/EventDetailModal";
 import { TimelineDaySection } from "@/components/timeline/TimelineDay";
 import { TimelineFilters } from "@/components/timeline/TimelineFilters";
 import { TimelineHeader } from "@/components/timeline/TimelineHeader";
@@ -787,19 +787,13 @@ export function TimelinePage({
         onOpenRelated={openEvent}
       />
 
-      <div className="xl:hidden">
-        <EventDetailsDrawer
-          open={
-            mobileDetailOpen &&
-            !!selectedEvent &&
-            (selectedView === "timeline" || selectedView === "day")
-          }
-          event={selectedEvent}
-          relatedResponses={relatedResponses}
-          onClose={closeDetail}
-          onOpenRelated={openEvent}
-        />
-      </div>
+      <EventDetailModal
+        open={mobileDetailOpen && !!selectedEvent}
+        event={selectedEvent}
+        relatedResponses={relatedResponses}
+        onClose={closeDetail}
+        onOpenRelated={openEvent}
+      />
 
       <TimelineFilters
         open={filtersOpen}

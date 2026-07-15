@@ -71,7 +71,7 @@ export function EventDetailPanel({
         role="dialog"
         aria-modal="true"
         aria-label="جزئیات رخداد"
-        className="flex h-full flex-col overflow-hidden xl:rounded-[14px]"
+        className="flex h-full min-h-0 flex-col overflow-hidden rounded-[14px] xl:rounded-[14px]"
         style={{
           background: isEnemy
             ? "var(--detail-enemy-bg)"

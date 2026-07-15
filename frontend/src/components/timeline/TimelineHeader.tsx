@@ -6,7 +6,7 @@ import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { SiteMottoBanner } from "@/components/brand/SiteMottoBanner";
 import { ViewSwitcher } from "@/components/timeline/ViewSwitcher";
 import type { TimelineViewMode } from "@/types/timeline";
-import { Bell, Filter, Search } from "lucide-react";
+import { Filter, Search } from "lucide-react";
 import { useEffect, useRef } from "react";
 
 type TimelineHeaderProps = {
@@ -102,17 +102,6 @@ export function TimelineHeader({
         </button>
 
         <ThemeToggle />
-
-        <button
-          type="button"
-          className="relative hidden shrink-0 rounded-xl border border-[var(--border)] bg-[var(--panel)] p-2.5 text-[var(--text-secondary)] hover:bg-[var(--hover)] sm:inline-flex"
-          aria-label="اعلان‌ها"
-        >
-          <Bell className="h-4 w-4" />
-          <span className="absolute -left-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white">
-            ۱۲
-          </span>
-        </button>
       </div>
 
       {showExtras ? (

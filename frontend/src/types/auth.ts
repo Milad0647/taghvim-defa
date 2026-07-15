@@ -1,4 +1,4 @@
-export type UserRole = "super_admin" | "editor" | "reviewer" | "viewer";
+export type UserRole = "super_admin" | "editor";
 
 export type Permission =
   | "view_admin_views"
@@ -50,10 +50,8 @@ export const PERMISSION_LABELS: Record<Permission, string> = {
 export const ALL_PERMISSIONS = Object.keys(PERMISSION_LABELS) as Permission[];
 
 export const ROLE_LABELS: Record<UserRole, string> = {
-  super_admin: "مدیر کل",
+  super_admin: "مدیر",
   editor: "ویرایشگر",
-  reviewer: "بازبین",
-  viewer: "مشاهده‌گر",
 };
 
 export function userHasPermission(
@@ -95,22 +93,6 @@ export const ROLE_PERMISSIONS: Record<
     manageAgencies: false,
     manageContent: true,
     publish: true,
-    viewDashboard: true,
-  },
-  reviewer: {
-    manageUsers: false,
-    manageSettings: false,
-    manageAgencies: false,
-    manageContent: false,
-    publish: false,
-    viewDashboard: true,
-  },
-  viewer: {
-    manageUsers: false,
-    manageSettings: false,
-    manageAgencies: false,
-    manageContent: false,
-    publish: false,
     viewDashboard: true,
   },
 };

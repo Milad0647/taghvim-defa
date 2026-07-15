@@ -67,7 +67,7 @@ class User extends Authenticatable
 
         if (! is_array($stored) || $stored === []) {
             return match ($this->role) {
-                UserRole::Editor, UserRole::Reviewer => Permission::editorDefaults(),
+                UserRole::Editor => Permission::editorDefaults(),
                 default => Permission::viewerDefaults(),
             };
         }

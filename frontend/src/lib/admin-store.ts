@@ -59,21 +59,10 @@ const SEED_USERS: AdminUser[] = [
     permissions: ["manage_content", "publish", "view_archive"],
     password: "password",
   },
-  {
-    id: "u-viewer",
-    name: "ناظر",
-    email: "viewer@taghvim.local",
-    role: "viewer",
-    is_active: true,
-    created_at: new Date().toISOString(),
-    agencyIds: [],
-    permissions: [],
-    password: "password",
-  },
 ];
 
 const USERS_VERSION_KEY = "taghvim_admin_users_version";
-const USERS_SEED_VERSION = "users-agencies-v1";
+const USERS_SEED_VERSION = "users-roles-v2";
 
 function normalizeUser(user: AdminUser): AdminUser {
   return {

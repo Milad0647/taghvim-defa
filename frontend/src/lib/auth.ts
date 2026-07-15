@@ -25,7 +25,7 @@ function normalizeUser(raw: Record<string, unknown>): AdminUser {
     id: String(raw.id),
     name: String(raw.name ?? ""),
     email: raw.email != null ? String(raw.email) : "",
-    role: (raw.role as AdminUser["role"]) ?? "viewer",
+    role: (raw.role as AdminUser["role"]) ?? "editor",
     is_active: Boolean(raw.is_active ?? true),
     created_at:
       typeof raw.created_at === "string"

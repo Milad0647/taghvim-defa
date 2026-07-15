@@ -17,7 +17,7 @@ import {
 import { Pencil, Trash2, UserPlus } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
-const ROLES: UserRole[] = ["super_admin", "editor", "reviewer", "viewer"];
+const ROLES: UserRole[] = ["super_admin", "editor"];
 
 export default function AdminUsersPage() {
   return (
@@ -53,7 +53,7 @@ function UsersManager() {
         id: String(u.id),
         name: String(u.name ?? ""),
         email: String(u.email ?? ""),
-        role: (u.role as UserRole) ?? "viewer",
+        role: (u.role as UserRole) ?? "editor",
         is_active: Boolean(u.is_active),
         created_at: String(u.created_at ?? ""),
         parent_id: u.parent_id ?? null,

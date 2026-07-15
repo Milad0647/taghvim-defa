@@ -2,7 +2,9 @@
 
 import { PersianDatePicker } from "@/components/shared/PersianDatePicker";
 import { getAgencyById, listAgencies } from "@/lib/agency-store";
+import { getDashboardSettings } from "@/lib/admin-store";
 import { apiFetch, getCurrentUser } from "@/lib/auth";
+import { SEED_RANGE_END, SEED_RANGE_START } from "@/data/timeline.mock";
 import { upsertTimelineEvent } from "@/lib/timeline-store";
 import { NATIONAL_HERO_TAG, withNationalHeroTag } from "@/lib/tags";
 import type { GovernmentAgency } from "@/types/agency";
@@ -60,6 +62,8 @@ export function CreateEventForm({
     location: "",
   });
   const [nationalHero, setNationalHero] = useState(false);
+  const [dateMin, setDateMin] = useState(SEED_RANGE_START);
+  const [dateMax, setDateMax] = useState(SEED_RANGE_END);
 
   const agencyOptions = useMemo(() => allowedAgencies, [allowedAgencies]);
   const activeFields = useMemo(
@@ -69,6 +73,12 @@ export function CreateEventForm({
 
   useEffect(() => {
     if (!open) return;
+    const settings = getDashboardSettings();
+    const min = settings.rangeStart || SEED_RANGE_START;
+    const max = settings.rangeEnd || SEED_RANGE_END;
+    setDateMin(min);
+    setDateMax(max);
+
     const user = getCurrentUser();
     const all = listAgencies({ activeOnly: true });
     const scoped =
@@ -76,10 +86,17 @@ export function CreateEventForm({
         ? all
         : all.filter((a) => user.agencyIds.includes(a.id));
     setAllowedAgencies(scoped);
-    setValues((d) => ({
-      ...d,
-      agencyId: d.agencyId || scoped[0]?.id || "",
-    }));
+    setValues((d) => {
+      let nextDate = d.date;
+      if (!nextDate || nextDate < min || nextDate > max) {
+        nextDate = min;
+      }
+      return {
+        ...d,
+        agencyId: d.agencyId || scoped[0]?.id || "",
+        date: nextDate,
+      };
+    });
 
     void (async () => {
       try {
@@ -123,6 +140,10 @@ export function CreateEventForm({
 
     if (!values.title?.trim() || !values.date) {
       setError("عنوان و تاریخ الزامی است.");
+      return;
+    }
+    if (values.date < dateMin || values.date > dateMax) {
+      setError("تاریخ باید داخل بازه مجاز سامانه باشد.");
       return;
     }
     if (!values.agencyId) {
@@ -317,6 +338,8 @@ export function CreateEventForm({
                   placeholder="انتخاب تاریخ شمسی"
                   ariaLabel="تاریخ رویداد"
                   allowClear={false}
+                  minDate={dateMin}
+                  maxDate={dateMax}
                 />
               </div>
               <Select
@@ -338,6 +361,8 @@ export function CreateEventForm({
                 field={field}
                 value={values[field.key] ?? ""}
                 onChange={(v) => setValue(field.key, v)}
+                minDate={dateMin}
+                maxDate={dateMax}
               />
             ))
           )}
@@ -400,10 +425,14 @@ function DynamicField({
   field,
   value,
   onChange,
+  minDate,
+  maxDate,
 }: {
   field: SchemaField;
   value: string;
   onChange: (v: string) => void;
+  minDate?: string;
+  maxDate?: string;
 }) {
   if (field.type === "date" || field.key === "date") {
     return (
@@ -418,6 +447,8 @@ function DynamicField({
           placeholder="انتخاب تاریخ شمسی"
           ariaLabel={field.label}
           allowClear={!field.required}
+          minDate={minDate}
+          maxDate={maxDate}
         />
       </div>
     );

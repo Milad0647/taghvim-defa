@@ -24,7 +24,17 @@ type PersianDatePickerProps = {
   compact?: boolean;
   allowClear?: boolean;
   className?: string;
+  /** Inclusive minimum selectable date (YYYY-MM-DD) */
+  minDate?: string;
+  /** Inclusive maximum selectable date (YYYY-MM-DD) */
+  maxDate?: string;
 };
+
+function isDateAllowed(date: string, minDate?: string, maxDate?: string): boolean {
+  if (minDate && date < minDate) return false;
+  if (maxDate && date > maxDate) return false;
+  return true;
+}
 
 export function PersianDatePicker({
   value,
@@ -34,13 +44,20 @@ export function PersianDatePicker({
   compact = false,
   allowClear = true,
   className,
+  minDate,
+  maxDate,
 }: PersianDatePickerProps) {
   const rootRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
 
-  const initial = value
-    ? getPersianYmd(value)
-    : getPersianYmd(todayGregorianString());
+  const fallbackAnchor =
+    value ||
+    (minDate && maxDate && todayGregorianString() >= minDate && todayGregorianString() <= maxDate
+      ? todayGregorianString()
+      : minDate) ||
+    todayGregorianString();
+
+  const initial = getPersianYmd(fallbackAnchor);
   const [cursorYear, setCursorYear] = useState(initial.year);
   const [cursorMonth, setCursorMonth] = useState(initial.month);
 
@@ -79,6 +96,16 @@ export function PersianDatePicker({
     : placeholder;
 
   const today = todayGregorianString();
+  const todayAllowed = isDateAllowed(today, minDate, maxDate);
+
+  const rangeHint =
+    minDate && maxDate
+      ? `فقط بازه ${formatPersianDateShort(minDate)} تا ${formatPersianDateShort(maxDate)}`
+      : minDate
+        ? `از ${formatPersianDateShort(minDate)} به بعد`
+        : maxDate
+          ? `تا ${formatPersianDateShort(maxDate)}`
+          : null;
 
   return (
     <div ref={rootRef} className={clsx("relative", className)}>
@@ -161,6 +188,12 @@ export function PersianDatePicker({
             </button>
           </div>
 
+          {rangeHint ? (
+            <p className="mb-2 text-center text-[10px] text-[var(--text-secondary)]">
+              {rangeHint}
+            </p>
+          ) : null}
+
           <div className="mb-1 grid grid-cols-7 gap-1 text-center text-[10px] text-[var(--text-muted)]">
             {WEEKDAY_LABELS.map((label) => (
               <span key={label}>{label}</span>
@@ -175,22 +208,33 @@ export function PersianDatePicker({
 
               const selected = value === cell.date;
               const isToday = cell.date === today;
+              const allowed = isDateAllowed(cell.date, minDate, maxDate);
 
               return (
                 <button
                   key={cell.key}
                   type="button"
+                  disabled={!allowed}
                   onClick={() => {
+                    if (!allowed) return;
                     onChange(cell.date!);
                     setOpen(false);
                   }}
                   className={clsx(
                     "h-9 rounded-lg text-[12px] transition",
-                    selected
-                      ? "bg-blue-600 font-bold text-white"
-                      : isToday
-                        ? "border border-[var(--primary)]/40 text-[var(--primary)] hover:bg-[var(--hover)]"
-                        : "text-[var(--text-primary)] hover:bg-[var(--hover)]",
+                    !allowed &&
+                      "cursor-not-allowed text-[var(--text-muted)] opacity-35",
+                    allowed &&
+                      selected &&
+                      "bg-blue-600 font-bold text-white",
+                    allowed &&
+                      !selected &&
+                      isToday &&
+                      "border border-[var(--primary)]/40 text-[var(--primary)] hover:bg-[var(--hover)]",
+                    allowed &&
+                      !selected &&
+                      !isToday &&
+                      "text-[var(--text-primary)] hover:bg-[var(--hover)]",
                   )}
                 >
                   {cell.day.toLocaleString("fa-IR")}
@@ -202,11 +246,12 @@ export function PersianDatePicker({
           <div className="mt-3 flex items-center justify-between gap-2">
             <button
               type="button"
-              className="rounded-lg px-2 py-1 text-[11px] text-[var(--primary)] hover:bg-[var(--hover)]"
+              disabled={!todayAllowed}
+              className="rounded-lg px-2 py-1 text-[11px] text-[var(--primary)] hover:bg-[var(--hover)] disabled:cursor-not-allowed disabled:opacity-40"
               onClick={() => {
-                const now = todayGregorianString();
-                onChange(now);
-                const ymd = getPersianYmd(now);
+                if (!todayAllowed) return;
+                onChange(today);
+                const ymd = getPersianYmd(today);
                 setCursorYear(ymd.year);
                 setCursorMonth(ymd.month);
                 setOpen(false);

@@ -7,6 +7,7 @@ use App\Http\Requests\Api\V1\StoreCalendarDayRequest;
 use App\Http\Requests\Api\V1\StoreEnemyActionRequest;
 use App\Http\Requests\Api\V1\StoreGovernmentActionRequest;
 use App\Http\Requests\Api\V1\UpdateCalendarDayRequest;
+use App\Http\Requests\Api\V1\UploadMediaRequest;
 use App\Http\Resources\CalendarDayResource;
 use App\Http\Resources\EnemyActionResource;
 use App\Http\Resources\GovernmentActionResource;
@@ -104,14 +105,9 @@ class CalendarDayController extends Controller
         ], 201);
     }
 
-    public function uploadMedia(Request $request, CalendarDay $calendarDay): JsonResponse
+    public function uploadMedia(UploadMediaRequest $request, CalendarDay $calendarDay): JsonResponse
     {
         $this->authorize('update', $calendarDay);
-
-        $request->validate([
-            'file' => ['required', 'file', 'image', 'max:10240'],
-            'alt' => ['nullable', 'string', 'max:255'],
-        ]);
 
         $media = $this->calendarService->attachMedia(
             $calendarDay,
@@ -124,14 +120,9 @@ class CalendarDayController extends Controller
         ], 201);
     }
 
-    public function uploadEnemyMedia(Request $request, EnemyAction $enemyAction): JsonResponse
+    public function uploadEnemyMedia(UploadMediaRequest $request, EnemyAction $enemyAction): JsonResponse
     {
         $this->authorize('update', $enemyAction);
-
-        $request->validate([
-            'file' => ['required', 'file', 'image', 'max:10240'],
-            'alt' => ['nullable', 'string', 'max:255'],
-        ]);
 
         $media = $this->calendarService->attachMedia(
             $enemyAction,
@@ -144,14 +135,9 @@ class CalendarDayController extends Controller
         ], 201);
     }
 
-    public function uploadGovernmentMedia(Request $request, GovernmentAction $governmentAction): JsonResponse
+    public function uploadGovernmentMedia(UploadMediaRequest $request, GovernmentAction $governmentAction): JsonResponse
     {
         $this->authorize('update', $governmentAction);
-
-        $request->validate([
-            'file' => ['required', 'file', 'image', 'max:10240'],
-            'alt' => ['nullable', 'string', 'max:255'],
-        ]);
 
         $media = $this->calendarService->attachMedia(
             $governmentAction,

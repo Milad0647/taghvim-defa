@@ -27,7 +27,7 @@ export type TimelineViewMode =
 
 export type TimelineMedia = {
   id: string;
-  type: "image" | "video" | "document";
+  type: "image" | "video" | "audio" | "document";
   url: string;
   thumbnailUrl?: string;
   title?: string;

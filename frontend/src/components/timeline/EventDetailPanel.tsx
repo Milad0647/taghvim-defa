@@ -25,7 +25,7 @@ export function EventDetailPanel({
   const panelRef = useRef<HTMLDivElement>(null);
   const [lightbox, setLightbox] = useState<{
     url: string;
-    type: "image" | "video";
+    type: "image" | "video" | "audio";
   } | null>(null);
 
   useEffect(() => {
@@ -172,14 +172,15 @@ export function EventDetailPanel({
           {media.length > 0 ? (
             <section>
               <h4 className="mb-2 text-[13px] font-bold text-[var(--text-primary)]">
-                تصاویر، فیلم و مدارک
+                تصاویر، فیلم و صوت
               </h4>
               <div className="grid grid-cols-3 gap-2">
                 {media.slice(0, 3).map((item, idx) => {
                   const isVideo = item.type === "video";
+                  const isAudio = item.type === "audio";
                   const thumb =
                     item.thumbnailUrl ||
-                    (isVideo ? undefined : item.url) ||
+                    (isVideo || isAudio ? undefined : item.url) ||
                     event.imageUrl ||
                     "";
                   return (
@@ -189,7 +190,7 @@ export function EventDetailPanel({
                       onClick={() =>
                         setLightbox({
                           url: item.url,
-                          type: isVideo ? "video" : "image",
+                          type: isVideo ? "video" : isAudio ? "audio" : "image",
                         })
                       }
                       className="relative overflow-hidden rounded-lg border border-[var(--border)]"
@@ -203,6 +204,10 @@ export function EventDetailPanel({
                           preload="metadata"
                           className="h-20 w-full object-cover"
                         />
+                      ) : isAudio ? (
+                        <span className="flex h-20 w-full items-center justify-center bg-[var(--panel-2)] text-[11px] font-bold text-[var(--text-secondary)]">
+                          صوت
+                        </span>
                       ) : (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img
@@ -338,6 +343,13 @@ export function EventDetailPanel({
               autoPlay
               className="relative z-[71] max-h-[85vh] max-w-[90vw] rounded-xl bg-black"
             />
+          ) : lightbox.type === "audio" ? (
+            <div className="relative z-[71] w-full max-w-md rounded-xl border border-[var(--border)] bg-[var(--surface-2)] p-6">
+              <p className="mb-3 text-center text-sm text-[var(--text-secondary)]">
+                پخش صوت
+              </p>
+              <audio src={lightbox.url} controls autoPlay className="w-full" />
+            </div>
           ) : (
             // eslint-disable-next-line @next/next/no-img-element
             <img

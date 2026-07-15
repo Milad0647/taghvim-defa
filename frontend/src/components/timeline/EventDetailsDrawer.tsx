@@ -26,7 +26,10 @@ export function EventDetailsDrawer({
   onOpenRelated,
 }: EventDetailsDrawerProps) {
   const panelRef = useRef<HTMLDivElement>(null);
-  const [lightbox, setLightbox] = useState<string | null>(null);
+  const [lightbox, setLightbox] = useState<{
+    url: string;
+    type: "image" | "video" | "audio" | "document";
+  } | null>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -139,17 +142,40 @@ export function EventDetailsDrawer({
 
         {media.length > 0 ? (
           <div className="mt-5 space-y-2">
-            <h4 className="text-sm font-semibold text-white">تصاویر و اسناد</h4>
+            <h4 className="text-sm font-semibold text-white">تصاویر، فیلم و صوت</h4>
             <div className="grid grid-cols-2 gap-2">
               {media.map((item) => (
                 <button
                   key={item.id}
                   type="button"
-                  onClick={() => setLightbox(item.url)}
+                  onClick={() =>
+                    setLightbox({
+                      url: item.url,
+                      type: item.type,
+                    })
+                  }
                   className="overflow-hidden rounded-xl border border-[var(--border)]"
                 >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={item.url} alt="" className="h-24 w-full object-cover" />
+                  {item.type === "video" ? (
+                    <video
+                      src={item.url}
+                      muted
+                      playsInline
+                      preload="metadata"
+                      className="h-24 w-full object-cover"
+                    />
+                  ) : item.type === "audio" ? (
+                    <span className="flex h-24 w-full items-center justify-center bg-white/5 text-xs text-slate-300">
+                      صوت
+                    </span>
+                  ) : (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={item.url}
+                      alt=""
+                      className="h-24 w-full object-cover"
+                    />
+                  )}
                 </button>
               ))}
             </div>
@@ -209,15 +235,28 @@ export function EventDetailsDrawer({
           <button
             type="button"
             className="absolute inset-0"
-            aria-label="بستن تصویر"
+            aria-label="بستن رسانه"
             onClick={() => setLightbox(null)}
           />
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={lightbox}
-            alt=""
-            className="relative z-[61] max-h-[85vh] max-w-[90vw] rounded-xl object-contain"
-          />
+          {lightbox.type === "video" ? (
+            <video
+              src={lightbox.url}
+              controls
+              autoPlay
+              className="relative z-[61] max-h-[85vh] max-w-[90vw] rounded-xl bg-black"
+            />
+          ) : lightbox.type === "audio" ? (
+            <div className="relative z-[61] w-full max-w-md rounded-xl border border-[var(--border)] bg-[var(--panel)] p-6">
+              <audio src={lightbox.url} controls autoPlay className="w-full" />
+            </div>
+          ) : (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={lightbox.url}
+              alt=""
+              className="relative z-[61] max-h-[85vh] max-w-[90vw] rounded-xl object-contain"
+            />
+          )}
         </div>
       ) : null}
     </div>

@@ -6,12 +6,19 @@ import { getDashboardSettings } from "@/lib/admin-store";
 import { apiFetch, getCurrentUser } from "@/lib/auth";
 import { SEED_RANGE_END, SEED_RANGE_START } from "@/data/timeline.mock";
 import { upsertTimelineEvent } from "@/lib/timeline-store";
+import {
+  isAllowedMediaFile,
+  MAX_MEDIA_BYTES,
+  mediaKindFromFile,
+  mediaKindFromMime,
+  mediaKindLabel,
+} from "@/lib/media";
 import { NATIONAL_HERO_TAG, withNationalHeroTag } from "@/lib/tags";
 import type { GovernmentAgency } from "@/types/agency";
 import { userHasPermission } from "@/types/auth";
-import type { EventType, Severity, TimelineEvent } from "@/types/timeline";
-import { X } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import type { EventType, Severity, TimelineEvent, TimelineMedia } from "@/types/timeline";
+import { ImagePlus, Mic, Trash2, Video, X } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 type SchemaField = {
   key: string;
@@ -64,6 +71,27 @@ export function CreateEventForm({
   const [nationalHero, setNationalHero] = useState(false);
   const [dateMin, setDateMin] = useState(SEED_RANGE_START);
   const [dateMax, setDateMax] = useState(SEED_RANGE_END);
+  const [mediaFiles, setMediaFiles] = useState<File[]>([]);
+  const [submitting, setSubmitting] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const mediaPreviews = useMemo(
+    () =>
+      mediaFiles.map((file) => ({
+        file,
+        kind: mediaKindFromFile(file),
+        url: URL.createObjectURL(file),
+      })),
+    [mediaFiles],
+  );
+
+  useEffect(() => {
+    return () => {
+      for (const preview of mediaPreviews) {
+        URL.revokeObjectURL(preview.url);
+      }
+    };
+  }, [mediaPreviews]);
 
   const agencyOptions = useMemo(() => allowedAgencies, [allowedAgencies]);
   const activeFields = useMemo(
@@ -73,6 +101,8 @@ export function CreateEventForm({
 
   useEffect(() => {
     if (!open) return;
+    setMediaFiles([]);
+    setError(null);
     const settings = getDashboardSettings();
     const min = settings.rangeStart || SEED_RANGE_START;
     const max = settings.rangeEnd || SEED_RANGE_END;
@@ -123,6 +153,67 @@ export function CreateEventForm({
     setValues((prev) => ({ ...prev, [key]: value }));
   }
 
+  function onPickMedia(files: FileList | null) {
+    if (!files?.length) return;
+    const next: File[] = [];
+    for (const file of Array.from(files)) {
+      if (!isAllowedMediaFile(file)) {
+        setError("فقط تصویر، فیلم یا صوت مجاز است.");
+        continue;
+      }
+      if (file.size > MAX_MEDIA_BYTES) {
+        setError(`حجم «${file.name}» بیشتر از ۵۰ مگابایت است.`);
+        continue;
+      }
+      next.push(file);
+    }
+    if (next.length) {
+      setMediaFiles((prev) => [...prev, ...next].slice(0, 12));
+      setError(null);
+    }
+  }
+
+  function removeMedia(index: number) {
+    setMediaFiles((prev) => prev.filter((_, i) => i !== index));
+  }
+
+  async function uploadActionMedia(
+    eventType: EventType,
+    actionId: number | string,
+    files: File[],
+  ): Promise<TimelineMedia[]> {
+    const endpoint =
+      eventType === "enemy"
+        ? `/enemy-actions/${actionId}/media`
+        : `/government-actions/${actionId}/media`;
+    const uploaded: TimelineMedia[] = [];
+
+    for (const file of files) {
+      const form = new FormData();
+      form.append("file", file);
+      form.append("alt", file.name);
+      const res = await apiFetch(endpoint, { method: "POST", body: form });
+      if (!res.ok) continue;
+      const payload = await res.json();
+      const data = payload.data as {
+        id?: number | string;
+        url?: string;
+        mime_type?: string;
+        alt?: string;
+      };
+      if (!data?.url) continue;
+      uploaded.push({
+        id: String(data.id ?? `${Date.now()}-${file.name}`),
+        type: mediaKindFromMime(data.mime_type ?? file.type),
+        url: data.url,
+        title: file.name,
+        alt: data.alt ?? file.name,
+      });
+    }
+
+    return uploaded;
+  }
+
   async function publish() {
     setError(null);
     const user = getCurrentUser();
@@ -165,6 +256,14 @@ export function CreateEventForm({
         ? withNationalHeroTag([], nationalHero)
         : [];
     const now = new Date().toISOString();
+    const localMedia: TimelineMedia[] = mediaFiles.map((file, index) => ({
+      id: `local-media-${Date.now()}-${index}`,
+      type: mediaKindFromFile(file),
+      url: URL.createObjectURL(file),
+      title: file.name,
+      alt: file.name,
+    }));
+
     const event: TimelineEvent = {
       id: `evt-${Date.now()}`,
       eventType,
@@ -191,6 +290,8 @@ export function CreateEventForm({
             ? [values.agencyId]
             : [],
       source: values.source?.trim() || undefined,
+      imageUrl: localMedia.find((m) => m.type === "image")?.url,
+      media: localMedia,
       tags,
       relatedEventIds: [],
       relatedResponseIds: [],
@@ -199,7 +300,7 @@ export function CreateEventForm({
       updatedAt: now,
     };
 
-    // Persist to API when possible
+    setSubmitting(true);
     try {
       const dayRes = await apiFetch("/days", {
         method: "POST",
@@ -255,16 +356,36 @@ export function CreateEventForm({
                 tags,
                 agency_id: values.agencyId || null,
               };
-        await apiFetch(endpoint, {
+        const actionRes = await apiFetch(endpoint, {
           method: "POST",
           body: JSON.stringify(body),
         });
+
+        if (actionRes.ok && mediaFiles.length > 0) {
+          const actionPayload = await actionRes.json();
+          const actionId = actionPayload.data?.id;
+          if (actionId != null) {
+            const uploaded = await uploadActionMedia(
+              eventType,
+              actionId,
+              mediaFiles,
+            );
+            if (uploaded.length > 0) {
+              event.media = uploaded;
+              event.imageUrl =
+                uploaded.find((m) => m.type === "image")?.url ?? event.imageUrl;
+            }
+          }
+        }
       }
     } catch {
       // Fall back to local store below
+    } finally {
+      setSubmitting(false);
     }
 
     upsertTimelineEvent(event);
+    setMediaFiles([]);
     onCreated?.(event);
     onClose();
   }
@@ -393,6 +514,92 @@ export function CreateEventForm({
             </label>
           ) : null}
 
+          <div className="space-y-2">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-xs text-[var(--text-secondary)]">
+                رسانه (تصویر، فیلم، صوت)
+              </span>
+              <span className="text-[10px] text-[var(--text-muted)]">
+                حداکثر ۵۰ مگابایت برای هر فایل
+              </span>
+            </div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*,video/*,audio/*"
+              multiple
+              className="hidden"
+              onChange={(e) => {
+                onPickMedia(e.target.files);
+                e.target.value = "";
+              }}
+            />
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="inline-flex items-center gap-1.5 rounded-xl border border-dashed border-[var(--border)] px-3 py-2 text-xs text-[var(--text-primary)] hover:bg-[var(--hover)]"
+              >
+                <ImagePlus className="h-3.5 w-3.5" />
+                افزودن رسانه
+              </button>
+              <span className="inline-flex items-center gap-1 text-[10px] text-[var(--text-muted)]">
+                <ImagePlus className="h-3 w-3" /> تصویر
+                <Video className="ms-2 h-3 w-3" /> فیلم
+                <Mic className="ms-2 h-3 w-3" /> صوت
+              </span>
+            </div>
+            {mediaPreviews.length > 0 ? (
+              <ul className="space-y-2">
+                {mediaPreviews.map((item, index) => (
+                  <li
+                    key={`${item.file.name}-${index}`}
+                    className="flex items-center gap-3 rounded-xl border border-[var(--border)] bg-[var(--surface-3)] px-3 py-2"
+                  >
+                    {item.kind === "image" ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={item.url}
+                        alt=""
+                        className="h-12 w-12 rounded-lg object-cover"
+                      />
+                    ) : item.kind === "video" ? (
+                      <video
+                        src={item.url}
+                        muted
+                        className="h-12 w-12 rounded-lg object-cover"
+                      />
+                    ) : (
+                      <span className="flex h-12 w-12 items-center justify-center rounded-lg bg-[var(--panel-2)]">
+                        <Mic className="h-5 w-5 text-[var(--text-secondary)]" />
+                      </span>
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-xs font-medium text-[var(--text-primary)]">
+                        {item.file.name}
+                      </p>
+                      <p className="text-[10px] text-[var(--text-muted)]">
+                        {mediaKindLabel(item.kind)} ·{" "}
+                        {(item.file.size / (1024 * 1024)).toLocaleString("fa-IR", {
+                          maximumFractionDigits: 1,
+                        })}{" "}
+                        مگابایت
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => removeMedia(index)}
+                      className="rounded-lg p-2 text-[var(--text-secondary)] hover:bg-[var(--hover)] hover:text-red-400"
+                      aria-label="حذف رسانه"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+          </div>
+
           {error ? (
             <p className="rounded-xl bg-red-500/15 px-3 py-2 text-sm text-red-200">
               {error}
@@ -404,16 +611,18 @@ export function CreateEventForm({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-xl border border-[var(--border)] px-4 py-2 text-sm"
+            disabled={submitting}
+            className="rounded-xl border border-[var(--border)] px-4 py-2 text-sm disabled:opacity-50"
           >
             انصراف
           </button>
           <button
             type="button"
             onClick={() => void publish()}
-            className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white"
+            disabled={submitting}
+            className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
           >
-            انتشار / ثبت
+            {submitting ? "در حال ثبت…" : "انتشار / ثبت"}
           </button>
         </div>
       </div>

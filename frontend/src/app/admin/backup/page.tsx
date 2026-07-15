@@ -2,7 +2,7 @@
 
 import { RequireAuth } from "@/components/admin/RequireAuth";
 import { apiFetch, getAuthToken } from "@/lib/auth";
-import { API_BASE } from "@/lib/api";
+import { getApiBase } from "@/lib/api";
 import { Download, HardDrive, RefreshCw } from "lucide-react";
 import { useEffect, useState } from "react";
 
@@ -60,7 +60,7 @@ function BackupManager() {
 
   function download(filename: string) {
     const token = getAuthToken();
-    const url = `${API_BASE}/backups/${encodeURIComponent(filename)}/download`;
+    const url = `${getApiBase()}/backups/${encodeURIComponent(filename)}/download`;
     const a = document.createElement("a");
     // Use fetch blob for auth header
     void (async () => {

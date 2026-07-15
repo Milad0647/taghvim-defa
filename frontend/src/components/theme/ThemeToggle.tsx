@@ -2,6 +2,7 @@
 
 import { useTheme } from "@/components/theme/ThemeProvider";
 import { Moon, Sun } from "lucide-react";
+import { useEffect, useState } from "react";
 
 type ThemeToggleProps = {
   className?: string;
@@ -10,7 +11,12 @@ type ThemeToggleProps = {
 
 export function ThemeToggle({ className = "", compact = false }: ThemeToggleProps) {
   const { theme, toggleTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
   const isLight = theme === "light";
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   return (
     <button
@@ -22,7 +28,9 @@ export function ThemeToggle({ className = "", compact = false }: ThemeToggleProp
     >
       {isLight ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
       {!compact ? (
-        <span className="hidden sm:inline">{isLight ? "تیره" : "روشن"}</span>
+        <span className="hidden sm:inline" suppressHydrationWarning>
+          {mounted ? (isLight ? "تیره" : "روشن") : "تم"}
+        </span>
       ) : null}
     </button>
   );

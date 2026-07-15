@@ -1,8 +1,31 @@
 import type { TimelineResponse } from "@/types/calendar";
 
-const API_BASE =
-  process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") ||
-  "http://localhost:8000/api/v1";
+/**
+ * Resolve API base at call-time so a production build accidentally
+ * pointed at localhost still talks to a same-origin / configured API.
+ */
+export function getApiBase(): string {
+  const fromEnv = (process.env.NEXT_PUBLIC_API_URL || "").replace(/\/$/, "");
+
+  if (typeof window !== "undefined") {
+    const host = window.location.hostname;
+    const pageIsLocal = host === "localhost" || host === "127.0.0.1";
+    const envIsLocal =
+      !fromEnv ||
+      fromEnv.includes("localhost") ||
+      fromEnv.includes("127.0.0.1");
+
+    // Production site must never call the visitor's localhost
+    if (!pageIsLocal && envIsLocal) {
+      return `${window.location.origin}/api/v1`;
+    }
+  }
+
+  return fromEnv || "http://localhost:8000/api/v1";
+}
+
+/** @deprecated Prefer getApiBase() — kept for older imports */
+export const API_BASE = getApiBase();
 
 function authHeaders(): HeadersInit {
   if (typeof window === "undefined") return {};
@@ -19,7 +42,8 @@ export async function fetchTimeline(
   if (to) params.set("to", to);
 
   const query = params.toString();
-  const url = `${API_BASE}/timeline${query ? `?${query}` : ""}`;
+  const base = getApiBase();
+  const url = `${base}/timeline${query ? `?${query}` : ""}`;
 
   const response = await fetch(url, {
     cache: "no-store",
@@ -37,7 +61,7 @@ export async function fetchTimeline(
 }
 
 export async function fetchDay(date: string) {
-  const response = await fetch(`${API_BASE}/timeline/${date}`, {
+  const response = await fetch(`${getApiBase()}/timeline/${date}`, {
     cache: "no-store",
     headers: {
       Accept: "application/json",
@@ -51,5 +75,3 @@ export async function fetchDay(date: string) {
 
   return response.json();
 }
-
-export { API_BASE };

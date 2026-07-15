@@ -52,7 +52,7 @@ services:
       QUEUE_CONNECTION: redis
       SESSION_DRIVER: redis
       FILESYSTEM_DISK: public
-      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:3000}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-https://taghvim.pixlink.ir,http://localhost:3000,http://127.0.0.1:3000}
     volumes:
       - backend_storage:/app/storage/app/public
     depends_on:
@@ -72,12 +72,12 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000/api/v1}
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://api.taghvim.pixlink.ir/api/v1}
     restart: unless-stopped
     expose:
       - "3000"
     environment:
-      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000/api/v1}
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://api.taghvim.pixlink.ir/api/v1}
     depends_on:
       backend:
         condition: service_started

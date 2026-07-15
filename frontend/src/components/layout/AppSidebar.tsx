@@ -15,6 +15,7 @@ import {
   Sun,
   Swords,
   UserCheck,
+  UserRound,
   X,
   Activity,
 } from "lucide-react";
@@ -26,7 +27,12 @@ import { IranEmblem } from "@/components/brand/IranEmblem";
 import { IranFlag } from "@/components/brand/IranFlag";
 import { getSiteBranding } from "@/lib/branding";
 import { getCurrentUser } from "@/lib/auth";
-import { canViewAdminViews, userHasPermission } from "@/types/auth";
+import {
+  canViewAdminViews,
+  ROLE_LABELS,
+  userHasPermission,
+  type AdminUser,
+} from "@/types/auth";
 
 const MENU = [
   { href: "/overview", label: "نمای کلی", icon: LayoutDashboard, match: "overview" },
@@ -64,10 +70,12 @@ export function AppSidebar({
   const [branding, setBranding] = useState(() => getSiteBranding());
   const [showAdminViews, setShowAdminViews] = useState(false);
   const [showAdminPanel, setShowAdminPanel] = useState(false);
+  const [user, setUser] = useState<AdminUser | null>(null);
 
   useEffect(() => {
     setBranding(getSiteBranding());
     const current = getCurrentUser();
+    setUser(current);
     setShowAdminViews(canViewAdminViews(current));
     setShowAdminPanel(
       userHasPermission(current, "manage_users") ||
@@ -194,7 +202,7 @@ export function AppSidebar({
         ) : null}
       </nav>
 
-      <div className="space-y-3 border-t border-[var(--border)] p-3">
+      <div className="mt-auto space-y-3 border-t border-[var(--border)] p-3">
         <ThemeToggle className="w-full justify-center" compact={collapsed} />
 
         {!collapsed ? (
@@ -225,6 +233,33 @@ export function AppSidebar({
             />
           </div>
         ) : null}
+
+        <Link
+          href={user ? "/admin" : "/login"}
+          className={clsx(
+            "flex items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--panel-2)] transition hover:bg-[var(--hover)]",
+            collapsed ? "justify-center p-2" : "px-2.5 py-2",
+          )}
+          aria-label={user ? "رفتن به داشبورد" : "ورود به داشبورد"}
+          title={user ? "داشبورد" : "ورود"}
+        >
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 text-xs font-bold text-white">
+            {user?.name?.trim().charAt(0) || "ک"}
+          </div>
+          {!collapsed ? (
+            <div className="min-w-0 flex-1 text-xs">
+              <p className="truncate font-semibold text-[var(--text-primary)]">
+                {user?.name ?? "ورود"}
+              </p>
+              <p className="truncate text-[var(--text-secondary)]">
+                {user ? ROLE_LABELS[user.role] : "داشبورد"}
+              </p>
+            </div>
+          ) : null}
+          {!collapsed ? (
+            <UserRound className="h-3.5 w-3.5 shrink-0 text-[var(--text-muted)]" />
+          ) : null}
+        </Link>
       </div>
     </div>
   );

@@ -6,11 +6,8 @@ import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { SiteMottoBanner } from "@/components/brand/SiteMottoBanner";
 import { ViewSwitcher } from "@/components/timeline/ViewSwitcher";
 import type { TimelineViewMode } from "@/types/timeline";
-import { Bell, Filter, Search, UserRound } from "lucide-react";
-import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
-import { getCurrentUser } from "@/lib/auth";
-import { ROLE_LABELS, type AdminUser } from "@/types/auth";
+import { Bell, Filter, Search } from "lucide-react";
+import { useEffect, useRef } from "react";
 
 type TimelineHeaderProps = {
   showViewSwitcher?: boolean;
@@ -45,11 +42,6 @@ export function TimelineHeader({
 }: TimelineHeaderProps) {
   const showExtras = showViewSwitcher || showDateFilters;
   const headerRef = useRef<HTMLElement>(null);
-  const [user, setUser] = useState<AdminUser | null>(null);
-
-  useEffect(() => {
-    setUser(getCurrentUser());
-  }, []);
 
   useEffect(() => {
     const el = headerRef.current;
@@ -121,26 +113,6 @@ export function TimelineHeader({
             ۱۲
           </span>
         </button>
-
-        <Link
-          href={user ? "/admin" : "/admin/login"}
-          className="inline-flex shrink-0 items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--panel)] px-2.5 py-1.5 transition hover:bg-[var(--hover)]"
-          aria-label={user ? "رفتن به داشبورد" : "ورود به داشبورد"}
-          title={user ? "داشبورد" : "ورود"}
-        >
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 text-xs font-bold text-white">
-            {user?.name?.trim().charAt(0) || "ک"}
-          </div>
-          <div className="hidden text-xs sm:block">
-            <p className="font-semibold text-[var(--text-primary)]">
-              {user?.name ?? "ورود"}
-            </p>
-            <p className="text-[var(--text-secondary)]">
-              {user ? ROLE_LABELS[user.role] : "داشبورد"}
-            </p>
-          </div>
-          <UserRound className="hidden h-3.5 w-3.5 text-[var(--text-muted)] lg:block" />
-        </Link>
       </div>
 
       {showExtras ? (

@@ -1,4 +1,4 @@
-import { API_BASE } from "@/lib/api";
+import { getApiBase } from "@/lib/api";
 import {
   clearSession,
   getSession,
@@ -45,14 +45,21 @@ export async function loginRequest(
   email: string,
   password: string,
 ): Promise<AuthSession> {
-  const response = await fetch(`${API_BASE}/auth/login`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Accept: "application/json",
-    },
-    body: JSON.stringify({ email, password }),
-  });
+  let response: Response;
+  try {
+    response = await fetch(`${getApiBase()}/auth/login`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify({ email, password }),
+    });
+  } catch {
+    throw new Error(
+      "اتصال به سرور برقرار نشد. آدرس API یا CORS را در تنظیمات سرور بررسی کنید.",
+    );
+  }
 
   if (!response.ok) {
     if (response.status === 401 || response.status === 422) {
@@ -72,7 +79,7 @@ export async function logoutRequest() {
   const session = getSession();
   if (session?.token) {
     try {
-      await fetch(`${API_BASE}/auth/logout`, {
+      await fetch(`${getApiBase()}/auth/logout`, {
         method: "POST",
         headers: {
           Accept: "application/json",
@@ -109,13 +116,16 @@ export async function apiFetch(
   }
 
   try {
-    return await fetch(`${API_BASE}${path.startsWith("/") ? path : `/${path}`}`, {
-      ...init,
-      headers,
-    });
+    return await fetch(
+      `${getApiBase()}${path.startsWith("/") ? path : `/${path}`}`,
+      {
+        ...init,
+        headers,
+      },
+    );
   } catch {
     throw new Error(
-      "اتصال به سرور برقرار نشد. لطفاً API را اجرا کنید (php artisan serve) و دوباره تلاش کنید.",
+      "اتصال به سرور برقرار نشد. لطفاً API را اجرا کنید و CORS دامنه را تنظیم کنید.",
     );
   }
 }

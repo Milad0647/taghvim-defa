@@ -4,9 +4,8 @@ import { loginRequest } from "@/lib/auth";
 import { getSession } from "@/lib/admin-store";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { IranEmblem } from "@/components/brand/IranEmblem";
-import { getSiteBranding } from "@/lib/branding";
+import { getSiteBranding, SITE_TAGLINE, SITE_TITLE } from "@/lib/branding";
 import { canViewAdminViews } from "@/lib/auth";
-import type { AdminUser } from "@/types/auth";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -16,10 +15,15 @@ export default function LoginPage() {
   const [password, setPassword] = useState("password");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [branding, setBranding] = useState(() => getSiteBranding());
+  // Stable SSR/CSR defaults — avoid localStorage during first paint (hydration #418)
+  const [branding, setBranding] = useState({
+    siteTitle: SITE_TITLE,
+    siteTagline: SITE_TAGLINE,
+  });
 
   useEffect(() => {
-    setBranding(getSiteBranding());
+    const b = getSiteBranding();
+    setBranding({ siteTitle: b.siteTitle, siteTagline: b.siteTagline });
     const session = getSession();
     if (session) {
       router.replace(

@@ -10,6 +10,8 @@ use App\Http\Controllers\Api\V1\NotificationController;
 use App\Http\Controllers\Api\V1\SettingsController;
 use App\Http\Controllers\Api\V1\TimelineController;
 use App\Http\Controllers\Api\V1\UserController;
+use App\Models\User;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
@@ -17,36 +19,45 @@ use Illuminate\Support\Facades\Schema;
 Route::get('/health', function () {
     $dbOk = false;
     $hasUsername = false;
-    $userBootOk = false;
+    $userQueryOk = false;
+    $cacheOk = false;
     $error = null;
 
     try {
         DB::connection()->getPdo();
         $dbOk = true;
         $hasUsername = Schema::hasColumn('users', 'username');
-        // Touch User class load — catches fatal redeclarations early
-        class_exists(\App\Models\User::class);
-        $userBootOk = true;
+        User::query()->limit(1)->exists();
+        $userQueryOk = true;
     } catch (Throwable $e) {
         $error = $e->getMessage();
     }
 
-    $ready = $dbOk && $userBootOk && $hasUsername;
+    try {
+        Cache::put('healthcheck', '1', 5);
+        $cacheOk = Cache::get('healthcheck') === '1';
+    } catch (Throwable $e) {
+        $error = $error ?? $e->getMessage();
+    }
+
+    $ready = $dbOk && $userQueryOk && $hasUsername && $cacheOk;
 
     return response()->json([
         'status' => $ready ? 'ok' : 'degraded',
         'service' => 'taghvim-defa-api',
         'checks' => [
             'database' => $dbOk,
-            'user_model' => $userBootOk,
+            'user_query' => $userQueryOk,
             'users_username_column' => $hasUsername,
+            'cache' => $cacheOk,
         ],
         'error' => $error,
     ], $ready ? 200 : 503);
 });
 
 Route::prefix('auth')->group(function () {
-    Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1');
+    // Rate limiting is handled inside AuthController (fail-open if cache is down).
+    Route::post('/login', [AuthController::class, 'login']);
     Route::middleware(['auth:sanctum', 'active'])->group(function () {
         Route::get('/me', [AuthController::class, 'me']);
         Route::post('/logout', [AuthController::class, 'logout']);

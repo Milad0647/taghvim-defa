@@ -13,17 +13,21 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 /**
- * Attaches Creative Commons / public-domain conflict imagery from Wikimedia Commons
- * to seeded actions. Commercial news agency photos are intentionally not scraped.
+ * Attaches bundled conflict imagery (database/seeders/assets/conflict) to seeded actions.
+ * Wikimedia Commons sources are used only when no bundled assets are present.
  */
 class ConflictMediaSeeder extends Seeder
 {
+    private const BUNDLED_DIR = 'seeders/assets/conflict';
+
+    private const SEED_STORAGE_DIR = 'uploads/seed';
+
     /**
-     * Freely licensed sources only (check Commons file page before changing).
+     * Freely licensed fallback sources (used only when bundled assets are missing).
      *
      * @var list<array{url: string, alt: string, filename: string}>
      */
-    private array $sources = [
+    private array $commonsSources = [
         [
             'url' => 'https://commons.wikimedia.org/wiki/Special:FilePath/Pictures_of_the_Israel_attack_on_Tehran_1_Mehr.jpg?width=1280',
             'alt' => 'CC BY 4.0 — Mehr News Agency via Wikimedia Commons',
@@ -56,11 +60,11 @@ class ConflictMediaSeeder extends Seeder
         ],
     ];
 
-    public function run(): void
+    public function run(bool $force = false): void
     {
-        $localFiles = $this->downloadSources();
-        if ($localFiles === []) {
-            $this->command?->warn('ConflictMediaSeeder: no images downloaded; skipped.');
+        $sourceFiles = $this->resolveSourceFiles();
+        if ($sourceFiles === []) {
+            $this->command?->warn('ConflictMediaSeeder: no images available; skipped.');
 
             return;
         }
@@ -75,10 +79,14 @@ class ConflictMediaSeeder extends Seeder
         foreach ($actions as $action) {
             /** @var Model $action */
             if ($action->media()->exists()) {
-                continue;
+                if (! $force) {
+                    continue;
+                }
+
+                $this->clearActionMedia($action);
             }
 
-            $file = $localFiles[$index % count($localFiles)];
+            $file = $sourceFiles[$index % count($sourceFiles)];
             $index++;
 
             $this->attachFile($action, $file['path'], $file['alt'], $file['mime']);
@@ -91,13 +99,98 @@ class ConflictMediaSeeder extends Seeder
     /**
      * @return list<array{path: string, alt: string, mime: string}>
      */
-    private function downloadSources(): array
+    private function resolveSourceFiles(): array
     {
-        Storage::disk('public')->makeDirectory('uploads/seed');
+        $bundled = $this->loadBundledAssets();
+        if ($bundled !== []) {
+            $this->command?->info('ConflictMediaSeeder: using '.count($bundled).' bundled image(s).');
+
+            return $bundled;
+        }
+
+        $this->command?->warn('ConflictMediaSeeder: no bundled assets; falling back to Wikimedia Commons.');
+
+        return $this->downloadCommonsSources();
+    }
+
+    /**
+     * @return list<array{path: string, alt: string, mime: string}>
+     */
+    private function loadBundledAssets(): array
+    {
+        $directory = database_path(self::BUNDLED_DIR);
+        if (! is_dir($directory)) {
+            return [];
+        }
+
+        $paths = array_merge(
+            glob($directory.'/*.jpg') ?: [],
+            glob($directory.'/*.jpeg') ?: [],
+            glob($directory.'/*.JPG') ?: [],
+            glob($directory.'/*.JPEG') ?: [],
+            glob($directory.'/*.png') ?: [],
+            glob($directory.'/*.PNG') ?: [],
+            glob($directory.'/*.webp') ?: [],
+            glob($directory.'/*.WEBP') ?: [],
+        );
+        if ($paths === false || $paths === []) {
+            return [];
+        }
+
+        natcasesort($paths);
+
+        Storage::disk('public')->makeDirectory(self::SEED_STORAGE_DIR);
         $files = [];
 
-        foreach ($this->sources as $source) {
-            $relative = 'uploads/seed/'.$source['filename'];
+        foreach (array_values($paths) as $absolute) {
+            if (! is_file($absolute)) {
+                continue;
+            }
+
+            $sanitized = $this->sanitizeFilename(basename($absolute));
+            $relative = self::SEED_STORAGE_DIR.'/'.$sanitized;
+
+            if (! Storage::disk('public')->exists($relative)) {
+                $contents = file_get_contents($absolute);
+                if ($contents === false) {
+                    Log::warning('ConflictMediaSeeder bundled read failed', ['path' => $absolute]);
+
+                    continue;
+                }
+
+                Storage::disk('public')->put($relative, $contents);
+            }
+
+            $storageAbsolute = Storage::disk('public')->path($relative);
+            if (! is_file($storageAbsolute)) {
+                continue;
+            }
+
+            $mime = mime_content_type($storageAbsolute) ?: 'image/jpeg';
+            if (! str_starts_with($mime, 'image/')) {
+                continue;
+            }
+
+            $files[] = [
+                'path' => $relative,
+                'alt' => 'Conflict imagery (seed asset)',
+                'mime' => $mime,
+            ];
+        }
+
+        return $files;
+    }
+
+    /**
+     * @return list<array{path: string, alt: string, mime: string}>
+     */
+    private function downloadCommonsSources(): array
+    {
+        Storage::disk('public')->makeDirectory(self::SEED_STORAGE_DIR);
+        $files = [];
+
+        foreach ($this->commonsSources as $source) {
+            $relative = self::SEED_STORAGE_DIR.'/'.$source['filename'];
             $absolute = Storage::disk('public')->path($relative);
 
             if (! Storage::disk('public')->exists($relative)) {
@@ -115,6 +208,7 @@ class ConflictMediaSeeder extends Seeder
                             'url' => $source['url'],
                             'status' => $response->status(),
                         ]);
+
                         continue;
                     }
 
@@ -124,6 +218,7 @@ class ConflictMediaSeeder extends Seeder
                         'url' => $source['url'],
                         'error' => $e->getMessage(),
                     ]);
+
                     continue;
                 }
             }
@@ -145,6 +240,28 @@ class ConflictMediaSeeder extends Seeder
         }
 
         return $files;
+    }
+
+    private function sanitizeFilename(string $filename): string
+    {
+        $extension = strtolower(pathinfo($filename, PATHINFO_EXTENSION) ?: 'jpg');
+        $basename = pathinfo($filename, PATHINFO_FILENAME);
+        $basename = preg_replace('/\s*\((\d+)\)\s*/', '-$1', $basename) ?? $basename;
+        $basename = Str::slug($basename, '-');
+
+        if ($basename === '') {
+            $basename = 'image';
+        }
+
+        return $basename.'.'.$extension;
+    }
+
+    private function clearActionMedia(Model $model): void
+    {
+        $model->media()->each(function (Media $media): void {
+            Storage::disk($media->disk)->delete($media->path);
+            $media->delete();
+        });
     }
 
     private function attachFile(Model $model, string $relativePath, string $alt, string $mime): void

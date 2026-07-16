@@ -7,13 +7,15 @@ use Illuminate\Console\Command;
 
 class SeedConflictMedia extends Command
 {
-    protected $signature = 'app:seed-conflict-media';
+    protected $signature = 'app:seed-conflict-media {--force : Replace existing media on actions}';
 
-    protected $description = 'Attach CC-licensed Wikimedia Commons images to actions that have no media';
+    protected $description = 'Attach bundled conflict images (or Commons fallback) to actions';
 
     public function handle(): int
     {
-        $this->call(ConflictMediaSeeder::class);
+        $this->callWith(ConflictMediaSeeder::class, [
+            'force' => (bool) $this->option('force'),
+        ]);
 
         return self::SUCCESS;
     }

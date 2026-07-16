@@ -143,7 +143,7 @@ export default function LoginPage() {
       />
 
       <div
-        className="relative w-full max-w-[420px]"
+        className="relative w-full max-w-[460px]"
         style={{
           transform: `perspective(1200px) rotateX(${tiltX}deg) rotateY(${tiltY}deg)`,
           transition: isHovering
@@ -168,16 +168,17 @@ export default function LoginPage() {
             className="pointer-events-none absolute inset-0 rounded-[32px] ring-1 ring-inset ring-white/10"
           />
 
-          <div className="relative mb-8 flex items-center gap-4">
+          <div className="relative mb-8 flex items-start gap-4">
             <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-white/25 bg-white/[0.08] shadow-[inset_0_1px_0_rgba(255,255,255,0.25)] backdrop-blur-xl">
               <IranEmblem className="h-8 w-8 text-white/95 drop-shadow-sm" />
             </div>
-            <div className="min-w-0">
-              <h1 className="text-[1.35rem] font-semibold tracking-tight text-white drop-shadow-sm">
-                ورود به سامانه
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-medium text-white/55">ورود به سامانه</p>
+              <h1 className="mt-1 text-[1.2rem] font-semibold leading-8 tracking-tight text-white drop-shadow-sm">
+                {branding.siteTitle}
               </h1>
-              <p className="mt-1 truncate text-sm text-white/70">
-                {branding.siteTitle} — {branding.siteTagline}
+              <p className="mt-1 text-sm leading-7 text-white/75">
+                {branding.siteTagline}
               </p>
             </div>
           </div>

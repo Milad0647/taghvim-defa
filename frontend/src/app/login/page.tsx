@@ -155,8 +155,8 @@ export default function LoginPage() {
           className="relative overflow-hidden rounded-[32px] border border-white/45 p-8 shadow-[0_24px_80px_rgba(0,0,0,0.22)]"
           style={{
             background: "rgba(255, 255, 255, 0.028)",
-            WebkitBackdropFilter: "blur(20px) saturate(160%) brightness(1.04)",
-            backdropFilter: "blur(20px) saturate(160%) brightness(1.04)",
+            WebkitBackdropFilter: "blur(10px) saturate(160%) brightness(1.04)",
+            backdropFilter: "blur(10px) saturate(160%) brightness(1.04)",
           }}
         >
           <div
@@ -184,8 +184,8 @@ export default function LoginPage() {
               className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-white/30 shadow-[inset_0_1px_0_rgba(255,255,255,0.35)]"
               style={{
                 background: "rgba(255, 255, 255, 0.025)",
-                WebkitBackdropFilter: "blur(12px) saturate(150%)",
-                backdropFilter: "blur(12px) saturate(150%)",
+                WebkitBackdropFilter: "blur(6px) saturate(150%)",
+                backdropFilter: "blur(6px) saturate(150%)",
               }}
             >
               <IranEmblem className="h-8 w-8 text-white/95 drop-shadow-sm" />
@@ -215,8 +215,8 @@ export default function LoginPage() {
                 className="w-full rounded-2xl border border-white/35 px-4 py-3 text-white placeholder:text-white/50 shadow-[inset_0_1px_0_rgba(255,255,255,0.2)] outline-none transition focus:border-white/60 focus:ring-2 focus:ring-white/25"
                 style={{
                   background: "rgba(255, 255, 255, 0.02)",
-                  WebkitBackdropFilter: "blur(10px)",
-                  backdropFilter: "blur(10px)",
+                  WebkitBackdropFilter: "blur(5px)",
+                  backdropFilter: "blur(5px)",
                 }}
                 required
               />
@@ -233,8 +233,8 @@ export default function LoginPage() {
                 className="w-full rounded-2xl border border-white/35 px-4 py-3 text-white placeholder:text-white/50 shadow-[inset_0_1px_0_rgba(255,255,255,0.2)] outline-none transition focus:border-white/60 focus:ring-2 focus:ring-white/25"
                 style={{
                   background: "rgba(255, 255, 255, 0.02)",
-                  WebkitBackdropFilter: "blur(10px)",
-                  backdropFilter: "blur(10px)",
+                  WebkitBackdropFilter: "blur(5px)",
+                  backdropFilter: "blur(5px)",
                 }}
                 required
               />
@@ -242,7 +242,7 @@ export default function LoginPage() {
 
             {error ? (
               <p
-                className="rounded-2xl border border-red-200/30 px-4 py-2.5 text-sm text-red-50 [text-shadow:0_1px_6px_rgba(0,0,0,0.4)] [background:rgba(220,38,38,0.12)] [backdrop-filter:blur(8px)]"
+                className="rounded-2xl border border-red-200/30 px-4 py-2.5 text-sm text-red-50 [text-shadow:0_1px_6px_rgba(0,0,0,0.4)] [background:rgba(220,38,38,0.12)] [backdrop-filter:blur(4px)]"
               >
                 {error}
               </p>
@@ -251,7 +251,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="mt-2 w-full rounded-2xl border border-white/20 bg-[#0A84FF]/90 py-3.5 text-sm font-semibold text-white shadow-[0_8px_28px_rgba(10,132,255,0.45),inset_0_1px_0_rgba(255,255,255,0.35)] backdrop-blur-md transition hover:bg-[#0077ED] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-55"
+              className="mt-2 w-full rounded-2xl border border-white/20 bg-[#0A84FF]/90 py-3.5 text-sm font-semibold text-white shadow-[0_8px_28px_rgba(10,132,255,0.45),inset_0_1px_0_rgba(255,255,255,0.35)] backdrop-blur-sm transition hover:bg-[#0077ED] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-55"
             >
               {loading ? "در حال ورود..." : "ورود"}
             </button>

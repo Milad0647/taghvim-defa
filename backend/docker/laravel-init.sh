@@ -41,6 +41,10 @@ echo "[laravel-init] Ensuring admin user..."
 php artisan app:ensure-admin --username=admin --password='Admin@12345' \
   || echo "[laravel-init] WARNING: ensure-admin failed (exit $?)" >&2
 
+echo "[laravel-init] Seeding conflict media (CC only)..."
+php artisan app:seed-conflict-media \
+  || echo "[laravel-init] WARNING: conflict media seed failed (exit $?)" >&2
+
 php artisan storage:link 2>/dev/null || true
 
 true

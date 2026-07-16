@@ -217,6 +217,8 @@ class DatabaseSeeder extends Seeder
                 ]);
             }
         }
+
+        $this->call(ConflictMediaSeeder::class);
     }
 
     private function seedFormSchema(): void

@@ -118,18 +118,18 @@ export default function LoginPage() {
 
   return (
     <main
-      className="relative flex min-h-screen items-center justify-center overflow-hidden px-4 py-10"
+      className="relative isolate flex min-h-screen items-center justify-center overflow-hidden px-4 py-10"
       style={{ direction: "rtl" }}
       onMouseMove={handlePointerMove}
       onMouseLeave={handlePointerLeave}
     >
       <div
         aria-hidden
-        className="absolute inset-[-6%] bg-cover bg-center bg-no-repeat will-change-transform"
+        className="absolute inset-[-4%] bg-cover bg-center bg-no-repeat"
         style={{
           backgroundImage: "url(/login-bg.webp)",
           filter: "saturate(1.12)",
-          transform: `translate3d(${bgShiftX}px, ${bgShiftY}px, 0) scale(1.05)`,
+          transform: `translate3d(${bgShiftX}px, ${bgShiftY}px, 0) scale(1.02)`,
         }}
       />
 
@@ -155,8 +155,8 @@ export default function LoginPage() {
           className="relative overflow-hidden rounded-[32px] border border-white/40 p-8 shadow-[0_20px_70px_rgba(0,0,0,0.28)]"
           style={{
             background: "rgba(255, 255, 255, 0.06)",
-            WebkitBackdropFilter: "blur(44px) saturate(180%)",
-            backdropFilter: "blur(44px) saturate(180%)",
+            WebkitBackdropFilter: "blur(24px) saturate(180%)",
+            backdropFilter: "blur(24px) saturate(180%)",
           }}
         >
           <div
@@ -183,9 +183,9 @@ export default function LoginPage() {
             <div
               className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-white/30 shadow-[inset_0_1px_0_rgba(255,255,255,0.35)]"
               style={{
-                background: "rgba(255, 255, 255, 0.05)",
-                WebkitBackdropFilter: "blur(24px)",
-                backdropFilter: "blur(24px)",
+                background: "rgba(255, 255, 255, 0.03)",
+                WebkitBackdropFilter: "blur(28px) saturate(180%)",
+                backdropFilter: "blur(28px) saturate(180%)",
               }}
             >
               <IranEmblem className="h-8 w-8 text-white/95 drop-shadow-sm" />
@@ -205,27 +205,37 @@ export default function LoginPage() {
 
           <form onSubmit={onSubmit} className="relative space-y-5">
             <label className="block space-y-2 text-sm">
-              <span className="font-medium text-white/80">نام کاربری</span>
+              <span className="font-medium text-white/90 [text-shadow:0_1px_8px_rgba(0,0,0,0.5)]">نام کاربری</span>
               <input
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 type="text"
                 autoComplete="username"
                 placeholder="نام کاربری خود را وارد کنید"
-                className="w-full rounded-2xl border border-white/30 px-4 py-3 text-white placeholder:text-white/45 shadow-[inset_0_1px_0_rgba(255,255,255,0.18)] outline-none transition focus:border-white/55 focus:ring-2 focus:ring-white/25 [background:rgba(255,255,255,0.04)] [backdrop-filter:blur(20px)]"
+                className="w-full rounded-2xl border border-white/35 px-4 py-3 text-white placeholder:text-white/50 shadow-[inset_0_1px_0_rgba(255,255,255,0.2)] outline-none transition focus:border-white/60 focus:ring-2 focus:ring-white/25"
+                style={{
+                  background: "rgba(255, 255, 255, 0.025)",
+                  WebkitBackdropFilter: "blur(24px)",
+                  backdropFilter: "blur(24px)",
+                }}
                 required
               />
             </label>
 
             <label className="block space-y-2 text-sm">
-              <span className="font-medium text-white/80">رمز عبور</span>
+              <span className="font-medium text-white/90 [text-shadow:0_1px_8px_rgba(0,0,0,0.5)]">رمز عبور</span>
               <input
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 type="password"
                 autoComplete="current-password"
                 placeholder="رمز عبور"
-                className="w-full rounded-2xl border border-white/30 px-4 py-3 text-white placeholder:text-white/45 shadow-[inset_0_1px_0_rgba(255,255,255,0.18)] outline-none transition focus:border-white/55 focus:ring-2 focus:ring-white/25 [background:rgba(255,255,255,0.04)] [backdrop-filter:blur(20px)]"
+                className="w-full rounded-2xl border border-white/35 px-4 py-3 text-white placeholder:text-white/50 shadow-[inset_0_1px_0_rgba(255,255,255,0.2)] outline-none transition focus:border-white/60 focus:ring-2 focus:ring-white/25"
+                style={{
+                  background: "rgba(255, 255, 255, 0.025)",
+                  WebkitBackdropFilter: "blur(24px)",
+                  backdropFilter: "blur(24px)",
+                }}
                 required
               />
             </label>

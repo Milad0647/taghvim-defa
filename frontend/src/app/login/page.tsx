@@ -152,18 +152,18 @@ export default function LoginPage() {
         }}
       >
         <div
-          className="relative overflow-hidden rounded-[32px] border border-white/40 p-8 shadow-[0_20px_70px_rgba(0,0,0,0.28)]"
+          className="relative overflow-hidden rounded-[32px] border border-white/45 p-8 shadow-[0_24px_80px_rgba(0,0,0,0.22)]"
           style={{
-            background: "rgba(255, 255, 255, 0.06)",
-            WebkitBackdropFilter: "blur(24px) saturate(180%)",
-            backdropFilter: "blur(24px) saturate(180%)",
+            background: "rgba(255, 255, 255, 0.035)",
+            WebkitBackdropFilter: "blur(52px) saturate(190%) brightness(1.08)",
+            backdropFilter: "blur(52px) saturate(190%) brightness(1.08)",
           }}
         >
           <div
             aria-hidden
             className="pointer-events-none absolute inset-0 rounded-[32px]"
             style={{
-              background: `radial-gradient(480px circle at ${glareX}% ${glareY}%, rgba(255,255,255,0.22) 0%, rgba(255,255,255,0.04) 32%, transparent 62%)`,
+              background: `radial-gradient(460px circle at ${glareX}% ${glareY}%, rgba(255,255,255,0.14) 0%, rgba(255,255,255,0.03) 30%, transparent 58%)`,
             }}
           />
           <div

@@ -125,21 +125,21 @@ export default function LoginPage() {
     >
       <div
         aria-hidden
-        className="absolute inset-[-8%] bg-cover bg-center bg-no-repeat will-change-transform"
+        className="absolute inset-[-6%] bg-cover bg-center bg-no-repeat will-change-transform"
         style={{
           backgroundImage: "url(/login-bg.webp)",
-          filter: "blur(5px) saturate(1.15)",
-          transform: `translate3d(${bgShiftX}px, ${bgShiftY}px, 0) scale(1.08)`,
+          filter: "saturate(1.12)",
+          transform: `translate3d(${bgShiftX}px, ${bgShiftY}px, 0) scale(1.05)`,
         }}
       />
 
       <div
         aria-hidden
-        className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/10 to-black/30"
+        className="absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-black/20"
       />
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,rgba(0,0,0,0.22)_100%)]"
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,rgba(0,0,0,0.12)_100%)]"
       />
 
       <div
@@ -151,33 +151,53 @@ export default function LoginPage() {
             : "transform 0.65s cubic-bezier(0.22, 1, 0.36, 1)",
         }}
       >
-        <div className="relative overflow-hidden rounded-[32px] border border-white/35 bg-white/[0.07] p-8 shadow-[0_18px_60px_rgba(0,0,0,0.35)] backdrop-blur-[28px] backdrop-saturate-150">
+        <div
+          className="relative overflow-hidden rounded-[32px] border border-white/40 p-8 shadow-[0_20px_70px_rgba(0,0,0,0.28)]"
+          style={{
+            background: "rgba(255, 255, 255, 0.06)",
+            WebkitBackdropFilter: "blur(44px) saturate(180%)",
+            backdropFilter: "blur(44px) saturate(180%)",
+          }}
+        >
           <div
             aria-hidden
             className="pointer-events-none absolute inset-0 rounded-[32px]"
             style={{
-              background: `radial-gradient(520px circle at ${glareX}% ${glareY}%, rgba(255,255,255,0.34) 0%, rgba(255,255,255,0.08) 28%, transparent 58%)`,
+              background: `radial-gradient(480px circle at ${glareX}% ${glareY}%, rgba(255,255,255,0.22) 0%, rgba(255,255,255,0.04) 32%, transparent 62%)`,
             }}
           />
           <div
             aria-hidden
-            className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/70 to-transparent"
+            className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/80 to-transparent"
           />
           <div
             aria-hidden
-            className="pointer-events-none absolute inset-0 rounded-[32px] ring-1 ring-inset ring-white/10"
+            className="pointer-events-none absolute inset-0 rounded-[32px] ring-1 ring-inset ring-white/20"
+          />
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-x-6 bottom-0 h-px bg-gradient-to-r from-transparent via-white/15 to-transparent"
           />
 
           <div className="relative mb-8 flex items-start gap-4">
-            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-white/25 bg-white/[0.08] shadow-[inset_0_1px_0_rgba(255,255,255,0.25)] backdrop-blur-xl">
+            <div
+              className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-white/30 shadow-[inset_0_1px_0_rgba(255,255,255,0.35)]"
+              style={{
+                background: "rgba(255, 255, 255, 0.05)",
+                WebkitBackdropFilter: "blur(24px)",
+                backdropFilter: "blur(24px)",
+              }}
+            >
               <IranEmblem className="h-8 w-8 text-white/95 drop-shadow-sm" />
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-xs font-medium text-white/55">ورود به سامانه</p>
-              <h1 className="mt-1 text-[1.2rem] font-semibold leading-8 tracking-tight text-white drop-shadow-sm">
+              <p className="text-xs font-medium text-white/65 [text-shadow:0_1px_8px_rgba(0,0,0,0.45)]">
+                ورود به سامانه
+              </p>
+              <h1 className="mt-1 text-[1.2rem] font-semibold leading-8 tracking-tight text-white [text-shadow:0_2px_12px_rgba(0,0,0,0.5)]">
                 {branding.siteTitle}
               </h1>
-              <p className="mt-1 text-sm leading-7 text-white/75">
+              <p className="mt-1 text-sm leading-7 text-white/85 [text-shadow:0_1px_10px_rgba(0,0,0,0.45)]">
                 {branding.siteTagline}
               </p>
             </div>
@@ -192,7 +212,7 @@ export default function LoginPage() {
                 type="text"
                 autoComplete="username"
                 placeholder="نام کاربری خود را وارد کنید"
-                className="w-full rounded-2xl border border-white/25 bg-white/[0.06] px-4 py-3 text-white placeholder:text-white/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] outline-none backdrop-blur-xl transition focus:border-white/45 focus:bg-white/[0.1] focus:ring-2 focus:ring-white/20"
+                className="w-full rounded-2xl border border-white/30 px-4 py-3 text-white placeholder:text-white/45 shadow-[inset_0_1px_0_rgba(255,255,255,0.18)] outline-none transition focus:border-white/55 focus:ring-2 focus:ring-white/25 [background:rgba(255,255,255,0.04)] [backdrop-filter:blur(20px)]"
                 required
               />
             </label>
@@ -205,13 +225,15 @@ export default function LoginPage() {
                 type="password"
                 autoComplete="current-password"
                 placeholder="رمز عبور"
-                className="w-full rounded-2xl border border-white/25 bg-white/[0.06] px-4 py-3 text-white placeholder:text-white/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] outline-none backdrop-blur-xl transition focus:border-white/45 focus:bg-white/[0.1] focus:ring-2 focus:ring-white/20"
+                className="w-full rounded-2xl border border-white/30 px-4 py-3 text-white placeholder:text-white/45 shadow-[inset_0_1px_0_rgba(255,255,255,0.18)] outline-none transition focus:border-white/55 focus:ring-2 focus:ring-white/25 [background:rgba(255,255,255,0.04)] [backdrop-filter:blur(20px)]"
                 required
               />
             </label>
 
             {error ? (
-              <p className="rounded-2xl border border-red-200/25 bg-red-500/15 px-4 py-2.5 text-sm text-red-50 backdrop-blur-xl">
+              <p
+                className="rounded-2xl border border-red-200/30 px-4 py-2.5 text-sm text-red-50 [background:rgba(220,38,38,0.12)] [backdrop-filter:blur(20px)]"
+              >
                 {error}
               </p>
             ) : null}

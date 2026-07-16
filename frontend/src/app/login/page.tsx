@@ -154,9 +154,9 @@ export default function LoginPage() {
         <div
           className="relative overflow-hidden rounded-[32px] border border-white/45 p-8 shadow-[0_24px_80px_rgba(0,0,0,0.22)]"
           style={{
-            background: "rgba(255, 255, 255, 0.035)",
-            WebkitBackdropFilter: "blur(52px) saturate(190%) brightness(1.08)",
-            backdropFilter: "blur(52px) saturate(190%) brightness(1.08)",
+            background: "rgba(255, 255, 255, 0.028)",
+            WebkitBackdropFilter: "blur(20px) saturate(160%) brightness(1.04)",
+            backdropFilter: "blur(20px) saturate(160%) brightness(1.04)",
           }}
         >
           <div
@@ -183,9 +183,9 @@ export default function LoginPage() {
             <div
               className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-white/30 shadow-[inset_0_1px_0_rgba(255,255,255,0.35)]"
               style={{
-                background: "rgba(255, 255, 255, 0.03)",
-                WebkitBackdropFilter: "blur(28px) saturate(180%)",
-                backdropFilter: "blur(28px) saturate(180%)",
+                background: "rgba(255, 255, 255, 0.025)",
+                WebkitBackdropFilter: "blur(12px) saturate(150%)",
+                backdropFilter: "blur(12px) saturate(150%)",
               }}
             >
               <IranEmblem className="h-8 w-8 text-white/95 drop-shadow-sm" />
@@ -214,9 +214,9 @@ export default function LoginPage() {
                 placeholder="نام کاربری خود را وارد کنید"
                 className="w-full rounded-2xl border border-white/35 px-4 py-3 text-white placeholder:text-white/50 shadow-[inset_0_1px_0_rgba(255,255,255,0.2)] outline-none transition focus:border-white/60 focus:ring-2 focus:ring-white/25"
                 style={{
-                  background: "rgba(255, 255, 255, 0.025)",
-                  WebkitBackdropFilter: "blur(24px)",
-                  backdropFilter: "blur(24px)",
+                  background: "rgba(255, 255, 255, 0.02)",
+                  WebkitBackdropFilter: "blur(10px)",
+                  backdropFilter: "blur(10px)",
                 }}
                 required
               />
@@ -232,9 +232,9 @@ export default function LoginPage() {
                 placeholder="رمز عبور"
                 className="w-full rounded-2xl border border-white/35 px-4 py-3 text-white placeholder:text-white/50 shadow-[inset_0_1px_0_rgba(255,255,255,0.2)] outline-none transition focus:border-white/60 focus:ring-2 focus:ring-white/25"
                 style={{
-                  background: "rgba(255, 255, 255, 0.025)",
-                  WebkitBackdropFilter: "blur(24px)",
-                  backdropFilter: "blur(24px)",
+                  background: "rgba(255, 255, 255, 0.02)",
+                  WebkitBackdropFilter: "blur(10px)",
+                  backdropFilter: "blur(10px)",
                 }}
                 required
               />
@@ -242,7 +242,7 @@ export default function LoginPage() {
 
             {error ? (
               <p
-                className="rounded-2xl border border-red-200/30 px-4 py-2.5 text-sm text-red-50 [background:rgba(220,38,38,0.12)] [backdrop-filter:blur(20px)]"
+                className="rounded-2xl border border-red-200/30 px-4 py-2.5 text-sm text-red-50 [text-shadow:0_1px_6px_rgba(0,0,0,0.4)] [background:rgba(220,38,38,0.12)] [backdrop-filter:blur(8px)]"
               >
                 {error}
               </p>
@@ -258,8 +258,8 @@ export default function LoginPage() {
           </form>
         </div>
 
-        <p className="mt-6 text-center text-xs text-white/50 drop-shadow">
-          سامانه مدیریت تقویم دفاعی
+        <p className="mt-6 text-center text-xs text-white/60 [text-shadow:0_1px_8px_rgba(0,0,0,0.5)]">
+          سامانه مدیریت تقویم دفاع ملی
         </p>
       </div>
     </main>

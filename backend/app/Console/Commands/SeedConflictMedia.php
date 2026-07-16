@@ -13,9 +13,9 @@ class SeedConflictMedia extends Command
 
     public function handle(): int
     {
-        $this->callWith(ConflictMediaSeeder::class, [
-            'force' => (bool) $this->option('force'),
-        ]);
+        $seeder = new ConflictMediaSeeder;
+        $seeder->setCommand($this);
+        $seeder->run(force: (bool) $this->option('force'));
 
         return self::SUCCESS;
     }

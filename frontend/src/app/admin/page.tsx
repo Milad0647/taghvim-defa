@@ -3,14 +3,21 @@
 import { RequireAuth } from "@/components/admin/RequireAuth";
 import { getCurrentUser, refreshCurrentUser } from "@/lib/auth";
 import {
+  clearDemoDataOnServer,
+  fetchDemoDataStats,
+  restoreDemoDataOnServer,
+  type DemoDataStats,
+} from "@/lib/demo-data";
+import {
   clearAllDemoData,
-  getDemoDataStats,
-  restoreConflictDemoData,
+  resetLocalTimelineCache,
 } from "@/lib/timeline-store";
 import { ROLE_LABELS, userHasPermission } from "@/types/auth";
 import { Eraser, RotateCcw } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+
+const EMPTY_STATS: DemoDataStats = { days: 0, events: 0, cleared: true };
 
 export default function AdminHomePage() {
   return (
@@ -30,9 +37,19 @@ function AdminHomeContent() {
   const [canArchive, setCanArchive] = useState(false);
   const [canBackup, setCanBackup] = useState(false);
   const [canForm, setCanForm] = useState(false);
-  const [stats, setStats] = useState({ days: 0, events: 0, cleared: false });
+  const [stats, setStats] = useState<DemoDataStats>(EMPTY_STATS);
   const [message, setMessage] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+
+  const refreshStats = useCallback(async () => {
+    try {
+      const next = await fetchDemoDataStats();
+      setStats(next);
+    } catch {
+      setStats(EMPTY_STATS);
+    }
+  }, []);
 
   useEffect(() => {
     void (async () => {
@@ -47,48 +64,60 @@ function AdminHomeContent() {
       setCanArchive(userHasPermission(user, "view_archive"));
       setCanBackup(userHasPermission(user, "run_backup"));
       setCanForm(userHasPermission(user, "manage_form_schema"));
-      setStats(getDemoDataStats());
+      await refreshStats();
     })();
-  }, []);
+  }, [refreshStats]);
 
-  function refreshStats() {
-    setStats(getDemoDataStats());
-  }
-
-  function handleClear() {
+  async function handleClear() {
     if (
       !window.confirm(
-        "همه داده‌های نمونه رویدادها، پیش‌نویس‌ها و فیلترهای ذخیره‌شده پاک می‌شود. این کار برای آماده‌سازی محصول خالی است. ادامه می‌دهید؟",
+        "همه رویدادهای خبری نمونه از سرور و حافظه محلی مرورگر پاک می‌شود. ادامه می‌دهید؟",
       )
     ) {
       return;
     }
 
     setBusy(true);
+    setError(null);
+    setMessage(null);
+
     try {
-      const result = clearAllDemoData();
-      refreshStats();
+      const result = await clearDemoDataOnServer();
+      clearAllDemoData();
+      resetLocalTimelineCache();
+      await refreshStats();
       setMessage(
-        `پاک شد: ${result.timelineCount.toLocaleString("fa-IR")} روز داده نمونه و کلیدهای محلی مرتبط. داشبورد اکنون خالی و آماده استفاده واقعی است.`,
+        `پاک شد: ${result.days.toLocaleString("fa-IR")} روز، ${result.events.toLocaleString("fa-IR")} رویداد و ${result.media.toLocaleString("fa-IR")} فایل رسانه‌ای از سرور.`,
       );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "پاک کردن ناموفق بود.");
     } finally {
       setBusy(false);
     }
   }
 
-  function handleRestore() {
+  async function handleRestore() {
     if (
       !window.confirm(
-        "داده نمونه جنگ ۲۰۲۶ از ۹ اسفند ۱۴۰۴ تا امروز دوباره بارگذاری شود؟",
+        "داده نمونه جنگ ۲۰۲۶ با تصاویر جدید از سرور دوباره بارگذاری شود؟",
       )
     ) {
       return;
     }
+
     setBusy(true);
+    setError(null);
+    setMessage(null);
+
     try {
-      restoreConflictDemoData();
-      refreshStats();
-      setMessage("داده نمونه خبری دوباره بارگذاری شد.");
+      const result = await restoreDemoDataOnServer();
+      resetLocalTimelineCache();
+      await refreshStats();
+      setMessage(
+        `بازیابی شد: ${result.days.toLocaleString("fa-IR")} روز، ${result.events.toLocaleString("fa-IR")} رویداد و ${result.media_attached.toLocaleString("fa-IR")} تصویر جدید.`,
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "بازیابی ناموفق بود.");
     } finally {
       setBusy(false);
     }
@@ -206,31 +235,34 @@ function AdminHomeContent() {
             داده نمونه و آماده‌سازی محصول
           </h3>
           <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
-            رویدادهای فعلی بر اساس گزارش‌های عمومی جنگ ۲۰۲۶ از{" "}
-            <strong className="text-[var(--text-primary)]">۹ اسفند ۱۴۰۴</strong>{" "}
-            تا{" "}
-            <strong className="text-[var(--text-primary)]">امروز (۱۹ تیر ۱۴۰۵)</strong>{" "}
-            برای نمایش دمو پر شده‌اند. قبل از بهره‌برداری واقعی، همه را پاک کنید تا
-            داشبورد خالی شود.
+            رویدادهای نمونه هفت روز اخیر از سرور بارگذاری می‌شوند. با «بازیابی»،
+            رویدادها و تصاویر جدید از پوشه seed سرور وصل می‌شوند. قبل از
+            بهره‌برداری واقعی می‌توانید همه را پاک کنید.
           </p>
           <p className="mt-3 text-xs text-[var(--text-muted)]">
-            وضعیت:{" "}
+            وضعیت سرور:{" "}
             {stats.cleared
               ? "خالی / آماده استفاده"
               : `${stats.days.toLocaleString("fa-IR")} روز · ${stats.events.toLocaleString("fa-IR")} رویداد`}
           </p>
 
           {message ? (
-            <p className="mt-3 rounded-xl border border-[var(--border)] bg-[var(--panel-2)] px-3 py-2 text-xs text-[var(--text-primary)]">
+            <p className="mt-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-xs text-[var(--text-primary)]">
               {message}
+            </p>
+          ) : null}
+
+          {error ? (
+            <p className="mt-3 rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-300">
+              {error}
             </p>
           ) : null}
 
           <div className="mt-4 flex flex-wrap gap-2">
             <button
               type="button"
-              disabled={busy || (stats.cleared && stats.events === 0)}
-              onClick={handleClear}
+              disabled={busy || stats.cleared}
+              onClick={() => void handleClear()}
               className="inline-flex items-center gap-2 rounded-xl bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-50"
             >
               <Eraser className="h-4 w-4" />
@@ -239,7 +271,7 @@ function AdminHomeContent() {
             <button
               type="button"
               disabled={busy}
-              onClick={handleRestore}
+              onClick={() => void handleRestore()}
               className="inline-flex items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--panel-2)] px-4 py-2.5 text-sm text-[var(--text-primary)] hover:bg-[var(--hover)] disabled:opacity-50"
             >
               <RotateCcw className="h-4 w-4" />

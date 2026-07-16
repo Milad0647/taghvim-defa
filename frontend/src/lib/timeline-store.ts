@@ -109,8 +109,16 @@ export function upsertTimelineEvent(event: TimelineEvent): TimelineDay[] {
   return next;
 }
 
+export function resetLocalTimelineCache(): void {
+  if (!canUseStorage()) return;
+  localStorage.removeItem(TIMELINE_KEY);
+  localStorage.removeItem(TIMELINE_CLEARED_KEY);
+  localStorage.removeItem(TIMELINE_VERSION_KEY);
+}
+
 export function restoreConflictDemoData(): TimelineDay[] {
-  return writeSeed();
+  resetLocalTimelineCache();
+  return conflictSeedDays;
 }
 
 /**

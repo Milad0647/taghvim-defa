@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\BackupController;
 use App\Http\Controllers\Api\V1\CalendarDayController;
 use App\Http\Controllers\Api\V1\CategoryController;
+use App\Http\Controllers\Api\V1\DemoDataController;
 use App\Http\Controllers\Api\V1\FormSchemaController;
 use App\Http\Controllers\Api\V1\NotificationController;
 use App\Http\Controllers\Api\V1\SettingsController;
@@ -82,6 +83,12 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
     Route::get('/notifications/unread-count', [NotificationController::class, 'unreadCount']);
     Route::post('/notifications/read-all', [NotificationController::class, 'markAllRead']);
     Route::post('/notifications/{id}/read', [NotificationController::class, 'markRead']);
+
+    Route::middleware('permission:manage_content')->group(function () {
+        Route::get('/demo-data/stats', [DemoDataController::class, 'stats']);
+        Route::post('/demo-data/clear', [DemoDataController::class, 'clear']);
+        Route::post('/demo-data/restore', [DemoDataController::class, 'restore']);
+    });
 
     Route::get('/categories', [CategoryController::class, 'index']);
     Route::get('/settings', [SettingsController::class, 'show']);

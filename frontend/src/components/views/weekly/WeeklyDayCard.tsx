@@ -11,12 +11,14 @@ type WeeklyDayCardProps = {
   model: WeeklyDayModel;
   selected?: boolean;
   onSelect: (date: string) => void;
+  className?: string;
 };
 
 export function WeeklyDayCard({
   model,
   selected = false,
   onSelect,
+  className,
 }: WeeklyDayCardProps) {
   const { day, topEvent, hourlyBars, intensityLevel } = model;
   const enemyHeavy = day.enemyActionsCount >= day.governmentActionsCount;
@@ -26,11 +28,12 @@ export function WeeklyDayCard({
       type="button"
       onClick={() => onSelect(day.date)}
       className={clsx(
-        "flex h-full min-h-[560px] flex-col gap-3 rounded-2xl border p-4 text-right transition duration-200",
+        "flex h-full min-h-[430px] flex-col gap-2.5 overflow-hidden rounded-2xl border p-3 text-right transition duration-200 md:min-h-[560px] md:gap-3 md:p-4",
         "hover:-translate-y-0.5 hover:border-[var(--primary)]/35",
         selected
           ? "border-[var(--primary)]/55 bg-[var(--surface-3)] shadow-[0_0_24px_rgba(99,102,241,0.18)]"
           : "border-[var(--border)] bg-[var(--panel)]",
+        className,
       )}
       aria-pressed={selected}
     >
@@ -47,6 +50,7 @@ export function WeeklyDayCard({
         total={day.totalEvents}
         enemy={day.enemyActionsCount}
         government={day.governmentActionsCount}
+        size={92}
       />
 
       <div className="space-y-1.5 text-[11px]">

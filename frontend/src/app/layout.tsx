@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Vazirmatn } from "next/font/google";
 import { AuthGate } from "@/components/auth/AuthGate";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
@@ -11,6 +11,14 @@ const vazir = Vazirmatn({
   subsets: ["arabic"],
   weight: ["400", "500", "600", "700", "800"],
 });
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  viewportFit: "cover",
+  themeColor: "#050b18",
+};
 
 export const metadata: Metadata = {
   title: {

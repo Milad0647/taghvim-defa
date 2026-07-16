@@ -7,6 +7,7 @@ import {
 } from "@/components/timeline/TimelineNode";
 import { groupSimilarEnemyEventsForAdmin } from "@/lib/enemy-similarity";
 import type { TimelineEvent } from "@/types/timeline";
+import clsx from "clsx";
 import { Users } from "lucide-react";
 
 type TimelineEventGroupProps = {
@@ -17,6 +18,8 @@ type TimelineEventGroupProps = {
   selectedEventId?: string | null;
   /** When true, similar enemy actions collapse into one admin box */
   groupSimilarEnemy?: boolean;
+  /** Highlight the timeline rail for the active day section */
+  illuminateRail?: boolean;
   relatedLookup: (event: TimelineEvent) => {
     hasResponse: boolean;
     responseTimeMinutes?: number;
@@ -31,6 +34,7 @@ export function TimelineEventGroup({
   searchQuery,
   selectedEventId,
   groupSimilarEnemy = false,
+  illuminateRail = false,
   relatedLookup,
   onOpen,
 }: TimelineEventGroupProps) {
@@ -43,7 +47,13 @@ export function TimelineEventGroup({
   const hiddenDuplicates = Math.max(0, events.length - displayEvents.length);
 
   return (
-    <section>
+    <section
+      className={clsx(
+        illuminateRail &&
+          !isEnemy &&
+          "rounded-2xl border border-[var(--government-border)]/35 bg-[var(--government-soft)]/20 px-2 py-2 md:px-3",
+      )}
+    >
       <div
         className="mb-2 flex flex-wrap items-center gap-2"
         style={{ direction: "rtl", paddingRight: railPad }}

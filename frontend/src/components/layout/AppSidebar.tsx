@@ -97,7 +97,9 @@ export function AppSidebar({
 
   useEffect(() => {
     onCloseMobile();
-  }, [pathname, view, onCloseMobile]);
+    // Close on route/view change only — not when onCloseMobile identity changes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname, view]);
 
   const agencyLabel = useMemo(() => {
     if (!user) return null;
@@ -345,17 +347,19 @@ export function AppSidebar({
 
   return (
     <>
-      <aside className="hidden h-full lg:block">{content}</aside>
+      <aside className="hidden h-full shrink-0 lg:block">{content}</aside>
 
       {mobileOpen ? (
-        <div className="fixed inset-0 z-50 lg:hidden">
+        <div className="fixed inset-0 z-[100] lg:hidden">
           <button
             type="button"
             className="absolute inset-0 bg-[var(--overlay)]"
             aria-label="بستن پس‌زمینه منو"
             onClick={onCloseMobile}
           />
-          <div className="absolute inset-y-3 right-3 shadow-2xl">{content}</div>
+          <div className="absolute inset-y-3 right-3 w-[min(280px,calc(100vw-1.5rem))] shadow-2xl">
+            {content}
+          </div>
         </div>
       ) : null}
 
@@ -398,7 +402,7 @@ export function MobileMenuButton({ onClick }: { onClick: () => void }) {
     <button
       type="button"
       onClick={onClick}
-      className="inline-flex rounded-xl border border-[var(--border)] bg-[var(--panel-2)] p-2 text-[var(--text-primary)] lg:hidden"
+      className="touch-target inline-flex items-center justify-center rounded-xl border border-[var(--border)] bg-[var(--panel-2)] p-2.5 text-[var(--text-primary)] lg:hidden"
       aria-label="باز کردن منو"
     >
       <Menu className="h-5 w-5" />

@@ -73,7 +73,7 @@ export function DayDetailModal({
         role="dialog"
         aria-modal="true"
         aria-label={`نمای روزانه ${day.persianDate}`}
-        className="relative z-[1] flex h-full w-full max-w-6xl flex-col overflow-hidden border border-[var(--border)] bg-[var(--background)] shadow-2xl sm:h-[min(92vh,920px)] sm:rounded-2xl"
+        className="relative z-[1] flex h-full w-full max-w-6xl flex-col overflow-hidden border border-[var(--border)] bg-[var(--background)] shadow-2xl pt-[env(safe-area-inset-top)] sm:h-[min(92dvh,920px)] sm:rounded-2xl sm:pt-0"
       >
         <div className="flex items-center justify-between gap-3 border-b border-[var(--border)] bg-[var(--panel)] px-3 py-2.5 sm:px-4">
           <div className="min-w-0">
@@ -95,7 +95,7 @@ export function DayDetailModal({
         </div>
 
         <div className="grid min-h-0 flex-1 grid-cols-1 overflow-hidden lg:grid-cols-[minmax(0,1.2fr)_minmax(300px,0.8fr)]">
-          <div className="min-h-0 overflow-y-auto p-3 sm:p-4">
+          <div className="min-h-0 overflow-y-auto overscroll-contain p-3 sm:p-4">
             <DayFullView
               day={day}
               searchQuery={searchQuery}
@@ -107,8 +107,8 @@ export function DayDetailModal({
             />
           </div>
 
-          <div className="min-h-0 border-t border-[var(--border)] lg:border-t-0 lg:border-r lg:border-[var(--border)]">
-            <div className="h-full min-h-[320px] overflow-y-auto p-3 sm:p-4">
+          <div className="hidden min-h-0 border-t border-[var(--border)] lg:block lg:border-t-0 lg:border-r lg:border-[var(--border)]">
+            <div className="h-full min-h-[320px] overflow-y-auto overscroll-contain p-3 sm:p-4">
               <EventDetailPanel
                 open
                 event={selectedEvent}

@@ -86,7 +86,7 @@ export function WeeklyView({
   };
 
   return (
-    <section className="space-y-3" style={{ direction: "rtl", textAlign: "right" }}>
+    <section className="space-y-2 md:space-y-3" style={{ direction: "rtl", textAlign: "right" }}>
       <WeeklyToolbar
         rangeLabel={rangeLabel || "بازه هفتگی"}
         weeks={weeks}
@@ -98,6 +98,7 @@ export function WeeklyView({
       />
 
       <WeeklyKpiCards
+        className="hidden md:grid"
         totalEvents={summary.totalEvents}
         enemy={summary.enemy}
         government={summary.government}
@@ -111,17 +112,16 @@ export function WeeklyView({
         </div>
       ) : (
         <>
-          <div className="-mx-1 overflow-x-auto px-1 pb-1 xl:mx-0 xl:overflow-visible xl:px-0">
-            <div className="grid min-w-[720px] grid-cols-7 gap-2 sm:min-w-[860px] sm:gap-3.5 xl:min-w-0">
-              {models.map((model) => (
-                <WeeklyDayCard
-                  key={model.day.date}
-                  model={model}
-                  selected={activeDate === model.day.date}
-                  onSelect={onSelectDay}
-                />
-              ))}
-            </div>
+          <div className="scrollbar-thin -mx-1 flex snap-x snap-mandatory gap-3 overflow-x-auto px-1 pb-2 md:mx-0 md:grid md:grid-cols-7 md:gap-3.5 md:overflow-visible md:px-0 md:pb-0">
+            {models.map((model) => (
+              <WeeklyDayCard
+                key={model.day.date}
+                model={model}
+                selected={activeDate === model.day.date}
+                onSelect={onSelectDay}
+                className="w-[40vw] min-w-[250px] max-w-[300px] shrink-0 snap-center md:w-auto md:min-w-0 md:max-w-none md:shrink"
+              />
+            ))}
           </div>
 
           <WeeklyLegend />

@@ -45,25 +45,26 @@ export function TimelineDaySection({
         isActive ? "border-[var(--primary)]/40" : "border-[var(--border)]",
         day.isCritical && "ring-1 ring-red-500/20",
       )}
-      style={{ scrollMarginTop: "0.5rem" }}
+      style={{ scrollMarginTop: "var(--timeline-sticky-top, 0.5rem)" }}
     >
       <button
         type="button"
         onClick={() => onToggle(day.date)}
-        className="sticky top-0 z-20 flex h-[42px] w-full items-center justify-between gap-3 border-b border-[var(--border)] bg-[var(--panel)] px-3 text-right shadow-[0_8px_16px_-12px_rgba(0,0,0,0.45)]"
+        className="sticky z-20 flex min-h-11 w-full items-center justify-between gap-2 border-b border-[var(--border)] bg-[var(--panel)]/95 px-3 text-right shadow-[0_8px_16px_-12px_rgba(0,0,0,0.45)] backdrop-blur-md sm:gap-3 sm:px-3"
+        style={{ top: "var(--timeline-sticky-top, 0px)" }}
         aria-expanded={!collapsed}
       >
-        <div className="flex min-w-0 flex-wrap items-center gap-2">
-          <h3 className="m-0 truncate text-[16px] font-bold leading-[1.4] text-[var(--text-primary)] sm:text-[18px]">
+        <div className="flex min-w-0 flex-wrap items-center gap-1.5 sm:gap-2">
+          <h3 className="m-0 truncate text-[15px] font-bold leading-[1.4] text-[var(--text-primary)] sm:text-[18px]">
             {day.weekday}، {day.persianDate}
           </h3>
-          <span className="rounded-[10px] border border-[var(--border)] bg-[var(--panel-2)] px-2.5 py-1 text-[11px] text-[var(--text-secondary)]">
+          <span className="rounded-[10px] border border-[var(--border)] bg-[var(--panel-2)] px-2 py-0.5 text-[10px] text-[var(--text-secondary)] sm:px-2.5 sm:py-1 sm:text-[11px]">
             {day.totalEvents.toLocaleString("fa-IR")} رویداد
           </span>
-          <span className="rounded-full bg-red-500/10 px-2 py-0.5 text-[10px] text-[var(--enemy)]">
+          <span className="hidden rounded-full bg-red-500/10 px-2 py-0.5 text-[10px] text-[var(--enemy)] sm:inline">
             {day.enemyActionsCount.toLocaleString("fa-IR")} دشمن
           </span>
-          <span className="rounded-full bg-blue-500/10 px-2 py-0.5 text-[10px] text-[var(--government)]">
+          <span className="hidden rounded-full bg-blue-500/10 px-2 py-0.5 text-[10px] text-[var(--government)] sm:inline">
             {day.governmentActionsCount.toLocaleString("fa-IR")} دولت
           </span>
         </div>
@@ -78,10 +79,16 @@ export function TimelineDaySection({
       {!collapsed ? (
         <div className="relative space-y-5 py-3 pl-3">
           <div
-            className="pointer-events-none absolute bottom-6 top-6 z-[1] w-px bg-[var(--border)]"
+            className="pointer-events-none absolute bottom-6 top-6 z-[1] w-px transition-all duration-300"
             style={{
               right: TIMELINE_RAIL_RIGHT,
               transform: "translateX(50%)",
+              background: isActive
+                ? "linear-gradient(180deg, var(--enemy) 0%, var(--government) 52%, var(--primary) 100%)"
+                : "var(--border)",
+              boxShadow: isActive
+                ? "0 0 14px rgba(59, 130, 246, 0.35), 0 0 8px rgba(239, 68, 68, 0.25)"
+                : undefined,
             }}
           />
 
@@ -99,8 +106,9 @@ export function TimelineDaySection({
           ) : null}
           {showGovernment ? (
             <TimelineEventGroup
-              title="اقدامات دولت"
+              title="اقدامات دولت / پای کار مردم"
               tone="government"
+              illuminateRail={isActive}
               events={govEvents}
               searchQuery={searchQuery}
               selectedEventId={selectedEventId}

@@ -1,7 +1,8 @@
 "use client";
 
 import clsx from "clsx";
-import type { ReactNode } from "react";
+import { usePathname } from "next/navigation";
+import { useEffect, type ReactNode } from "react";
 
 type AppShellProps = {
   sidebar: ReactNode;
@@ -22,14 +23,22 @@ export function AppShell({
   detailOpen = false,
   mobileNav,
 }: AppShellProps) {
+  const pathname = usePathname();
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (window.matchMedia("(max-width: 1023px)").matches) {
+      window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    }
+  }, [pathname]);
+
   return (
-    <div className="h-dvh overflow-hidden bg-[var(--background)] text-[var(--text-primary)]">
+    <div className="h-dvh overflow-hidden bg-[var(--background)] text-[var(--text-primary)] safe-top">
       <div
-        className="mx-auto flex h-full max-w-[1680px] gap-2 p-2 sm:gap-3 sm:p-3 lg:gap-4 lg:p-4"
+        className="mx-auto flex h-full max-w-[1680px] gap-1 p-1 sm:gap-3 sm:p-3 lg:gap-4 lg:p-4"
         style={{ direction: "rtl" }}
       >
-        {/* Right: sidebar */}
-        <div className="hidden h-full shrink-0 lg:block">{sidebar}</div>
+        {sidebar}
 
         {/* Center: timeline content — only the events list scrolls inside */}
         <div className="flex min-h-0 min-w-0 flex-1 flex-col">{main}</div>

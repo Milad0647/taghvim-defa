@@ -18,7 +18,7 @@ export function MonthlyDayCellCard({
   if (!cell.inMonth || !cell.date || !cell.day) {
     return (
       <div
-        className="min-h-[118px] rounded-xl border border-transparent bg-transparent sm:min-h-[132px]"
+        className="aspect-square min-h-[92px] rounded-xl border border-transparent bg-transparent md:min-h-[132px] md:aspect-auto"
         aria-hidden
       />
     );
@@ -33,7 +33,7 @@ export function MonthlyDayCellCard({
       type="button"
       onClick={() => onSelect(cell.date!)}
       className={clsx(
-        "flex min-h-[118px] w-full flex-col gap-1.5 rounded-xl border p-2 text-right transition duration-150 sm:min-h-[132px] sm:p-2.5",
+        "flex aspect-square min-h-[92px] w-full flex-col gap-1 rounded-xl border p-2 text-right transition duration-150 md:min-h-[132px] md:aspect-auto md:gap-1.5 md:p-2.5",
         "hover:border-[var(--primary)]/40 hover:bg-[var(--surface-3)]",
         selected
           ? "border-[var(--primary)]/55 bg-[var(--surface-3)] shadow-[0_0_18px_rgba(39,112,255,0.16)]"
@@ -87,13 +87,13 @@ export function MonthlyDayCellCard({
           </div>
 
           {summary ? (
-            <p className="m-0 line-clamp-2 text-[10px] leading-4 text-[var(--text-secondary)]">
+            <p className="m-0 line-clamp-2 hidden text-[10px] leading-4 text-[var(--text-secondary)] md:block">
               {summary}
             </p>
           ) : null}
 
           {thumbs.length > 0 ? (
-            <div className="mt-auto flex gap-1 pt-0.5">
+            <div className="mt-auto hidden gap-1 pt-0.5 md:flex">
               {thumbs.map((url) => (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img

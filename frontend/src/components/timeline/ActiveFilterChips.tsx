@@ -1,23 +1,26 @@
 "use client";
 
 import type { ActiveFilterChip } from "@/types/timeline";
+import clsx from "clsx";
 import { X } from "lucide-react";
 
 type ActiveFilterChipsProps = {
   chips: ActiveFilterChip[];
   onRemove: (key: string) => void;
   onClearAll: () => void;
+  className?: string;
 };
 
 export function ActiveFilterChips({
   chips,
   onRemove,
   onClearAll,
+  className,
 }: ActiveFilterChipsProps) {
   if (chips.length === 0) return null;
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
+    <div className={clsx("flex flex-wrap items-center gap-2", className)}>
       {chips.map((chip) => (
         <button
           key={chip.key + chip.label}

@@ -41,11 +41,11 @@ export function EventDetailModal({
       />
 
       <div
-        className="absolute inset-x-0 bottom-0 flex max-h-[92dvh] flex-col overflow-hidden rounded-t-2xl border border-[var(--border)] bg-[var(--surface-2)] shadow-2xl sm:inset-y-6 sm:left-1/2 sm:right-auto sm:w-[min(560px,calc(100vw-2rem))] sm:-translate-x-1/2 sm:rounded-2xl"
+        className="absolute inset-x-0 bottom-0 flex max-h-[92dvh] flex-col overflow-hidden rounded-t-2xl border border-[var(--border)] bg-[var(--surface-2)] pb-[env(safe-area-inset-bottom)] shadow-2xl overscroll-contain sm:inset-y-6 sm:left-1/2 sm:right-auto sm:w-[min(560px,calc(100vw-2rem))] sm:-translate-x-1/2 sm:rounded-2xl sm:pb-0"
         role="presentation"
       >
         <div className="mx-auto mt-2 h-1 w-10 shrink-0 rounded-full bg-[var(--border)] sm:hidden" />
-        <div className="min-h-0 flex-1 overflow-hidden">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
           <EventDetailPanel
             open
             event={event}

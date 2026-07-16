@@ -522,7 +522,7 @@ export function CreateEventForm({
       <div
         role="dialog"
         aria-modal="true"
-        className="absolute inset-x-0 bottom-0 flex max-h-[92vh] flex-col overflow-hidden rounded-t-2xl border border-[var(--border)] bg-[var(--surface-2)] md:inset-y-6 md:left-1/2 md:right-auto md:w-[560px] md:-translate-x-1/2 md:rounded-2xl"
+        className="absolute inset-x-0 bottom-0 flex max-h-[92dvh] flex-col overflow-hidden rounded-t-2xl border border-[var(--border)] bg-[var(--surface-2)] pb-[env(safe-area-inset-bottom)] overscroll-contain md:inset-y-6 md:left-1/2 md:right-auto md:w-[560px] md:-translate-x-1/2 md:rounded-2xl md:pb-0"
       >
         <div className="shrink-0 border-b border-[var(--border)] px-4 pb-3 pt-4">
           <div className="flex items-center justify-between">
@@ -851,7 +851,7 @@ export function CreateEventForm({
           ) : null}
         </div>
 
-        <div className="shrink-0 border-t border-[var(--border)] bg-[var(--surface-2)] px-4 py-3">
+        <div className="shrink-0 border-t border-[var(--border)] bg-[var(--surface-2)] px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] md:pb-3">
           <div className="flex flex-wrap gap-2">
             <button
               type="button"

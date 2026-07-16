@@ -8,7 +8,6 @@ const VIEWS: { id: TimelineViewMode; label: string; short: string }[] = [
   { id: "day", label: "نمای روزانه", short: "روزانه" },
   { id: "week", label: "نمای هفتگی", short: "هفتگی" },
   { id: "month", label: "نمای ماهانه", short: "ماهانه" },
-  { id: "heatmap", label: "نقشه حرارتی", short: "حرارتی" },
   { id: "map", label: "نقشه", short: "نقشه" },
   { id: "analytics", label: "تحلیل آماری", short: "آمار" },
 ];

@@ -1,6 +1,7 @@
 "use client";
 
 import { formatResponseTime } from "@/lib/timeline";
+import clsx from "clsx";
 import {
   Building2,
   CalendarDays,
@@ -15,6 +16,7 @@ type WeeklyKpiCardsProps = {
   government: number;
   responseRatio: number;
   avgResponseMinutes: number;
+  className?: string;
 };
 
 export function WeeklyKpiCards({
@@ -23,6 +25,7 @@ export function WeeklyKpiCards({
   government,
   responseRatio,
   avgResponseMinutes,
+  className,
 }: WeeklyKpiCardsProps) {
   const items = [
     {
@@ -63,13 +66,18 @@ export function WeeklyKpiCards({
   ] as const;
 
   return (
-    <section className="grid grid-cols-2 gap-2.5 xl:grid-cols-5">
+    <section
+      className={clsx(
+        "scrollbar-thin -mx-1 flex gap-2.5 overflow-x-auto px-1 pb-1 md:mx-0 md:grid md:grid-cols-5 md:overflow-visible md:px-0 md:pb-0",
+        className,
+      )}
+    >
       {items.map((item) => {
         const Icon = item.icon;
         return (
           <div
             key={item.label}
-            className={`flex items-center justify-between gap-3 rounded-[14px] border p-3 ${item.tone}`}
+            className={`flex min-w-[11.5rem] shrink-0 items-center justify-between gap-3 rounded-[14px] border p-3 md:min-w-0 ${item.tone}`}
           >
             <div className="min-w-0 text-right">
               <p className="text-[11px] text-[var(--text-secondary)]">{item.label}</p>

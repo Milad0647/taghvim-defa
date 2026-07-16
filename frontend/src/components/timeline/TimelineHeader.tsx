@@ -70,11 +70,11 @@ export function TimelineHeader({
   return (
     <header
       ref={headerRef}
-      className="z-30 space-y-2 bg-[var(--background)] pb-1"
+      className="mobile-chrome-header sticky top-0 z-30 space-y-2 border-b border-[var(--border)] bg-[var(--background)]/88 pb-2 pt-1 backdrop-blur-xl md:space-y-2"
     >
-      <SiteMottoBanner />
+      <SiteMottoBanner className="hidden md:flex" />
 
-      <div className="flex items-center gap-2 sm:gap-3">
+      <div className="flex items-center gap-2 px-1 md:gap-3 md:px-0">
         <MobileMenuButton onClick={onOpenMobileMenu} />
 
         <label className="relative min-w-0 flex-1">
@@ -82,8 +82,10 @@ export function TimelineHeader({
           <input
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
-            placeholder="جست‌وجوی رویداد، نهاد، شهر یا منبع..."
-            className="w-full rounded-xl border border-[var(--border)] bg-[var(--panel)] py-2.5 pr-10 pl-3 text-sm text-[var(--text-primary)] outline-none placeholder:text-[var(--text-muted)] focus:ring-2 focus:ring-blue-500/50"
+            placeholder="جست‌وجوی رویداد..."
+            inputMode="search"
+            enterKeyHint="search"
+            className="mobile-input w-full rounded-xl border border-[var(--border)] bg-[var(--panel)] py-2.5 pr-10 pl-3 text-base text-[var(--text-primary)] outline-none placeholder:text-[var(--text-muted)] focus:ring-2 focus:ring-blue-500/50 md:text-sm"
             aria-label="جست‌وجو"
           />
         </label>
@@ -91,10 +93,10 @@ export function TimelineHeader({
         <button
           type="button"
           onClick={onOpenFilters}
-          className="inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-[var(--border)] bg-[var(--panel)] px-3 py-2.5 text-xs text-[var(--text-primary)] hover:bg-[var(--hover)]"
+          className="touch-target inline-flex shrink-0 items-center justify-center gap-1.5 rounded-xl border border-[var(--border)] bg-[var(--panel)] px-3 text-xs text-[var(--text-primary)] hover:bg-[var(--hover)]"
         >
-          <Filter className="h-3.5 w-3.5" />
-          <span className="hidden sm:inline">فیلترها</span>
+          <Filter className="h-4 w-4" />
+          <span className="hidden md:inline">فیلترها</span>
           {activeFilterCount > 0 ? (
             <span className="rounded-md bg-blue-500/15 px-1.5 text-[10px] text-[var(--primary)]">
               {activeFilterCount.toLocaleString("fa-IR")}
@@ -102,8 +104,10 @@ export function TimelineHeader({
           ) : null}
         </button>
 
-        <ThemeToggle />
-        <NotificationBell />
+        <div className="hidden items-center gap-2 md:flex">
+          <ThemeToggle />
+          <NotificationBell />
+        </div>
       </div>
 
       {showExtras ? (

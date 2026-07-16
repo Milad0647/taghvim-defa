@@ -24,6 +24,9 @@ type MonthlyViewProps = {
   onSelectDay: (date: string) => void;
 };
 
+const MOBILE_CELL = 92;
+const MOBILE_GRID_MIN_WIDTH = MOBILE_CELL * 7 + 6 * 8;
+
 export function MonthlyView({
   days,
   selectedDay = null,
@@ -90,7 +93,7 @@ export function MonthlyView({
 
   return (
     <section
-      className="space-y-3"
+      className="space-y-2 md:space-y-3"
       style={{ direction: "rtl", textAlign: "right" }}
     >
       <MonthlyToolbar
@@ -105,6 +108,7 @@ export function MonthlyView({
       />
 
       <WeeklyKpiCards
+        className="hidden md:grid"
         totalEvents={summary.totalEvents}
         enemy={summary.enemy}
         government={summary.government}
@@ -112,24 +116,34 @@ export function MonthlyView({
         avgResponseMinutes={summary.avgResponseMinutes}
       />
 
-      <div className="overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-2 sm:p-3">
-        <div className="mb-2 grid grid-cols-7 gap-1.5 text-center text-[11px] font-medium text-[var(--text-muted)]">
-          {WEEKDAY_LABELS.map((label) => (
-            <span key={label} className="py-1">
-              {label}
-            </span>
-          ))}
-        </div>
+      <div className="overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-2 md:p-3">
+        <div
+          className="scrollbar-thin max-h-[min(72dvh,640px)] overflow-auto overscroll-contain md:max-h-none md:overflow-visible"
+          style={{ WebkitOverflowScrolling: "touch" }}
+        >
+          <div
+            className="inline-block min-w-full align-top md:block"
+            style={{ minWidth: `max(100%, ${MOBILE_GRID_MIN_WIDTH}px)` }}
+          >
+            <div className="sticky top-0 z-10 mb-2 grid grid-cols-7 gap-2 bg-[var(--panel)] text-center text-[11px] font-medium text-[var(--text-muted)] md:gap-1.5">
+              {WEEKDAY_LABELS.map((label) => (
+                <span key={label} className="py-1">
+                  {label}
+                </span>
+              ))}
+            </div>
 
-        <div className="grid grid-cols-7 gap-1.5">
-          {cells.map((cell) => (
-            <MonthlyDayCellCard
-              key={cell.key}
-              cell={cell}
-              selected={!!cell.date && selectedDay === cell.date}
-              onSelect={onSelectDay}
-            />
-          ))}
+            <div className="grid grid-cols-7 gap-2 md:gap-1.5">
+              {cells.map((cell) => (
+                <MonthlyDayCellCard
+                  key={cell.key}
+                  cell={cell}
+                  selected={!!cell.date && selectedDay === cell.date}
+                  onSelect={onSelectDay}
+                />
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     </section>

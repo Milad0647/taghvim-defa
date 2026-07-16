@@ -30,6 +30,7 @@ export default function LoginPage() {
   const smoothRef = useRef<Pointer>({ ...CENTER });
   const [pointer, setPointer] = useState<Pointer>(CENTER);
   const [isHovering, setIsHovering] = useState(false);
+  const [keyboardInset, setKeyboardInset] = useState(0);
 
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -66,6 +67,24 @@ export default function LoginPage() {
       }
     };
   }, [tick]);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.visualViewport) return;
+
+    const viewport = window.visualViewport;
+    const updateInset = () => {
+      const next = Math.max(0, window.innerHeight - viewport.height - viewport.offsetTop);
+      setKeyboardInset(next > 72 ? next : 0);
+    };
+
+    updateInset();
+    viewport.addEventListener("resize", updateInset);
+    viewport.addEventListener("scroll", updateInset);
+    return () => {
+      viewport.removeEventListener("resize", updateInset);
+      viewport.removeEventListener("scroll", updateInset);
+    };
+  }, []);
 
   useEffect(() => {
     const b = getSiteBranding();
@@ -118,14 +137,14 @@ export default function LoginPage() {
 
   return (
     <main
-      className="relative isolate flex min-h-screen items-center justify-center overflow-hidden px-4 py-10"
+      className="login-page relative isolate flex h-dvh items-center justify-center overflow-hidden px-4 py-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))] sm:py-10"
       style={{ direction: "rtl" }}
       onMouseMove={handlePointerMove}
       onMouseLeave={handlePointerLeave}
     >
       <div
         aria-hidden
-        className="absolute inset-[-4%] bg-cover bg-center bg-no-repeat"
+        className="login-bg-parallax absolute inset-[-4%] bg-cover bg-center bg-no-repeat"
         style={{
           backgroundImage: "url(/login-bg.webp)",
           filter: "saturate(1.12)",
@@ -143,16 +162,17 @@ export default function LoginPage() {
       />
 
       <div
-        className="relative w-full max-w-[460px]"
+        className="login-parallax relative w-full max-w-[460px]"
         style={{
           transform: `perspective(1200px) rotateX(${tiltX}deg) rotateY(${tiltY}deg)`,
           transition: isHovering
             ? "transform 0.08s ease-out"
             : "transform 0.65s cubic-bezier(0.22, 1, 0.36, 1)",
+          marginBottom: keyboardInset ? `${Math.min(keyboardInset, 320)}px` : undefined,
         }}
       >
         <div
-          className="relative overflow-hidden rounded-[32px] border border-white/45 p-8 shadow-[0_24px_80px_rgba(0,0,0,0.22)]"
+          className="relative overflow-hidden rounded-[32px] border border-white/45 p-5 shadow-[0_24px_80px_rgba(0,0,0,0.22)] sm:p-8"
           style={{
             background: "rgba(255, 255, 255, 0.024)",
             WebkitBackdropFilter: "blur(5px) saturate(155%) brightness(1.04)",
@@ -209,10 +229,11 @@ export default function LoginPage() {
               <input
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
+                onFocus={(e) => e.currentTarget.scrollIntoView({ block: "center", behavior: "smooth" })}
                 type="text"
                 autoComplete="username"
                 placeholder="نام کاربری خود را وارد کنید"
-                className="w-full rounded-2xl border border-white/35 px-4 py-3 text-white placeholder:text-white/50 shadow-[inset_0_1px_0_rgba(255,255,255,0.2)] outline-none transition focus:border-white/60 focus:ring-2 focus:ring-white/25"
+                className="mobile-input w-full rounded-2xl border border-white/35 px-4 py-3.5 text-white placeholder:text-white/50 shadow-[inset_0_1px_0_rgba(255,255,255,0.2)] outline-none transition focus:border-white/60 focus:ring-2 focus:ring-white/25"
                 style={{
                   background: "rgba(255, 255, 255, 0.018)",
                   WebkitBackdropFilter: "blur(2.5px)",
@@ -227,10 +248,11 @@ export default function LoginPage() {
               <input
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                onFocus={(e) => e.currentTarget.scrollIntoView({ block: "center", behavior: "smooth" })}
                 type="password"
                 autoComplete="current-password"
                 placeholder="رمز عبور"
-                className="w-full rounded-2xl border border-white/35 px-4 py-3 text-white placeholder:text-white/50 shadow-[inset_0_1px_0_rgba(255,255,255,0.2)] outline-none transition focus:border-white/60 focus:ring-2 focus:ring-white/25"
+                className="mobile-input w-full rounded-2xl border border-white/35 px-4 py-3.5 text-white placeholder:text-white/50 shadow-[inset_0_1px_0_rgba(255,255,255,0.2)] outline-none transition focus:border-white/60 focus:ring-2 focus:ring-white/25"
                 style={{
                   background: "rgba(255, 255, 255, 0.018)",
                   WebkitBackdropFilter: "blur(2.5px)",

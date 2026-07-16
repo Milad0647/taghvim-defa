@@ -4,6 +4,11 @@
 :root,
 [data-theme="dark"] {
   color-scheme: dark;
+  --app-bottom-nav-h: 4.25rem;
+  --app-safe-top: env(safe-area-inset-top, 0px);
+  --app-safe-bottom: env(safe-area-inset-bottom, 0px);
+  --app-content-pad-bottom: calc(var(--app-bottom-nav-h) + var(--app-safe-bottom) + 0.5rem);
+  --timeline-sticky-top: 0px;
   --background: #050b18;
   --surface-1: #091226;
   --surface-2: #0d172a;
@@ -64,6 +69,11 @@
 
 [data-theme="light"] {
   color-scheme: light;
+  --app-bottom-nav-h: 4.25rem;
+  --app-safe-top: env(safe-area-inset-top, 0px);
+  --app-safe-bottom: env(safe-area-inset-bottom, 0px);
+  --app-content-pad-bottom: calc(var(--app-bottom-nav-h) + var(--app-safe-bottom) + 0.5rem);
+  --timeline-sticky-top: 0px;
   --background: #eef2f7;
   --surface-1: #ffffff;
   --surface-2: #ffffff;
@@ -189,4 +199,95 @@ mark {
 }
 [data-theme="light"] .settings-range-hint__title {
   color: #1e3a8a;
+}
+
+.safe-top {
+  padding-top: var(--app-safe-top);
+}
+
+.safe-bottom {
+  padding-bottom: var(--app-safe-bottom);
+}
+
+.app-shell-pad {
+  padding-bottom: var(--app-content-pad-bottom);
+}
+
+@media (min-width: 768px) {
+  .app-shell-pad {
+    padding-bottom: 0.5rem;
+  }
+}
+
+.app-floating-bottom {
+  bottom: var(--app-content-pad-bottom);
+}
+
+@media (min-width: 768px) {
+  .app-floating-bottom {
+    bottom: 1.5rem;
+  }
+}
+
+.touch-target {
+  min-height: 2.75rem;
+  min-width: 2.75rem;
+}
+
+.mobile-input {
+  font-size: 1rem;
+  line-height: 1.5rem;
+}
+
+@supports (-webkit-touch-callout: none) {
+  .mobile-input {
+    font-size: 16px;
+  }
+}
+
+.overscroll-contain {
+  overscroll-behavior: contain;
+}
+
+.mobile-nav-snap {
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+}
+
+.mobile-nav-snap > * {
+  scroll-snap-align: center;
+}
+
+@media (pointer: coarse) {
+  .login-parallax {
+    transform: none !important;
+  }
+
+  .login-bg-parallax {
+    transform: scale(1.02) !important;
+  }
+}
+
+@media (max-width: 767px) {
+  html:has(.login-page),
+  body:has(.login-page) {
+    overflow: hidden;
+    height: 100%;
+  }
+
+  .mobile-chrome-header {
+    position: fixed;
+    top: var(--app-safe-top);
+    right: 0;
+    left: 0;
+    z-index: 50;
+    padding-top: 0.25rem;
+    padding-bottom: 0.5rem;
+    background: color-mix(in srgb, var(--background) 92%, transparent);
+  }
+
+  .mobile-chrome-spacer {
+    height: var(--timeline-sticky-top, 3.5rem);
+    flex-shrink: 0;
+  }
 }

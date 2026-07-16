@@ -25,10 +25,11 @@ import {
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
-import { ThemeToggle } from "@/components/theme/ThemeToggle";
+import { AdminMobileTabBar } from "@/components/admin/AdminMobileTabBar";
 import { IranEmblem } from "@/components/brand/IranEmblem";
 import { SiteMottoBanner } from "@/components/brand/SiteMottoBanner";
 import { CreateEventForm } from "@/components/forms/CreateEventForm";
+import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { getSiteBranding } from "@/lib/branding";
 
 type NavItem = {
@@ -137,6 +138,11 @@ function AdminShell({
     setBranding(getSiteBranding());
   }, []);
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  }, [pathname]);
+
   async function onLogout() {
     await logoutRequest();
     router.replace("/login");
@@ -151,10 +157,10 @@ function AdminShell({
 
   return (
     <div
-      className="min-h-screen bg-[var(--background)] text-[var(--text-primary)]"
+      className="min-h-dvh bg-[var(--background)] text-[var(--text-primary)] safe-top"
       style={{ direction: "rtl" }}
     >
-      <div className="mx-auto flex min-h-screen max-w-6xl gap-4 p-4">
+      <div className="mx-auto flex min-h-dvh max-w-6xl gap-4 p-3 pb-[var(--app-content-pad-bottom)] sm:p-4 lg:pb-4">
         <aside className="sticky top-4 hidden h-[calc(100vh-2rem)] w-64 shrink-0 flex-col rounded-2xl border border-[var(--border)] bg-[var(--panel)] lg:flex">
           <div className="border-b border-[var(--border)] p-4">
             <div className="mb-2 flex items-center gap-2">
@@ -231,46 +237,37 @@ function AdminShell({
         <main className="min-w-0 flex-1 space-y-4">
           <SiteMottoBanner compact />
 
-          <div className="flex items-center justify-between gap-3 rounded-2xl border border-[var(--border)] bg-[var(--panel)] px-4 py-3 lg:hidden">
-            <div>
-              <p className="text-sm font-semibold text-[var(--text-primary)]">{user.name}</p>
+          <div className="sticky top-0 z-20 flex items-center justify-between gap-3 rounded-2xl border border-[var(--border)] bg-[var(--panel)]/95 px-3 py-3 backdrop-blur-xl lg:static lg:hidden">
+            <div className="min-w-0">
+              <p className="truncate text-sm font-semibold text-[var(--text-primary)]">{user.name}</p>
               <p className="text-xs text-[var(--text-secondary)]">{ROLE_LABELS[user.role]}</p>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex shrink-0 items-center gap-2">
               {canContent ? (
                 <button
                   type="button"
                   onClick={() => setCreateOpen(true)}
-                  className="rounded-xl bg-blue-600 px-3 py-2 text-xs font-semibold text-white"
+                  className="touch-target rounded-xl bg-blue-600 px-3 text-xs font-semibold text-white"
                 >
                   ثبت رویداد
                 </button>
               ) : null}
+              <ThemeToggle />
               <button
                 type="button"
                 onClick={onLogout}
-                className="rounded-xl border border-[var(--border)] px-3 py-2 text-xs"
+                className="touch-target rounded-xl border border-[var(--border)] px-3 text-xs"
               >
                 خروج
               </button>
             </div>
           </div>
 
-          <div className="flex flex-wrap gap-2 lg:hidden">
-            {visibleNav().map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="rounded-xl border border-[var(--border)] bg-[var(--panel)] px-3 py-2 text-xs text-[var(--text-secondary)]"
-              >
-                {item.label}
-              </Link>
-            ))}
-          </div>
-
           {children}
         </main>
       </div>
+
+      <AdminMobileTabBar user={user} />
 
       {canContent ? (
         <CreateEventForm open={createOpen} onClose={() => setCreateOpen(false)} />

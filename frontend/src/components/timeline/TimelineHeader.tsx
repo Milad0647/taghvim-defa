@@ -8,7 +8,6 @@ import { SiteMottoBanner } from "@/components/brand/SiteMottoBanner";
 import { ViewSwitcher } from "@/components/timeline/ViewSwitcher";
 import type { TimelineViewMode } from "@/types/timeline";
 import { Filter, Search } from "lucide-react";
-import { useEffect, useRef } from "react";
 
 type TimelineHeaderProps = {
   showViewSwitcher?: boolean;
@@ -42,39 +41,12 @@ export function TimelineHeader({
   showDateFilters = false,
 }: TimelineHeaderProps) {
   const showExtras = showViewSwitcher || showDateFilters;
-  const headerRef = useRef<HTMLElement>(null);
-
-  useEffect(() => {
-    const el = headerRef.current;
-    if (!el) return;
-
-    const publishHeight = () => {
-      const height = Math.ceil(el.getBoundingClientRect().height);
-      document.documentElement.style.setProperty(
-        "--timeline-sticky-top",
-        `${height}px`,
-      );
-    };
-
-    publishHeight();
-    const observer = new ResizeObserver(publishHeight);
-    observer.observe(el);
-    window.addEventListener("resize", publishHeight);
-
-    return () => {
-      observer.disconnect();
-      window.removeEventListener("resize", publishHeight);
-    };
-  }, [showExtras]);
 
   return (
-    <header
-      ref={headerRef}
-      className="mobile-chrome-header sticky top-0 z-30 space-y-2 border-b border-[var(--border)] bg-[var(--background)]/88 pb-2 pt-1 backdrop-blur-xl md:space-y-2"
-    >
+    <header className="z-30 shrink-0 bg-[var(--background)] px-2 pb-2 pt-1 md:space-y-2 md:border-b md:border-[var(--border)] md:px-0">
       <SiteMottoBanner className="hidden md:flex" />
 
-      <div className="flex items-center gap-2 px-1 md:gap-3 md:px-0">
+      <div className="flex items-center gap-2 md:gap-3">
         <MobileMenuButton onClick={onOpenMobileMenu} />
 
         <label className="relative min-w-0 flex-1">

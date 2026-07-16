@@ -35,7 +35,7 @@ export function AppShell({
   return (
     <div className="h-dvh overflow-hidden bg-[var(--background)] text-[var(--text-primary)] safe-top">
       <div
-        className="mx-auto flex h-full max-w-[1680px] gap-1 p-1 sm:gap-3 sm:p-3 lg:gap-4 lg:p-4"
+        className="mx-auto flex h-full max-w-[1680px] gap-0 p-0 sm:gap-3 sm:p-3 lg:gap-4 lg:p-4"
         style={{ direction: "rtl" }}
       >
         {sidebar}

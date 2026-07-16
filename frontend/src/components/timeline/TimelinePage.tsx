@@ -553,8 +553,8 @@ export function TimelinePage({
   }, [selectedView]);
 
   const main = (
-    <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-1 app-shell-pad md:gap-3 md:pb-2">
-      <div className="shrink-0 space-y-1.5 md:space-y-3">
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-0 md:gap-3 md:pb-2">
+      <div className="shrink-0 space-y-0 border-b border-[var(--border)] bg-[var(--background)] md:space-y-3 md:border-b-0">
         <TimelineHeader
           showViewSwitcher={
             selectedView !== "timeline" &&
@@ -588,8 +588,6 @@ export function TimelinePage({
           onViewChange={changeView}
         />
 
-        <div aria-hidden className="mobile-chrome-spacer md:hidden" />
-
         <AgencyFilterBar
           className="hidden md:block"
           value={filters.agencyId}
@@ -613,7 +611,7 @@ export function TimelinePage({
         ) : null}
 
         {!loading && !error && selectedView === "timeline" && filteredDays.length > 0 ? (
-          <div className="hidden sm:block">
+          <div className="hidden md:block">
             <EventIntensityPanel
               days={rangedDays}
               activeDate={selectedDay}
@@ -625,7 +623,7 @@ export function TimelinePage({
 
       <div
         ref={timelineScrollRef}
-        className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain scrollbar-thin"
+        className="min-h-0 flex-1 overflow-y-auto overscroll-contain scrollbar-thin pb-[var(--app-content-pad-bottom)] md:pb-0"
       >
         {loading ? <TimelineSkeleton /> : null}
         {error ? (
@@ -651,7 +649,7 @@ export function TimelinePage({
               }}
             />
           ) : (
-            <div className="space-y-4 pb-4">
+            <div className="space-y-0 md:space-y-4 md:pb-4">
               {filteredDays.map((day) => (
                 <TimelineDaySection
                   key={day.date}

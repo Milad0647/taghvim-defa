@@ -77,8 +77,8 @@ export function MobileNavigation({ value, onChange }: MobileNavigationProps) {
         </div>
       ) : null}
 
-      <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-[var(--border)] bg-[var(--surface-1)]/92 backdrop-blur-xl md:hidden safe-bottom">
-        <div className="mx-auto flex max-w-lg items-stretch gap-1 px-2 py-2">
+      <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-[var(--border)] bg-[var(--surface-1)] md:hidden safe-bottom">
+        <div className="mx-auto flex h-[3.75rem] max-w-lg items-stretch gap-0.5 px-1.5">
           {PRIMARY_ITEMS.map((item) => {
             const Icon = item.icon;
             const active = value === item.id;

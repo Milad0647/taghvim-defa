@@ -4,10 +4,10 @@
 :root,
 [data-theme="dark"] {
   color-scheme: dark;
-  --app-bottom-nav-h: 4.25rem;
+  --app-bottom-nav-h: 3.75rem;
   --app-safe-top: env(safe-area-inset-top, 0px);
   --app-safe-bottom: env(safe-area-inset-bottom, 0px);
-  --app-content-pad-bottom: calc(var(--app-bottom-nav-h) + var(--app-safe-bottom) + 0.5rem);
+  --app-content-pad-bottom: calc(var(--app-bottom-nav-h) + var(--app-safe-bottom) + 0.25rem);
   --timeline-sticky-top: 0px;
   --background: #050b18;
   --surface-1: #091226;
@@ -69,10 +69,10 @@
 
 [data-theme="light"] {
   color-scheme: light;
-  --app-bottom-nav-h: 4.25rem;
+  --app-bottom-nav-h: 3.75rem;
   --app-safe-top: env(safe-area-inset-top, 0px);
   --app-safe-bottom: env(safe-area-inset-bottom, 0px);
-  --app-content-pad-bottom: calc(var(--app-bottom-nav-h) + var(--app-safe-bottom) + 0.5rem);
+  --app-content-pad-bottom: calc(var(--app-bottom-nav-h) + var(--app-safe-bottom) + 0.25rem);
   --timeline-sticky-top: 0px;
   --background: #eef2f7;
   --surface-1: #ffffff;
@@ -273,21 +273,5 @@ mark {
   body:has(.login-page) {
     overflow: hidden;
     height: 100%;
-  }
-
-  .mobile-chrome-header {
-    position: fixed;
-    top: var(--app-safe-top);
-    right: 0;
-    left: 0;
-    z-index: 50;
-    padding-top: 0.25rem;
-    padding-bottom: 0.5rem;
-    background: color-mix(in srgb, var(--background) 92%, transparent);
-  }
-
-  .mobile-chrome-spacer {
-    height: var(--timeline-sticky-top, 3.5rem);
-    flex-shrink: 0;
   }
 }

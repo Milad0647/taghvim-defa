@@ -41,17 +41,19 @@ export function TimelineDaySection({
     <section
       id={`day-${day.date}`}
       className={clsx(
-        "rounded-2xl border bg-[var(--panel)] transition",
-        isActive ? "border-[var(--primary)]/40" : "border-[var(--border)]",
+        "border bg-[var(--panel)] transition md:rounded-2xl",
+        "rounded-none border-x-0 border-t border-b first:border-t-0 md:border",
+        isActive
+          ? "border-[var(--primary)]/40 md:border-[var(--primary)]/40"
+          : "border-[var(--border)]",
         day.isCritical && "ring-1 ring-red-500/20",
       )}
-      style={{ scrollMarginTop: "var(--timeline-sticky-top, 0.5rem)" }}
+      style={{ scrollMarginTop: 0 }}
     >
       <button
         type="button"
         onClick={() => onToggle(day.date)}
-        className="sticky z-20 flex min-h-11 w-full items-center justify-between gap-2 border-b border-[var(--border)] bg-[var(--panel)]/95 px-3 text-right shadow-[0_8px_16px_-12px_rgba(0,0,0,0.45)] backdrop-blur-md sm:gap-3 sm:px-3"
-        style={{ top: "var(--timeline-sticky-top, 0px)" }}
+        className="sticky top-0 z-20 flex min-h-12 w-full items-center justify-between gap-2 border-b border-[var(--border)] bg-[var(--panel)] px-3 text-right shadow-[0_1px_0_var(--border)] sm:gap-3 sm:px-3"
         aria-expanded={!collapsed}
       >
         <div className="flex min-w-0 flex-wrap items-center gap-1.5 sm:gap-2">

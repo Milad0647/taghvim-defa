@@ -9,7 +9,7 @@ class SeedConflictMedia extends Command
 {
     protected $signature = 'app:seed-conflict-media {--force : Replace existing media on actions}';
 
-    protected $description = 'Attach bundled conflict images (or Commons fallback) to actions';
+    protected $description = 'Attach bundled jang conflict images to actions';
 
     public function handle(): int
     {

@@ -1,3 +1,4 @@
+import { JANG_IMAGE_PATHS } from "@/data/jang-images";
 import type { TimelineDay, TimelineEvent } from "@/types/timeline";
 
 /**
@@ -33,31 +34,21 @@ function eventBase(
   };
 }
 
-/** Local real photos (bundled under public/) so images load without external CDN. */
-const IMG = {
-  strike: "/images/events/strike.jpg",
-  missile: "/images/events/missile.jpg",
-  radar: "/images/events/radar.jpg",
-  diplomacy: "/images/events/diplomacy.jpg",
-  base: "/images/events/base.jpg",
-  city: "/images/events/city.jpg",
-  sea: "/images/events/sea.jpg",
-} as const;
+/** Bundled jang images (synced from Desktop/jang via scripts/sync-jang-images.ps1). */
+function pick<T>(items: readonly T[], seed: number): T {
+  return items[((seed % items.length) + items.length) % items.length]!;
+}
+
+function jangImage(seed: number): string {
+  return pick(JANG_IMAGE_PATHS, seed);
+}
 
 /** Inclusive seed window: 9 Esfand 1404 → today */
 export const SEED_RANGE_START = "2026-02-28";
 export const SEED_RANGE_END = "2026-07-10";
-export const TIMELINE_SEED_VERSION = "conflict-2026-real-images-v5";
+export const TIMELINE_SEED_VERSION = "conflict-2026-jang-images-v1";
 
-const IMG_POOL = [
-  IMG.strike,
-  IMG.missile,
-  IMG.radar,
-  IMG.diplomacy,
-  IMG.base,
-  IMG.city,
-  IMG.sea,
-] as const;
+const IMG_POOL = JANG_IMAGE_PATHS;
 
 /** Landmark / reported milestones — kept verbatim, then densified per day */
 const landmarkConflictEvents: TimelineEvent[] = [
@@ -77,13 +68,13 @@ const landmarkConflictEvents: TimelineEvent[] = [
     category: "حمله آمریکا / اسرائیل",
     location: { province: "تهران", city: "تهران" },
     source: "AP News / Wikipedia — 2026 Iran war",
-    imageUrl: IMG.strike,
+    imageUrl: jangImage(21),
     media: [
       {
         id: "e-20260228-opening-strike-m1",
         type: "image",
-        url: IMG.strike,
-        thumbnailUrl: IMG.strike,
+        url: jangImage(22),
+        thumbnailUrl: jangImage(23),
       },
     ],
     tags: ["آمریکا", "اسرائیل", "۹ اسفند", "جنگ ۲۰۲۶"],
@@ -110,7 +101,7 @@ const landmarkConflictEvents: TimelineEvent[] = [
     location: { province: "تهران", city: "تهران" },
     organization: "نیروی پدافند هوایی",
     source: "سخنگوی نیروهای مسلح",
-    imageUrl: IMG.radar,
+    imageUrl: jangImage(0),
     tags: ["پدافند", "آماده‌باش"],
     relatedEventIds: ["e-20260228-opening-strike"],
     relatedResponseIds: [],
@@ -132,7 +123,7 @@ const landmarkConflictEvents: TimelineEvent[] = [
     location: { province: "کرمانشاه", city: "کرمانشاه" },
     organization: "نیروی هوافضای سپاه",
     source: "رصد بین‌المللی / AP",
-    imageUrl: IMG.missile,
+    imageUrl: jangImage(1),
     tags: ["پاسخ", "موشک", "پهپاد"],
     relatedEventIds: ["e-20260228-opening-strike"],
     relatedResponseIds: [],
@@ -156,7 +147,7 @@ const landmarkConflictEvents: TimelineEvent[] = [
     location: { province: "هرمزگان", city: "بندرعباس" },
     organization: "نیروی دریایی",
     source: "AP / Britannica",
-    imageUrl: IMG.sea,
+    imageUrl: jangImage(2),
     tags: ["هرمز", "نفت", "دریایی"],
     relatedEventIds: ["e-20260228-opening-strike"],
     relatedResponseIds: [],
@@ -176,7 +167,7 @@ const landmarkConflictEvents: TimelineEvent[] = [
     category: "جبهه منطقه‌ای",
     location: { province: "تهران", city: "تهران" },
     source: "AP / BBC",
-    imageUrl: IMG.strike,
+    imageUrl: jangImage(24),
     tags: ["لبنان", "حزب‌الله", "اسرائیل"],
     relatedEventIds: [],
     relatedResponseIds: ["g-20260302-support-axis"],
@@ -197,7 +188,7 @@ const landmarkConflictEvents: TimelineEvent[] = [
     location: { province: "تهران", city: "تهران" },
     organization: "وزارت امور خارجه",
     source: "سخنگوی وزارت امور خارجه",
-    imageUrl: IMG.diplomacy,
+    imageUrl: jangImage(3),
     tags: ["دیپلماسی", "لبنان"],
     relatedEventIds: ["e-20260302-hezbollah"],
     relatedResponseIds: [],
@@ -219,7 +210,7 @@ const landmarkConflictEvents: TimelineEvent[] = [
     location: { province: "تهران", city: "تهران" },
     organization: "شورای عالی امنیت ملی",
     source: "AP News",
-    imageUrl: IMG.diplomacy,
+    imageUrl: jangImage(4),
     tags: ["رهبری", "امنیت ملی"],
     relatedEventIds: [],
     relatedResponseIds: [],
@@ -238,7 +229,7 @@ const landmarkConflictEvents: TimelineEvent[] = [
     category: "تهدید / فشار",
     location: { province: "بوشهر", city: "خارک" },
     source: "Britannica",
-    imageUrl: IMG.base,
+    imageUrl: jangImage(5),
     tags: ["هرمز", "انرژی", "آمریکا"],
     relatedEventIds: [],
     relatedResponseIds: ["g-20260321-energy-guard"],
@@ -278,7 +269,7 @@ const landmarkConflictEvents: TimelineEvent[] = [
     category: "دیپلماسی / آتش‌بس",
     location: { province: "تهران", city: "تهران" },
     source: "AP News",
-    imageUrl: IMG.diplomacy,
+    imageUrl: jangImage(6),
     tags: ["آتش‌بس", "آمریکا"],
     relatedEventIds: [],
     relatedResponseIds: ["g-20260407-monitor"],
@@ -318,7 +309,7 @@ const landmarkConflictEvents: TimelineEvent[] = [
     category: "دیپلماسی",
     location: { province: "تهران", city: "تهران" },
     source: "AP News",
-    imageUrl: IMG.diplomacy,
+    imageUrl: jangImage(7),
     tags: ["اسلام‌آباد", "مذاکره"],
     relatedEventIds: [],
     relatedResponseIds: [],
@@ -337,7 +328,7 @@ const landmarkConflictEvents: TimelineEvent[] = [
     category: "محاصره / تحریم",
     location: { province: "هرمزگان", city: "بندرعباس" },
     source: "AP News",
-    imageUrl: IMG.sea,
+    imageUrl: jangImage(8),
     tags: ["محاصره", "بندر", "آمریکا"],
     relatedEventIds: [],
     relatedResponseIds: ["g-20260417-reopen"],
@@ -377,7 +368,7 @@ const landmarkConflictEvents: TimelineEvent[] = [
     category: "دیپلماسی / آتش‌بس",
     location: { province: "تهران", city: "تهران" },
     source: "AP News",
-    imageUrl: IMG.diplomacy,
+    imageUrl: jangImage(9),
     tags: ["آتش‌بس", "تمدید"],
     relatedEventIds: [],
     relatedResponseIds: [],
@@ -398,7 +389,7 @@ const landmarkConflictEvents: TimelineEvent[] = [
     category: "حمله هوایی / موشکی",
     location: { province: "ایلام", city: "مهران" },
     source: "AP / Britannica",
-    imageUrl: IMG.missile,
+    imageUrl: jangImage(10),
     tags: ["اسرائیل", "آتش‌بس", "موشک"],
     relatedEventIds: [],
     relatedResponseIds: ["g-20260607-retaliation"],
@@ -419,7 +410,7 @@ const landmarkConflictEvents: TimelineEvent[] = [
     location: { province: "کرمانشاه", city: "قصرشیرین" },
     organization: "نیروی هوافضای سپاه",
     source: "رصد بین‌المللی",
-    imageUrl: IMG.missile,
+    imageUrl: jangImage(11),
     tags: ["پاسخ", "اسرائیل"],
     relatedEventIds: ["e-20260607-iran-israel-fire"],
     relatedResponseIds: [],
@@ -439,7 +430,7 @@ const landmarkConflictEvents: TimelineEvent[] = [
     category: "دیپلماسی",
     location: { province: "تهران", city: "تهران" },
     source: "AP / Wikipedia",
-    imageUrl: IMG.diplomacy,
+    imageUrl: jangImage(12),
     tags: ["توافق", "تحریم", "نفت"],
     relatedEventIds: [],
     relatedResponseIds: ["g-20260618-blockade-lift"],
@@ -481,7 +472,7 @@ const landmarkConflictEvents: TimelineEvent[] = [
     location: { province: "هرمزگان", city: "بندرعباس" },
     organization: "فرماندهی مشترک نیروهای مسلح",
     source: "AP News",
-    imageUrl: IMG.sea,
+    imageUrl: jangImage(13),
     tags: ["هرمز", "نفتکش"],
     relatedEventIds: [],
     relatedResponseIds: [],
@@ -502,13 +493,13 @@ const landmarkConflictEvents: TimelineEvent[] = [
     category: "حمله آمریکا",
     location: { province: "بوشهر", city: "بوشهر" },
     source: "AP / The National",
-    imageUrl: IMG.strike,
+    imageUrl: jangImage(25),
     media: [
       {
         id: "e-20260707-us-strikes-m1",
         type: "image",
-        url: IMG.missile,
-        thumbnailUrl: IMG.missile,
+        url: jangImage(14),
+        thumbnailUrl: jangImage(15),
       },
     ],
     tags: ["آمریکا", "هرمز", "تحریم"],
@@ -529,7 +520,7 @@ const landmarkConflictEvents: TimelineEvent[] = [
     category: "دیپلماسی / آتش‌بس",
     location: { province: "تهران", city: "تهران" },
     source: "AP / The National",
-    imageUrl: IMG.diplomacy,
+    imageUrl: jangImage(16),
     tags: ["آتش‌بس", "ترامپ"],
     relatedEventIds: ["e-20260707-us-strikes"],
     relatedResponseIds: [],
@@ -550,7 +541,7 @@ const landmarkConflictEvents: TimelineEvent[] = [
     location: { province: "خوزستان", city: "اهواز" },
     organization: "سپاه پاسداران",
     source: "The National / AP",
-    imageUrl: IMG.missile,
+    imageUrl: jangImage(17),
     tags: ["پاسخ", "خلیج فارس", "آمریکا"],
     relatedEventIds: ["e-20260707-us-strikes"],
     relatedResponseIds: [],
@@ -572,7 +563,7 @@ const landmarkConflictEvents: TimelineEvent[] = [
     location: { province: "تهران", city: "تهران" },
     organization: "وزارت امور خارجه",
     source: "The National",
-    imageUrl: IMG.diplomacy,
+    imageUrl: jangImage(18),
     tags: ["دیپلماسی", "محکومیت"],
     relatedEventIds: ["e-20260707-us-strikes"],
     relatedResponseIds: [],
@@ -592,7 +583,7 @@ const landmarkConflictEvents: TimelineEvent[] = [
     category: "حمله آمریکا",
     location: { province: "هرمزگان", city: "بندرعباس" },
     source: "The National / CENTCOM",
-    imageUrl: IMG.strike,
+    imageUrl: jangImage(26),
     tags: ["سنتکام", "هرمز", "آمریکا"],
     relatedEventIds: [],
     relatedResponseIds: ["g-20260709-defense"],
@@ -613,7 +604,7 @@ const landmarkConflictEvents: TimelineEvent[] = [
     location: { province: "هرمزگان", city: "بندرعباس" },
     organization: "نیروی پدافند هوایی / نیروی دریایی",
     source: "رصد میدانی",
-    imageUrl: IMG.radar,
+    imageUrl: jangImage(19),
     tags: ["پدافند", "هرمز"],
     relatedEventIds: ["e-20260709-second-wave"],
     relatedResponseIds: [],
@@ -635,7 +626,7 @@ const landmarkConflictEvents: TimelineEvent[] = [
     location: { province: "تهران", city: "تهران" },
     organization: "ستاد کل نیروهای مسلح",
     source: "جمع‌بندی رصد روزانه",
-    imageUrl: IMG.radar,
+    imageUrl: jangImage(20),
     tags: ["امروز", "آماده‌باش"],
     relatedEventIds: [],
     relatedResponseIds: [],
@@ -833,10 +824,6 @@ function eachDateInclusive(start: string, end: string): string[] {
     cursor.setDate(cursor.getDate() + 1);
   }
   return out;
-}
-
-function pick<T>(items: readonly T[], seed: number): T {
-  return items[((seed % items.length) + items.length) % items.length]!;
 }
 
 function buildMediaBundle(

@@ -44,6 +44,8 @@ class DemoDataService
      */
     public function restore(): array
     {
+        $this->purgeLegacySeedUploads();
+
         $contentSeeder = new DemoContentSeeder;
         $contentSeeder->run();
 
@@ -111,5 +113,16 @@ class DemoDataService
 
             $media->delete();
         });
+    }
+
+    private function purgeLegacySeedUploads(): void
+    {
+        if (! Storage::disk('public')->exists('uploads/seed')) {
+            return;
+        }
+
+        foreach (Storage::disk('public')->allFiles('uploads/seed') as $relative) {
+            Storage::disk('public')->delete($relative);
+        }
     }
 }
